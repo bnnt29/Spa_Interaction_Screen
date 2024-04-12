@@ -1,0 +1,206 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\embedvlc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\embedvlc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\config.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\config.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\mainform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 742,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "EmbedVLC.cs [Entwurf]",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\EmbedVLC.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.cs [Entwurf]",
+              "RelativeToolTip": "Spa_Interaction_Screen\\EmbedVLC.cs [Entwurf]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-12T16:07:11.657Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Constants.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Constants.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Constants.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Constants.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\Constants.cs",
+              "ViewState": "AQIAADUAAAAAAAAAAAAtwEsAAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:07:03.911Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "MainForm.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.Designer.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.Designer.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.Designer.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.Designer.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:07:09.049Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "MainForm.cs [Design]",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs [Design]",
+              "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:07:02.181Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Network.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Network.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Network.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Network.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\Network.cs",
+              "ViewState": "AQIAAA8AAAAAAAAAAAAAACMAAAANAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:07:00.761Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "UIHelper.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\UIHelper.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\UIHelper.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\UIHelper.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\UIHelper.cs",
+              "ViewState": "AQIAAA8AAAAAAAAAAAAAACYAAAA5AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:06:44.359Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 742,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 742,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "FloatingWindowState": {
+        "Id": "c841004f-cef4-4abd-bff3-a9712e6e1954",
+        "Display": 0,
+        "X": 436,
+        "Y": 80,
+        "Width": 1140,
+        "Height": 957,
+        "WindowState": 2
+      },
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Program.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Program.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Program.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\Program.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-12T16:02:23.612Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Config.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Config.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Config.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Config.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\Config.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-11T16:07:04.532Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MainForm.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.cs",
+              "ViewState": "AQIAACYAAAAAAAAAAAAxwEQAAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-04-12T16:00:27.521Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
