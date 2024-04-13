@@ -1,22 +1,9 @@
-﻿using ColorSlider;
-using IronBarCode;
-using Microsoft.VisualBasic.Devices;
-using Microsoft.VisualBasic.Logging;
-using System;
-using System.Collections.Generic;
+﻿using IronBarCode;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static Spa_Interaction_Screen.MainForm;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace Spa_Interaction_Screen
 {
-     public class UIHelper
+    public class UIHelper
     {
         private MainForm form;
         private Config config;
@@ -69,7 +56,7 @@ namespace Spa_Interaction_Screen
             setConfig(c);
         }
 
-       
+
 
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
@@ -78,7 +65,7 @@ namespace Spa_Interaction_Screen
             slide.ElapsedInnerColor = Color.Green;
             slide.ElapsedPenColorBottom = Color.Green;
             slide.ElapsedPenColorTop = Color.Green;
-            
+
             slide.BarPenColorBottom = Color.White;
             slide.BarPenColorTop = Color.White;
             slide.BarInnerColor = Color.White;
@@ -234,8 +221,8 @@ namespace Spa_Interaction_Screen
         {
             int red = 0;
             int green = 0;
-            int blue = 0; 
-            
+            int blue = 0;
+
             if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
             {
                 red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
@@ -249,10 +236,10 @@ namespace Spa_Interaction_Screen
                 blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
             }
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
-            form.colorWheelElement.Color= Color.FromArgb(1, red, green, blue);
-            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth/2.25), (int)(Constants.windowwidth / 2.25));
-            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width/2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
-            form.colorWheelElement.ColorChanged+= form.ColorChanged_Handler;
+            form.colorWheelElement.Color = Color.FromArgb(1, red, green, blue);
+            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 2.25), (int)(Constants.windowwidth / 2.25));
+            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
+            form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
             form.ColorPage.Controls.Add(form.colorWheelElement);
             form.ColorPage.BackColor = Color.Black;
         }
@@ -260,7 +247,7 @@ namespace Spa_Interaction_Screen
         public void createMediaPageElements()
         {
             int Pos_x, Pos_y = 0;
-            
+
             GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0.5, 1, false);
             form.WiFiQRCodePicturebox.Location = new Point(Pos_x, Pos_y);
 
@@ -273,7 +260,7 @@ namespace Spa_Interaction_Screen
             form.WiFiPasswordTitle.Location = new Point(Pos_x, Pos_y);
 
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0.2, 1.5, false);
-            form.TVSettingsAmbienteButton = Constants.createButton(Constants.Element_width * 2, (int)(Constants.Element_height * 0.75),Pos_x, Pos_y, MediaPageButtons, "Ambiente Video", true, form.MediaPage, form, form.Content_Change_Handler);
+            form.TVSettingsAmbienteButton = Constants.createButton(Constants.Element_width * 2, (int)(Constants.Element_height * 0.75), Pos_x, Pos_y, MediaPageButtons, "Ambiente Video", true, form.MediaPage, form, form.Content_Change_Handler);
             selectButton(form.TVSettingsAmbienteButton, true, Constants.selected_color);
             form.TVSettingsAmbienteButton.Name = "AmbientVideo";
 
@@ -387,7 +374,7 @@ namespace Spa_Interaction_Screen
             {
                 for (int e = 0; e < 3; e++)
                 {
-                    Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (e * (Constants.Element_height + Constants.Element_y_padding)), starty + (i * (Constants.Element_height + Constants.Element_y_padding)), WartungPageButtons, $"{3 * i + e + 1}", 3 * i + e + 1, form.WartungPage,form, form.Numberfield_Click);
+                    Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (e * (Constants.Element_height + Constants.Element_y_padding)), starty + (i * (Constants.Element_height + Constants.Element_y_padding)), WartungPageButtons, $"{3 * i + e + 1}", 3 * i + e + 1, form.WartungPage, form, form.Numberfield_Click);
                 }
             }
             Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (1 * (Constants.Element_height + Constants.Element_y_padding)), starty + (3 * (Constants.Element_height + Constants.Element_y_padding)), WartungPageButtons, $"{0}", 0, form.WartungPage, form, form.Numberfield_Click);
@@ -424,7 +411,7 @@ namespace Spa_Interaction_Screen
 
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
-            
+
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset);
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
@@ -589,8 +576,8 @@ namespace Spa_Interaction_Screen
 
         public void selectButton(Button b, Boolean select, Color c)
         {
-            if(b == null) return;
-            if(select)
+            if (b == null) return;
+            if (select)
             {
                 b.UseVisualStyleBackColor = false;
                 b.BackColor = c;
@@ -604,7 +591,7 @@ namespace Spa_Interaction_Screen
 
         public void UpdateActiveDMXScene(int old_scene)
         {
-            for(int i = 0;i< config.DMXScenes.Count; i++)
+            for (int i = 0; i < config.DMXScenes.Count; i++)
             {
                 if (config.DMXScenes[i].ButtonElement != null)
                 {
@@ -614,14 +601,14 @@ namespace Spa_Interaction_Screen
             int channel = 0;
             foreach (ColorSlider.ColorSlider slider in FormColorSlides)
             {
-                if (slider == null || (int)slider.Tag <= 0 || (int)slider.Tag >= 3 || slider.Name == null || slider.Name.Length<=0)
+                if (slider == null || (int)slider.Tag <= 0 || (int)slider.Tag >= 3 || slider.Name == null || slider.Name.Length <= 0)
                 {
                     continue;
                 }
                 try
                 {
                     channel = config.Dimmerchannel[Int32.Parse(slider.Name)];
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -631,7 +618,7 @@ namespace Spa_Interaction_Screen
                 int old_value = 0;
                 if ((old_scene < 0))
                 {
-                    old_value = (int) slider.Value;
+                    old_value = (int)slider.Value;
                 }
                 else
                 {
@@ -663,7 +650,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             config = c;
-            if (config.showtime>0)
+            if (config.showtime > 0)
             {
                 createTimePageElements();
             }
@@ -718,7 +705,7 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Fallback random PW generator");
                 for (int i = 0; i < 10; i++)
                 {
-                    if (r.Next(0, 2)>0)
+                    if (r.Next(0, 2) > 0)
                     {
                         Password += Convert.ToChar(r.Next(65, 91));
                     }
@@ -801,7 +788,7 @@ namespace Spa_Interaction_Screen
             }
             UpdateActiveDMXScene(-1);
 
-            foreach(ColorSlider.ColorSlider s in FormColorSlides)
+            foreach (ColorSlider.ColorSlider s in FormColorSlides)
             {
                 Label l = new Label();
                 switch (FormColorSlides.IndexOf(s))
@@ -821,7 +808,7 @@ namespace Spa_Interaction_Screen
 
         private void setConfigRestricted(Config config)
         {
-            if(config == null)
+            if (config == null)
             {
                 return;
             }

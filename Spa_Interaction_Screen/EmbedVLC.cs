@@ -1,20 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Dynamic;
-using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using BitMiracle.LibTiff.Classic;
-using LibVLCSharp.Shared;
+﻿using LibVLCSharp.Shared;
 using LibVLCSharp.WinForms;
-using static System.Windows.Forms.DataFormats;
+using System.Diagnostics;
 
 namespace Spa_Interaction_Screen
 {
@@ -92,7 +78,7 @@ namespace Spa_Interaction_Screen
 
         public void changeMedia(String link)
         {
-            if (currentlyshowing != null && currentlyshowing.Length>=0 && currentlyshowing.Equals(link))
+            if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
             {
                 Debug.Print($"Already showing: {link}");
                 return;
@@ -121,7 +107,7 @@ namespace Spa_Interaction_Screen
                 case ".DVB":
                 case ".HEIF":
                 case ".AVIF":
-                    video(link); 
+                    video(link);
                     break;
                 case ".bitmap":
                 case ".gif":
@@ -144,7 +130,7 @@ namespace Spa_Interaction_Screen
 
         private void video(String link)
         {
-            if (!File.Exists(link)) 
+            if (!File.Exists(link))
             {
                 Debug.Print("Video Media not found");
             }
@@ -174,7 +160,7 @@ namespace Spa_Interaction_Screen
 
         }
 
-        private void picture(String link) 
+        private void picture(String link)
         {
             if (!File.Exists(link))
             {

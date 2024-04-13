@@ -15,7 +15,7 @@
 
         public static Char[] Delimiter
         {
-            get {return delimiter; }
+            get { return delimiter; }
         }
 
         public static Char[] Sonderzeichen

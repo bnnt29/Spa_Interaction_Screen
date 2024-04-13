@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using Newtonsoft.Json;
-using System.Reflection;
-using System.Net.NetworkInformation;
-using System.IO;
 
 namespace Spa_Interaction_Screen
 {
@@ -25,7 +17,7 @@ namespace Spa_Interaction_Screen
             config = c;
         }
 
-        public void changeconfig(Config c) 
+        public void changeconfig(Config c)
         {
             config = c;
         }

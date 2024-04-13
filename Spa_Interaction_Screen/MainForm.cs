@@ -1,14 +1,7 @@
-using System.Configuration;
-using System.Diagnostics;
-using System.Runtime.Intrinsics.Arm;
-using System.Windows.Forms;
-using System.IO.Ports;
-using System;
-using System.Numerics;
-using SixLabors.Fonts.Tables.TrueType;
 using AudioSwitcher.AudioApi.CoreAudio;
-using System.Reflection;
 using Cyotek.Windows.Forms;
+using System.Diagnostics;
+using System.IO.Ports;
 
 
 namespace Spa_Interaction_Screen
@@ -83,7 +76,7 @@ namespace Spa_Interaction_Screen
                     request.id = currentState;
                     request.Raum = config.Room;
                     Network.UDPSender(request, false);
-                    await Task.Delay(config.StateSendInterval*1000);
+                    await Task.Delay(config.StateSendInterval * 1000);
                 }
             });
         }
@@ -374,7 +367,7 @@ namespace Spa_Interaction_Screen
 
         public void Ambiente_Change(Constants.DMXScene? scene, bool force)
         {
-            if(scene == null)
+            if (scene == null)
             {
                 return;
             }
@@ -390,7 +383,7 @@ namespace Spa_Interaction_Screen
             }
             if (vlc != null)
             {
-                if (scene.ContentPath!=null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
+                if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
                     vlc.changeMedia(scene.ContentPath);
                     vlc.Show();
@@ -399,7 +392,7 @@ namespace Spa_Interaction_Screen
                 {
                     vlc.quitMedia();
                 }
-                
+
             }
             SendCurrentSceneOverCom();
         }
@@ -419,8 +412,8 @@ namespace Spa_Interaction_Screen
                     currentState = 1;
                 }
             }
-            byte[] tempchannelvalues = (byte[]) config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
-            if(config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
+            byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
+            if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
             {
                 tempchannelvalues[config.Dimmerchannel[0]] = changeddimmerchannels[0];
             }
@@ -477,13 +470,13 @@ namespace Spa_Interaction_Screen
                 ((Button)(sender)).Tag = 0;
                 helper.selectButton((Button)sender, false, Constants.selected_color);
             }
-            if((int?)((Button)(sender)).Tag == null)
+            if ((int?)((Button)(sender)).Tag == null)
             {
                 currentState = 1;
                 return;
             }
             changeddimmerchannels[2] = config.ObjectLightInterval[Byte.Parse($"{((Button)(sender)).Tag}")];
-            
+
             SendCurrentSceneOverCom();
         }
 
@@ -498,7 +491,7 @@ namespace Spa_Interaction_Screen
                 byte[] ba = config.DMXScenes[i].Channelvalues;
                 if (ba != null && ba.Length > channel)
                 {
-                        ba[channel] = value;
+                    ba[channel] = value;
                 }
                 else
                 {
@@ -524,16 +517,16 @@ namespace Spa_Interaction_Screen
             helper.selectButton(TVSettingsStreamingButton, SwitchToStream, Constants.selected_color);
             TVSettingsAmbienteButton.Tag = !SwitchToStream;
             TVSettingsStreamingButton.Tag = SwitchToStream;
-            if(SwitchToStream)
+            if (SwitchToStream)
             {
-                foreach(ColorSlider.ColorSlider slider in helper.FormColorSlides)
+                foreach (ColorSlider.ColorSlider slider in helper.FormColorSlides)
                 {
                     if (slider != null && ((int?)slider.Tag) == 3)
                     {
                         slider.Hide();
                     }
                 }
-                AmbientelautstärkeColorSliderDescribtion.Hide();    
+                AmbientelautstärkeColorSliderDescribtion.Hide();
                 TVSettingsVolumeColorSliderDescribtion.Hide();
                 streaming = true;
                 vlc.quitMedia();
@@ -617,12 +610,13 @@ namespace Spa_Interaction_Screen
                 try
                 {
                     index = Int32.Parse(((ColorSlider.ColorSlider)(sender)).Name);
-                } catch (FormatException ex)
+                }
+                catch (FormatException ex)
                 {
                     Debug.Print(ex.Message);
                     return;
                 }
-                if((int)((ColorSlider.ColorSlider)(sender)).Value == null)
+                if ((int)((ColorSlider.ColorSlider)(sender)).Value == null)
                 {
                     currentState = 1;
                     return;
@@ -656,13 +650,13 @@ namespace Spa_Interaction_Screen
         public String ArraytoString(String[] array, int until)
         {
             String r = "";
-            for(int i=0; i<array.Length && i<until; i++)
+            for (int i = 0; i < array.Length && i < until; i++)
             {
                 r += array[i];
-                    if (i+1 < array.Length && i+1 < until)
-                    {
-                        r += ".";
-                    }
+                if (i + 1 < array.Length && i + 1 < until)
+                {
+                    r += ".";
+                }
             }
             return r;
         }

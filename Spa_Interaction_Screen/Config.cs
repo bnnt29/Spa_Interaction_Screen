@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using static Spa_Interaction_Screen.Constants;
 
 namespace Spa_Interaction_Screen
@@ -106,7 +101,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref PortZentrale, 0);
             read_all = getcsvFields(stream, ref StateSendInterval, 0);
             read_all = getcsvFields(stream, ref Wartungspin, -1);
-            read_all = getcsvFields(stream, ref Sitzungsdauer, 0); 
+            read_all = getcsvFields(stream, ref Sitzungsdauer, 0);
             read_all = getcsvFields(stream, ref GastroUrl, 0);
             read_all = getcsvFields(stream, ref WiFiSSID, 0);
             read_all = getcsvFields(stream, ref WiFiAPIPassword, 0);
@@ -126,8 +121,8 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref Dimmerchannelval1, -1);
             String[] Dimmerchannelval2 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval2, -1);
-            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0])-1, Int32.Parse(Dimmerchannelval2[0]) - 1 };
-            slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1] , null};
+            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]) - 1, Int32.Parse(Dimmerchannelval2[0]) - 1 };
+            slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
             read_all = getcsvFields(stream, ref field, -1);
             try
@@ -143,9 +138,9 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref field, -1);
             try
             {
-                ObjectLightchannel = Int32.Parse(field[0])-1;
-                Objectname = field[1];  
-                ObjectLightInterval = new Byte[2] { Byte.Parse(field[2]), Byte.Parse(field[3])};
+                ObjectLightchannel = Int32.Parse(field[0]) - 1;
+                Objectname = field[1];
+                ObjectLightInterval = new Byte[2] { Byte.Parse(field[2]), Byte.Parse(field[3]) };
             }
             catch (FormatException e)
             {
@@ -156,7 +151,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref ReadFields, -1);
             colorwheelvalues = new Int32[3][];
             bool atleastonechannel = false;
-            for (int i=0;i< ReadFields.Length; i++)
+            for (int i = 0; i < ReadFields.Length; i++)
             {
                 int x = 0;
                 colorwheelvalues[i] = new Int32[ReadFields[i].Length];
@@ -175,7 +170,7 @@ namespace Spa_Interaction_Screen
                 }
                 Array.Resize(ref colorwheelvalues[i], x);
             }
-            if (! atleastonechannel)
+            if (!atleastonechannel)
             {
                 showcolor = 0;
             }
@@ -186,7 +181,7 @@ namespace Spa_Interaction_Screen
             }
             SystemSettingsChannel = Int32.Parse(ReadFields[1]);
             SystemSettings = new List<SystemSetting>();
-            for (int i =0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 read_all = getcsvFields(stream, ref ReadFields, -1);
                 SystemSetting s = new SystemSetting();
@@ -290,27 +285,27 @@ namespace Spa_Interaction_Screen
                         while (ReadFields == null || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
                         {
                             DMXScene scene = new DMXScene();
-                            int i=0;
+                            int i = 0;
                             scene.id = DMXScenes.Count;
                             scene.ShowText = ReadFields[i++];
                             scene.JsonText = ReadFields[i++];
                             scene.Channelvalues = new byte[ReadFields.Length - 2];
                             int rese;
-                            if (!int.TryParse(ReadFields[ReadFields.Length-1], out rese))
+                            if (!int.TryParse(ReadFields[ReadFields.Length - 1], out rese))
                             {
                                 scene.ContentPath = ReadFields[ReadFields.Length - 1];
                                 scene.Channelvalues = new byte[ReadFields.Length - 3];
                             }
                             int x = i;
-                            for (i=i; i < scene.Channelvalues.Length; i++)
+                            for (i = i; i < scene.Channelvalues.Length; i++)
                             {
                                 if (Int32.Parse(ReadFields[i]) > 255 || Int32.Parse(ReadFields[i]) < 0)
                                 {
-                                    scene.Channelvalues[i-x] = 0;
+                                    scene.Channelvalues[i - x] = 0;
                                 }
                                 else
                                 {
-                                    scene.Channelvalues[i-x] = Byte.Parse(ReadFields[i]);
+                                    scene.Channelvalues[i - x] = Byte.Parse(ReadFields[i]);
                                 }
                             }
                             DMXScenes.Add(scene);
@@ -322,12 +317,12 @@ namespace Spa_Interaction_Screen
                             }
                         }
                         break;
-                        default:
+                    default:
                         break;
                 }
                 read_all = getcsvFields(stream, ref ReadFields, -1);
             }
-            while(DMXScenes.Count < 2)
+            while (DMXScenes.Count < 2)
             {
                 DMXScene scene = new DMXScene();
                 scene.ShowText = $"Generated {DMXScenes.Count}";
@@ -343,7 +338,7 @@ namespace Spa_Interaction_Screen
                 }
                 for (int i = 0; i < scene.Channelvalues.Length - 1; i++)
                 {
-                   scene.Channelvalues[i] = 0;
+                    scene.Channelvalues[i] = 0;
                 }
                 DMXScenes.Add(scene);
             }
@@ -461,7 +456,7 @@ namespace Spa_Interaction_Screen
             int x = 0;
             foreach (String s in field)
             {
-                if (s!=null && !s.StartsWith(CommandDelimiters) && !s.Equals("") && s.Length>0)
+                if (s != null && !s.StartsWith(CommandDelimiters) && !s.Equals("") && s.Length > 0)
                 {
                     res[x++] = s;
                 }
