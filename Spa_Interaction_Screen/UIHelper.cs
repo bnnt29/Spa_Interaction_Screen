@@ -1,5 +1,6 @@
 ﻿using IronBarCode;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace Spa_Interaction_Screen
 {
@@ -42,8 +43,6 @@ namespace Spa_Interaction_Screen
             createMediaPageElements();
 
             createServicePageElements();
-
-            setConfig(c);
 
             createRestrictedPageElements();
             removeRestrictedPageElements();
@@ -219,24 +218,9 @@ namespace Spa_Interaction_Screen
 
         public void createColorPageElements()
         {
-            int red = 0;
-            int green = 0;
-            int blue = 0;
-
-            if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
-            {
-                red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
-            }
-            if (config.colorwheelvalues[1] != null && config.colorwheelvalues[1].Length > 0)
-            {
-                green = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[1][0]];
-            }
-            if (config.colorwheelvalues[2] != null && config.colorwheelvalues[2].Length > 0)
-            {
-                blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
-            }
+           
+            
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
-            form.colorWheelElement.Color = Color.FromArgb(1, red, green, blue);
             form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 2.25), (int)(Constants.windowwidth / 2.25));
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
@@ -660,11 +644,30 @@ namespace Spa_Interaction_Screen
                 createColorPageElements();
                 form.UIControl.SelectTab(2);
             }
+            int red = 0;
+            int green = 0;
+            int blue = 0;
+
+            if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
+            {
+                red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
+            }
+            if (config.colorwheelvalues[1] != null && config.colorwheelvalues[1].Length > 0)
+            {
+                green = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[1][0]];
+            }
+            if (config.colorwheelvalues[2] != null && config.colorwheelvalues[2].Length > 0)
+            {
+                blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
+            }
+            form.colorWheelElement.Color = Color.FromArgb(1, red, green, blue);
+
             if (config.GastroUrl != null && config.GastroUrl.Length >= 0)
             {
                 form.GastronomieWebview.Source = new Uri(config.GastroUrl, UriKind.Absolute);
             }
             int Pos_x, Pos_y;
+            
             int notshowenscenes = 2;
             int Numscenes = config.DMXScenes.Count - notshowenscenes;
             Numscenes = Math.Min(Numscenes, Constants.maxscenes);
@@ -699,6 +702,7 @@ namespace Spa_Interaction_Screen
             }
             List<string> strings = GetPasswortWords();
             String Password = "";
+
             if (strings == null && strings.Count <= 90)
             {
                 Random r = new Random();
@@ -728,6 +732,7 @@ namespace Spa_Interaction_Screen
                 }
                 Password = Passwordparts(Password, rnd, Constants.PasswordLength + rnd.Next(3));
             }
+            /*
             GeneratedBarcode qrCode = null;
             if (config.LogoFilePath != null && config.LogoFilePath.Length >= 0)
             {
@@ -743,9 +748,13 @@ namespace Spa_Interaction_Screen
 
             form.WiFiQRCodePicturebox.Size = new Size(Constants.Element_width + Constants.Element_height, Constants.Element_width + Constants.Element_height);
             form.WiFiQRCodePicturebox.Image = qrCode.Image;
+           */
+            
+
 #if !DEBUG
             Network.SendTelnet($@"wifi pass {Password}", form);
 #endif
+            
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
 #if Debug
@@ -754,6 +763,7 @@ namespace Spa_Interaction_Screen
             form.WiFiPasswortLabel.Text = "Passwort wird im Debug Modus nicht an den Router gesendet";
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y + 25);
 #endif
+            
             form.WiFiSSIDLabel.Text = config.WiFiSSID;
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
             form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);

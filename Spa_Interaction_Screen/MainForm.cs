@@ -57,11 +57,11 @@ namespace Spa_Interaction_Screen
             start();
             loadscreen.updateProgress(90);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
+
             loadscreen.updateProgress(100);
             this.Show();
             vlc.Show();
             loadscreen.Hide();
-            loadscreen = null;
 
             //TODO: Test the State updater
             await Task.Run(async () =>
@@ -639,12 +639,21 @@ namespace Spa_Interaction_Screen
 
         public void reset(object sender, EventArgs e)
         {
+            this.Hide();
+            loadscreen.Show();
+            loadscreen.updateProgress(20);
+            logout();
             Config c = new Config(config);
             config = c;
             net.changeconfig(c);
+            helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
             start();
             UIControl.SelectTab(0);
+            loadscreen.updateProgress(100);
+            this.Show();
+            vlc.Show();
+            loadscreen.Hide();
         }
 
         public String ArraytoString(String[] array, int until)
