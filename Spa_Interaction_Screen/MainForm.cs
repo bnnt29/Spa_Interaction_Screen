@@ -8,6 +8,7 @@ using System.Numerics;
 using SixLabors.Fonts.Tables.TrueType;
 using AudioSwitcher.AudioApi.CoreAudio;
 using System.Reflection;
+using Cyotek.Windows.Forms;
 
 
 namespace Spa_Interaction_Screen
@@ -15,11 +16,12 @@ namespace Spa_Interaction_Screen
     public partial class MainForm : Form
     {
         private EmbedVLC vlc;
+        private Loading loadscreen;
 
         System.Windows.Forms.Timer t = null;
         public DateTime Sessionstart;
         public DateTime Sessionend;
-        private byte[] changedchannels;
+        private byte[] changeddimmerchannels;
         private SerialPort serialPort1;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
@@ -31,6 +33,7 @@ namespace Spa_Interaction_Screen
         public Screen main;
         private bool streaming = false;
         private bool vlcclosed = false;
+        private int minutes_received = 0;
 
         private Config config;
         private UIHelper helper;
@@ -38,19 +41,34 @@ namespace Spa_Interaction_Screen
 
         public MainForm()
         {
-            changedchannels = new byte[3];
+            this.Hide();
+            changeddimmerchannels = new byte[3];
             main = Screen.PrimaryScreen;
+            loadscreen = new Loading(this, main);
+            loadscreen.Show();
+            loadscreen.updateProgress(10);
             config = new Config(null);
+            loadscreen.updateProgress(20);
             net = new Network(this, config);
             serialPort1 = new SerialPort();
+            loadscreen.updateProgress(30);
             InitializeComponent();
+            loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
+            loadscreen.updateProgress(50);
         }
 
         public async void Main_Load(object sender, EventArgs e)
         {
+            this.Hide();
             start();
+            loadscreen.updateProgress(90);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
+            loadscreen.updateProgress(100);
+            this.Show();
+            vlc.Show();
+            loadscreen.Hide();
+            loadscreen = null;
 
             //TODO: Test the State updater
             await Task.Run(async () =>
@@ -72,10 +90,14 @@ namespace Spa_Interaction_Screen
 
         private void start()
         {
-            Programm_Enter();
+            EnterFullscreen(this, main);
             if (config.showtime <= 0)
             {
                 UIControl.Controls.Remove(TimePage);
+            }
+            if (config.showcolor <= 0)
+            {
+                UIControl.Controls.Remove(ColorPage);
             }
             int tabs = 5;
             if (config.showtime > 0)
@@ -86,6 +108,7 @@ namespace Spa_Interaction_Screen
 
             defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
 
+            loadscreen.updateProgress(60);
             Screen TV = null;
             if (Screen.AllScreens.Length > 1)
             {
@@ -110,20 +133,20 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                vlc = new EmbedVLC(TV);
-
-                vlc.Show();
+                vlc = new EmbedVLC(this, TV);
             }
 
+            loadscreen.updateProgress(70);
             GastronomieWebview.CoreWebView2InitializationCompleted += webcontentLoaded;
 
             AmbientVolume(config.Volume, 3, null);
-            Ambiente_Change(config.DMXScenes[1]);
+            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true);
 
             Sessionstart = DateTime.Now;
             Sessionend = DateTime.Now;
             Sessionend = Sessionend.AddMinutes(config.Sitzungsdauer);
 
+            loadscreen.updateProgress(80);
             if (config.showtime > 0)
             {
                 t = new System.Windows.Forms.Timer();
@@ -131,6 +154,9 @@ namespace Spa_Interaction_Screen
                 t.Tick += timer_tick;
                 t.Enabled = true;
             }
+#if !DEBUG
+            minutes_received = config.SessionSettings.Count - 1;
+#endif 
         }
 
         public void timer_tick(object sender, EventArgs e)
@@ -155,10 +181,14 @@ namespace Spa_Interaction_Screen
             {
                 Hours += DateTime.Now.TimeOfDay.Hours.ToString();
             }
-            clock.Text = $"{Hours} : {Minutes}";
+            clock.Text = $"{Hours}:{Minutes}";
             clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
+            timer.Text = config.SessionSettings[minutes_received].ShowText;
+            timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
+            /*
             timer.Text = $"{((DateTime.Now.Subtract(Sessionstart).Minutes - config.Sitzungsdauer) * (-1)).ToString()}";
             timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
+            /*
             if ((DateTime.Now.Subtract(Sessionstart).Minutes - config.Sitzungsdauer) > 0)
             {
                 timer.ForeColor = Color.Red;
@@ -185,6 +215,7 @@ namespace Spa_Interaction_Screen
             }
             sessionEnd.Text = $"{Hours} : {Minutes}";
             sessionEnd.Location = new Point((Constants.windowwidth / 2) - (sessionEnd.Size.Width / 2), sessionEnd.Location.Y);
+            */
         }
 
         public void webcontentLoaded(object sender, EventArgs e)
@@ -264,12 +295,6 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void maximise_without_taskbar()
-        {
-            this.WindowState = FormWindowState.Normal;
-            this.WindowState = FormWindowState.Maximized;
-        }
-
         public void Programm_Exit_Handler(object sender, EventArgs e)
         {
             Programm_Exit();
@@ -318,43 +343,46 @@ namespace Spa_Interaction_Screen
 
         public void Programm_Enter_Handler(object sender, EventArgs e)
         {
-            Programm_Enter();
+            EnterFullscreen(this, main);
             ((Button)sender).Click -= Programm_Enter_Handler;
             ((Button)sender).Click += Programm_Exit_Handler;
             ((Button)sender).Text = Constants.ExitFullscreenText;
         }
 
-        private void Programm_Enter()
+        public void EnterFullscreen(Form f, Screen screen)
         {
 #if !DEBUG
-            this.TopMost = true;
-            this.ControlBox = false;
-            this.FormBorderStyle = FormBorderStyle.None;
+            f.TopMost = true;
+            f.ControlBox = false;
+            f.FormBorderStyle = FormBorderStyle.None;
 #else
-            this.TopMost = false;
-            this.ControlBox = true;
+            f.TopMost = false;
+            f.ControlBox = true;
 #endif
-            maximise_without_taskbar();
-            this.Size = main.Bounds.Size;
-            this.Location = main.Bounds.Location;
+            f.WindowState = FormWindowState.Normal;
+            f.WindowState = FormWindowState.Maximized;
+            //Set fullscreen
+            f.Size = screen.Bounds.Size;
+            f.Location = screen.Bounds.Location;
         }
 
         public void Ambiente_Change_Handler(object sender, EventArgs e)
         {
-            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)));
+            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false);
 
         }
 
-        public void Ambiente_Change(Constants.DMXScene? scene)
+        public void Ambiente_Change(Constants.DMXScene? scene, bool force)
         {
             if(scene == null)
             {
                 return;
             }
             int index = config.DMXScenes.IndexOf(scene);
-            if (config.DMXSceneSetting == index)
+            if (config.DMXSceneSetting == index && !force)
             {
-                helper.setActiveDMXScene(1);
+                helper.setActiveDMXScene(0);
+                scene = config.DMXScenes[0];
             }
             else
             {
@@ -362,7 +390,7 @@ namespace Spa_Interaction_Screen
             }
             if (vlc != null)
             {
-                if(scene.ContentPath!=null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
+                if (scene.ContentPath!=null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
                     vlc.changeMedia(scene.ContentPath);
                     vlc.Show();
@@ -394,15 +422,36 @@ namespace Spa_Interaction_Screen
             byte[] tempchannelvalues = (byte[]) config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
             if(config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
             {
-                tempchannelvalues[config.Dimmerchannel[0]] = changedchannels[0];
+                tempchannelvalues[config.Dimmerchannel[0]] = changeddimmerchannels[0];
             }
             if (config.Dimmerchannel[1] >= 0 && config.Dimmerchannel[1] < tempchannelvalues.Length)
             {
-                tempchannelvalues[config.Dimmerchannel[1]] = changedchannels[1];
+                tempchannelvalues[config.Dimmerchannel[1]] = changeddimmerchannels[1];
             }
             if (config.ObjectLightchannel >= 0 && config.ObjectLightchannel < tempchannelvalues.Length)
             {
-                tempchannelvalues[config.ObjectLightchannel] = changedchannels[2];
+                tempchannelvalues[config.ObjectLightchannel] = changeddimmerchannels[2];
+            }
+            foreach (int value in config.colorwheelvalues[0])
+            {
+                if (tempchannelvalues.Length > value)
+                {
+                    tempchannelvalues[value] = colorWheelElement.Color.R;
+                }
+            }
+            foreach (int value in config.colorwheelvalues[1])
+            {
+                if (tempchannelvalues.Length > value)
+                {
+                    tempchannelvalues[value] = colorWheelElement.Color.G;
+                }
+            }
+            foreach (int value in config.colorwheelvalues[2])
+            {
+                if (tempchannelvalues.Length > value)
+                {
+                    tempchannelvalues[value] = colorWheelElement.Color.B;
+                }
             }
             if (serialPort1.IsOpen)
             {
@@ -433,7 +482,7 @@ namespace Spa_Interaction_Screen
                 currentState = 1;
                 return;
             }
-            changedchannels[2] = config.ObjectLightInterval[Byte.Parse($"{((Button)(sender)).Tag}")];
+            changeddimmerchannels[2] = config.ObjectLightInterval[Byte.Parse($"{((Button)(sender)).Tag}")];
             
             SendCurrentSceneOverCom();
         }
@@ -501,7 +550,7 @@ namespace Spa_Interaction_Screen
                 AmbientelautstärkeColorSliderDescribtion.Show();
                 TVSettingsVolumeColorSliderDescribtion.Show();
                 streaming = false;
-                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting]);
+                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false);
             }
         }
 
@@ -530,7 +579,7 @@ namespace Spa_Interaction_Screen
         public void OpenPlayer(object sender, EventArgs e)
         {
             vlc.Show();
-            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting]);
+            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false);
             ((Button)(sender)).Click -= OpenPlayer;
             ((Button)(sender)).Click += closePlayer;
             ((Button)(sender)).Text = "Schließe den Player";
@@ -578,9 +627,20 @@ namespace Spa_Interaction_Screen
                     currentState = 1;
                     return;
                 }
-                changedchannels[index] = (byte)((ColorSlider.ColorSlider)(sender)).Value;
+                changeddimmerchannels[index] = (byte)((ColorSlider.ColorSlider)(sender)).Value;
             }
             SendCurrentSceneOverCom();
+        }
+
+        public void ColorChanged_Handler(object sender, EventArgs e)
+        {
+            ColorWheel colorWheel = (ColorWheel)sender;
+            if (colorWheel != null)
+            {
+                Color c = colorWheel.Color;
+                //ColorPage.BackColor = c;
+                SendCurrentSceneOverCom();
+            }
         }
 
         public void reset(object sender, EventArgs e)

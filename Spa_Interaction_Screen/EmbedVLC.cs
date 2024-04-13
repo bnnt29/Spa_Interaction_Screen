@@ -28,11 +28,11 @@ namespace Spa_Interaction_Screen
         private PictureBox TVPictureView;
         private String currentlyshowing;
 
-        public EmbedVLC(Screen screen)
+        public EmbedVLC(MainForm f, Screen screen)
         {
             InitializeComponent();
 
-            EnterFullscreen(screen);
+            f.EnterFullscreen(this, screen);
             createElements();
 
             Core.Initialize();
@@ -78,24 +78,6 @@ namespace Spa_Interaction_Screen
             TVPictureView.TabStop = false;
             TVPictureView.Hide();
             Controls.Add(TVPictureView);
-        }
-
-        private void EnterFullscreen(Screen screen)
-        {
-#if !DEBUG
-            this.TopMost = true;
-            this.ControlBox = false;
-            this.FormBorderStyle = FormBorderStyle.None;
-#else
-            this.TopMost = false;
-            this.ControlBox = true;
-#endif
-            this.WindowState = FormWindowState.Normal;
-            this.WindowState = FormWindowState.Maximized;
-            //Set fullscreen
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Size = screen.Bounds.Size;
-            this.Location = screen.Bounds.Location;
         }
 
         public void quitMedia()

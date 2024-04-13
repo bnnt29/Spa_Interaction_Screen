@@ -47,7 +47,6 @@ namespace Spa_Interaction_Screen
             form = f;
 
             form.GastronomieWebview.BackColor = Color.Black;
-            form.UIControl.SelectTab(1);
 
             SetupElementsLists();
 
@@ -70,56 +69,7 @@ namespace Spa_Interaction_Screen
             setConfig(c);
         }
 
-        public void createAmbientePageElements()
-        {
-            int Pos_x, Pos_y;
-
-            GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 2, false);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Design Beleuchtung", 0, form.AmbientePage, form, form.Ambiente_Design_Handler);
-            
-            ColorSlider.ColorSlider newslider=null;
-            GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(255);
-            form.AmbientePage.Controls.Add(newslider);
-            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.Tag = 1;
-            newslider.Name = "0";
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
-            //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[0]];
-            FormColorSlides.Add(newslider);
-            SetupLabelofTrackbar(newslider, form.Dimmer1ColorSliderDescribtion, "Dusche");
-            newslider.ValueChanged += form.Dimmer_Change;
-
-            GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(255);
-            form.AmbientePage.Controls.Add(newslider);
-            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.Tag = 2;
-            newslider.Name = "1";
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
-            //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[1]];
-            FormColorSlides.Add(newslider);
-            SetupLabelofTrackbar(newslider, form.Dimmer2ColorSliderDescribtion, "Toilette");
-            newslider.ValueChanged += form.Dimmer_Change;
-
-            GetDynamicPosition(2, 0, out Pos_x, out Pos_y, 0, 3, false);
-            newslider = createColorSlide(100);
-            form.AmbientePage.Controls.Add(newslider);
-            newslider.Size = new Size(Constants.Element_width * 2, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
-            newslider.Tag = 3;
-            newslider.ValueChanged += form.AmbientVolume_Handler;
-
-            /*if (config.Volume >= newslider.Minimum && config.Volume <= newslider.Maximum)
-            {
-                newslider.Value = config.Volume;
-            }*/
-            FormColorSlides.Add(newslider);
-            SetupLabelofTrackbar(newslider, form.AmbientelautstärkeColorSliderDescribtion, "Lautstärke");
-        }
+       
 
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
@@ -214,7 +164,99 @@ namespace Spa_Interaction_Screen
             }
 
         }
-        
+
+        public void createAmbientePageElements()
+        {
+            int Pos_x, Pos_y;
+
+            GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 2, false);
+            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Design Beleuchtung", 0, form.AmbientePage, form, form.Ambiente_Design_Handler);
+
+            ColorSlider.ColorSlider newslider = null;
+            GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
+            newslider = createColorSlide(255);
+            form.AmbientePage.Controls.Add(newslider);
+            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
+            newslider.Location = new Point(Pos_x, Pos_y);
+            newslider.Tag = 1;
+            newslider.Name = "0";
+            newslider.TabIndex = AmbientePageButtons.Count + 1;
+            //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[0]];
+            FormColorSlides.Add(newslider);
+            form.Dimmer1ColorSliderDescribtion = new Label();
+            form.Dimmer1ColorSliderDescribtion.AutoSize = true;
+            form.Dimmer1ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
+            newslider.ValueChanged += form.Dimmer_Change;
+
+            GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 2, false);
+            newslider = createColorSlide(255);
+            form.AmbientePage.Controls.Add(newslider);
+            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
+            newslider.Location = new Point(Pos_x, Pos_y);
+            newslider.Tag = 2;
+            newslider.Name = "1";
+            newslider.TabIndex = AmbientePageButtons.Count + 1;
+            //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[1]];
+            FormColorSlides.Add(newslider);
+            form.Dimmer2ColorSliderDescribtion = new Label();
+            form.Dimmer2ColorSliderDescribtion.AutoSize = true;
+            form.Dimmer2ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
+            newslider.ValueChanged += form.Dimmer_Change;
+
+            GetDynamicPosition(2, 0, out Pos_x, out Pos_y, 0, 3, false);
+            newslider = createColorSlide(100);
+            form.AmbientePage.Controls.Add(newslider);
+            newslider.Size = new Size(Constants.Element_width * 2, Constants.Element_height);
+            newslider.Location = new Point(Pos_x, Pos_y);
+            newslider.TabIndex = AmbientePageButtons.Count + 1;
+            newslider.Tag = 3;
+            newslider.ValueChanged += form.AmbientVolume_Handler;
+
+            /*if (config.Volume >= newslider.Minimum && config.Volume <= newslider.Maximum)
+            {
+                newslider.Value = config.Volume;
+            }*/
+
+            // 
+            // AmbientelautstärkeColorSliderDescribtion
+            // 
+
+            form.AmbientelautstärkeColorSliderDescribtion = new Label();
+            form.AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
+            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderDescribtion);
+            FormColorSlides.Add(newslider);
+        }
+
+        public void createColorPageElements()
+        {
+            int red = 0;
+            int green = 0;
+            int blue = 0; 
+            
+            if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
+            {
+                red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
+            }
+            if (config.colorwheelvalues[1] != null && config.colorwheelvalues[1].Length > 0)
+            {
+                green = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[1][0]];
+            }
+            if (config.colorwheelvalues[2] != null && config.colorwheelvalues[2].Length > 0)
+            {
+                blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
+            }
+            form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
+            form.colorWheelElement.Color= Color.FromArgb(1, red, green, blue);
+            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth/2.25), (int)(Constants.windowwidth / 2.25));
+            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width/2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
+            form.colorWheelElement.ColorChanged+= form.ColorChanged_Handler;
+            form.ColorPage.Controls.Add(form.colorWheelElement);
+            form.ColorPage.BackColor = Color.Black;
+        }
+
         public void createMediaPageElements()
         {
             int Pos_x, Pos_y = 0;
@@ -249,12 +291,16 @@ namespace Spa_Interaction_Screen
             newslider.Tag = 3;
             form.MediaPage.Controls.Add(newslider);
             FormColorSlides.Add(newslider);
-            newslider.ValueChanged += form.AmbientVolume_Handler; 
+            newslider.ValueChanged += form.AmbientVolume_Handler;
             /*if (config.Volume >= newslider.Minimum && config.Volume <= newslider.Maximum)
             {
                 newslider.Value = config.Volume;
             }*/
-            SetupLabelofTrackbar(newslider, form.TVSettingsVolumeColorSliderDescribtion, "Lautstärke");
+
+            form.TVSettingsVolumeColorSliderDescribtion = new Label();
+            form.TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
+            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderDescribtion);
         }
 
         public void createTimePageElements()
@@ -271,34 +317,34 @@ namespace Spa_Interaction_Screen
             form.clock.Name = "Clock";
             form.clock.TabIndex = 1;
             form.clock.BackColor = Color.Transparent;
-            form.clock.Text = "00:00";
+            //form.clock.Text = "00:00";
             form.TimePage.Controls.Add(form.clock);
             form.clock.Location = new Point((Constants.windowwidth / 2) - (form.clock.Size.Width / 2), Pos_y);
-
+            /*
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 2, true);
             Label label = new Label();
             label.AutoSize = true;
             label.Font = new Font("Segoe UI", 40F, FontStyle.Regular, GraphicsUnit.Point, 0);
             label.ForeColor = SystemColors.ControlLightLight;
             label.Name = "TimerDescribtion";
-            label.Text = "Verbleibende Zeit:";
+            //label.Text = "Verbleibende Zeit:";
             label.TabIndex = 2;
             label.BackColor = Color.Transparent;
             form.TimePage.Controls.Add(label);
             label.Location = new Point((int)((Constants.windowwidth / 2) - (label.Size.Width/2)), Pos_y);
-
-            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 3, true);
+            */
+            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 2, true);
             form.timer = new Label();
             form.timer.AutoSize = true;
-            form.timer.Font = new Font("Segoe UI", 70F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            form.timer.Font = new Font("Segoe UI", 55F, FontStyle.Bold, GraphicsUnit.Point, 0);
             form.timer.ForeColor = SystemColors.ControlLightLight;
             form.timer.Name = "Timer";
-            form.clock.Text = "00";
+            //form.clock.Text = "00";
             form.timer.TabIndex = 3;
             form.timer.BackColor = Color.Transparent;
             form.TimePage.Controls.Add(form.timer);
             form.timer.Location = new Point((Constants.windowwidth / 2) - (form.timer.Size.Width / 2), Pos_y);
-
+            /*
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 4.5, true);
             form.sessionEnd = new Label();
             form.sessionEnd.AutoSize = true;
@@ -310,7 +356,7 @@ namespace Spa_Interaction_Screen
             form.clock.Text = "00:00";
             form.TimePage.Controls.Add(form.sessionEnd);
             form.sessionEnd.Location = new Point((Constants.windowwidth / 2) - (form.sessionEnd.Size.Width / 2), Pos_y);
-
+            */
         }
 
         public void createServicePageElements()
@@ -565,9 +611,9 @@ namespace Spa_Interaction_Screen
                     selectButton(config.DMXScenes[i].ButtonElement, config.DMXSceneSetting == i, Constants.selected_color);
                 }
             }
+            int channel = 0;
             foreach (ColorSlider.ColorSlider slider in FormColorSlides)
             {
-                int channel = 0;
                 if (slider == null || (int)slider.Tag <= 0 || (int)slider.Tag >= 3 || slider.Name == null || slider.Name.Length<=0)
                 {
                     continue;
@@ -621,6 +667,12 @@ namespace Spa_Interaction_Screen
             {
                 createTimePageElements();
             }
+            form.UIControl.SelectTab(1);
+            if (config.showcolor > 0)
+            {
+                createColorPageElements();
+                form.UIControl.SelectTab(2);
+            }
             if (config.GastroUrl != null && config.GastroUrl.Length >= 0)
             {
                 form.GastronomieWebview.Source = new Uri(config.GastroUrl, UriKind.Absolute);
@@ -662,7 +714,19 @@ namespace Spa_Interaction_Screen
             String Password = "";
             if (strings == null && strings.Count <= 90)
             {
+                Random r = new Random();
                 Debug.Print("Fallback random PW generator");
+                for (int i = 0; i < 10; i++)
+                {
+                    if (r.Next(0, 2)>0)
+                    {
+                        Password += Convert.ToChar(r.Next(65, 91));
+                    }
+                    else
+                    {
+                        Password += Convert.ToChar(r.Next(48, 58));
+                    }
+                }
             }
             else
             {
@@ -687,13 +751,11 @@ namespace Spa_Interaction_Screen
             {
                 qrCode = QRCodeWriter.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{Password};;");
             }
-
             qrCode.KeepAspectRatio(true);
             qrCode.ResizeTo(Constants.Element_width + Constants.Element_height, Constants.Element_width + Constants.Element_height);
 
             form.WiFiQRCodePicturebox.Size = new Size(Constants.Element_width + Constants.Element_height, Constants.Element_width + Constants.Element_height);
             form.WiFiQRCodePicturebox.Image = qrCode.Image;
-
 #if !DEBUG
             Network.SendTelnet($@"wifi pass {Password}", form);
 #endif
@@ -738,6 +800,23 @@ namespace Spa_Interaction_Screen
                 form.ServicePage.BackgroundImage = Image.FromFile(config.ServiceBackgroundFilePath);
             }
             UpdateActiveDMXScene(-1);
+
+            foreach(ColorSlider.ColorSlider s in FormColorSlides)
+            {
+                Label l = new Label();
+                switch (FormColorSlides.IndexOf(s))
+                {
+                    case 0:
+                        l = form.Dimmer1ColorSliderDescribtion; break;
+                    case 1:
+                        l = form.Dimmer2ColorSliderDescribtion; break;
+                    case 2:
+                        l = form.AmbientelautstärkeColorSliderDescribtion; break;
+                    case 3:
+                        l = form.TVSettingsVolumeColorSliderDescribtion; break;
+                }
+                SetupLabelofTrackbar(s, l, config.slidernames[((int)s.Tag) - 1]);
+            }
         }
 
         private void setConfigRestricted(Config config)
@@ -750,9 +829,9 @@ namespace Spa_Interaction_Screen
 
             GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Button b = null;
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[0].ShowText, config.DMXScenes[0], form.WartungPage, form, form.Ambiente_Change_Handler, out b);
-            config.DMXScenes[0].ButtonElement = b;
-            selectButton(b, config.DMXSceneSetting == 0, Constants.selected_color);
+            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[1].ShowText, config.DMXScenes[1], form.WartungPage, form, form.Ambiente_Change_Handler, out b);
+            config.DMXScenes[1].ButtonElement = b;
+            selectButton(b, config.DMXSceneSetting == 1, Constants.selected_color);
         }
     }
 }

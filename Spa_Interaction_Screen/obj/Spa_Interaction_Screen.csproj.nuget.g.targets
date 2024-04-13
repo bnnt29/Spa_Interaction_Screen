@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)xamarin.forms\4.7.0.968\buildTransitive\Xamarin.Forms.targets" Condition="Exists('$(NuGetPackageRoot)xamarin.forms\4.7.0.968\buildTransitive\Xamarin.Forms.targets')" />
     <Import Project="$(NuGetPackageRoot)videolan.libvlc.windows\3.0.20\build\VideoLAN.LibVLC.Windows.targets" Condition="Exists('$(NuGetPackageRoot)videolan.libvlc.windows\3.0.20\build\VideoLAN.LibVLC.Windows.targets')" />
     <Import Project="$(NuGetPackageRoot)microsoft.web.webview2\1.0.2420.47\build\Microsoft.Web.WebView2.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.web.webview2\1.0.2420.47\build\Microsoft.Web.WebView2.targets')" />
     <Import Project="$(NuGetPackageRoot)microsoft.ml.onnxruntime.managed\1.17.1\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.ml.onnxruntime.managed\1.17.1\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets')" />

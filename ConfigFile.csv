@@ -13,17 +13,18 @@
 #String;#Port Router;23;;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;1;;;;;;;;;;;;;;;;
 #Bool;#Zeige Color Wheel Seite;1;;;;;;;;;;;;;;;;
-#String;#Passwort Wörter Absolut Filepath;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\Passwordwords.txt;;;;;;;;;;;;;;;;
-#String;#Logo Absolut Filepath;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\QRLogo.png;;;;;;;;;;;;;;;;
+#String;#Passwort Wörter Absolut Filepath;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen_Backup\Passwordwords.txt;;;;;;;;;;;;;;;;
+#String;#Logo Absolut Filepath;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\QRLogo.png;;;;;;;;;;;;;;;;
 #String;#Ambiente Hintergrund Bild Absolut FilePath;;;;;;;;;;;;;;;;;
 #String;#Medien Bild Absolut FilePath;;;;;;;;;;;;;;;;;
-#String;#Timer Bild Absolut FilePath;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\pexels-joyston-judah-933054.jpg;;;;;;;;;;;;;;;;
-#String;#Service Bild Absolut FilePath;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\butler-3849399_1920.png;;;;;;;;;;;;;;;;
-#;#Special DMX Channels;#Channel to change;#Off Value;#On Value;;;;;;;;;;;;;;
-#Integer;#Dimmer1 Channel;5;#;#;;;;;;;;;;;;;;
-#Integer;#Dimmer2 Channel;6;#;#;;;;;;;;;;;;;;
-#Integer;#HDMI Switch;7;0;255;;;;;;;;;;;;;;
-#Integer;#Objektbeleuchtung (Channel(1<X<#channels)|Off|On);10;0;255;;;;;;;;;;;;;;
+#String;#Timer Bild Absolut FilePath;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\pexels-joyston-judah-933054.jpg;;;;;;;;;;;;;;;;
+#String;#Service Bild Absolut FilePath;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\butler-3849399_1920.png;;;;;;;;;;;;;;;;
+#;#Special DMX Channels;#Channel to change;#Anzeige Text ;#Off Value;#On Value;;;;;;;;;;;;;
+#Integer;#Dimmer1 Channel;5;Duschen;#;#;;;;;;;;;;;;;
+#Integer;#Dimmer2 Channel;6;Toiletten;#;#;;;;;;;;;;;;;
+#Integer;#HDMI Switch;7;#Not useable;0;255;;;;;;;;;;;;;
+#Integer;#Objektbeleuchtung (Channel(1<X<#channels)|Off|On);10;Kust Beleuchtung;0;255;;;;;;;;;;;;;
+#Integer;#List of Channels (R|G|B);9;2, 10;3, 11;;;;;;;;;;;;;;
 #;#ArtnetControl;#ArtnetValue min;#ArtnetValue max;#Json String;;;;;;;;;;;;;;
 #;System;#Artnet Channel:;1;;;;;;;;;;;;;;;
 #Integer;#Normalbetrieb;0;63;normal;;;;;;;;;;;;;;
@@ -32,8 +33,8 @@
 #Integer;#Aus;192;255;off;;;;;;;;;;;;;;
 #;#;#ArtnetValue min;#ArtnetValue max;#Json String;#default;#Artnet Channel:;;;;;;;;;;;;
 #Integer;#DMXScene;#255 / [Anzahl DMXSzenen] * [gewünschter Index];#255 / [Anzahl DMXSzenen] * [gewünschter Index+1]-1;scene;0;3;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;
-#Integer;#Content Volume;#255 / 100 * [gewünschter Lautstärke];#255 / 100 * [gewünschter Lautstärke+1]-1;volume;10;4;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;
-#Integer;#States;#;#;state;#;5;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;
+#Integer;Laustärke;#255 / 100 * [gewünschter Lautstärke];#255 / 100 * [gewünschter Lautstärke+1]-1;volume;10;4;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;
+#Integer;#States;#siehe JsonTamplates.readme;#min: (255/[Status ids])*[status id], max (255/[Status ids])*[status id+1]-1;state;#;5;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;
 #;#ArtnetControl;#ArtnetValue min;#ArtnetValue max;#Json value;#Anzeige Text ;;;;;;;;;;;;;
 #;Session;#Artnet Channel:;2;#+[Room]*(255/[Max Rooms]);;;;;;;;;;;;;;
 #String;#Sitzung ist zuende;0;5;0;Sitzung ist zuende;;;;;;;;;;;;;
@@ -49,11 +50,11 @@
 #String;#2;#255 / [Anzahl Service] * [gewünschter Index];#255 / [Anzahl Service] * [gewünschter Index+1]-1;frische Handtücher;Handtuch;;;;;;;;;;;;;
 #;#[More Serives can be added];;;;;;;;;;;;;;;;;
 #;DMXScenes;#Anzeige Text;#Json String;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#TVContent absolute Filepath;#Info
-#Order Importance;#0;Standart;default;255;56;0;0;128;128;255;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\videoplayback.mp4;
+#Order Importance;#0;Standart;default;255;56;0;0;128;128;255;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\videoplayback.mp4;
 #Order Importance;#1;Putzlicht/Notfall;Putzlicht;255;200;128;255;255;255;255;0;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
 #Order Importance;#2;Farbwahl;Colorwheel;0;0;0;0;0;0;0;0;0;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)
-#;#3;Kamin;Kamin;255;0;0;0;0;0;0;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\Spa_werbe_Bild.jpeg;
+#;#3;Kamin;Kamin;255;0;0;0;0;0;0;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_werbe_Bild.jpeg;
 #;#4;Wellen;Wellen;0;255;0;0;0;0;0;0;0;0;0;0;0;;
-#;#5;Wald;Wald;0;0;255;0;128;128;0;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\PlanwerkLicht_Spa\PlanwerkLichtSpa\videoplayback.mp4;
+#;#5;Wald;Wald;0;0;255;0;128;128;0;0;0;0;0;0;0;C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\videoplayback.mp4;
 #;#[More Scenes can be added];;;;;;;;;;;;;;;;;
 #End of Data Placeholder;;;;;;;;;;;;;;;;;;

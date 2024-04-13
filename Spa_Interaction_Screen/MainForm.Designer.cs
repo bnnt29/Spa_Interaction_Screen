@@ -14,6 +14,7 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Web.WebView2.Core;
 using ColorSlider;
+using Cyotek.Windows.Forms;
 
 
 namespace Spa_Interaction_Screen
@@ -52,9 +53,7 @@ namespace Spa_Interaction_Screen
             backgroundWorker2 = new System.ComponentModel.BackgroundWorker();
             UIControl = new TabControl();
             AmbientePage = new TabPage();
-            Dimmer1ColorSliderDescribtion = new Label();
-            Dimmer2ColorSliderDescribtion = new Label();
-            AmbientelautstärkeColorSliderDescribtion = new Label();
+            TimePage = new TabPage();
             GastronomiePage = new TabPage();
             GastronomieWebview = new Microsoft.Web.WebView2.WinForms.WebView2();
             MediaPage = new TabPage();
@@ -64,14 +63,13 @@ namespace Spa_Interaction_Screen
             WiFiPasswortLabel = new Label();
             WiFiQRCodePicturebox = new PictureBox();
             TVSettingsTitle = new Label();
-            TVSettingsVolumeColorSliderDescribtion = new Label();
             ServicePage = new TabPage();
             HowCanIHelpYouDescribtion = new Label();
             WartungPage = new TabPage();
             WartungCodeField = new Label();
             RestrictedAreaDescribtion = new Label();
             RestrictedAreaTitle = new Label();
-            TimePage = new TabPage();
+            ColorPage = new TabPage();
             UIControl.SuspendLayout();
             AmbientePage.SuspendLayout();
             GastronomiePage.SuspendLayout();
@@ -79,6 +77,7 @@ namespace Spa_Interaction_Screen
             MediaPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)WiFiQRCodePicturebox).BeginInit();
             TimePage.SuspendLayout();
+            ColorPage.SuspendLayout();
             ServicePage.SuspendLayout();
             WartungPage.SuspendLayout();
             SuspendLayout();
@@ -87,6 +86,7 @@ namespace Spa_Interaction_Screen
             // 
             UIControl.Alignment = TabAlignment.Bottom;
             UIControl.Controls.Add(AmbientePage);
+            UIControl.Controls.Add(ColorPage);
             UIControl.Controls.Add(GastronomiePage);
             UIControl.Controls.Add(MediaPage);
             UIControl.Controls.Add(TimePage);
@@ -107,9 +107,6 @@ namespace Spa_Interaction_Screen
             // AmbientePage
             // 
             AmbientePage.BackColor = Color.Black;
-            AmbientePage.Controls.Add(Dimmer1ColorSliderDescribtion);
-            AmbientePage.Controls.Add(Dimmer2ColorSliderDescribtion);
-            AmbientePage.Controls.Add(AmbientelautstärkeColorSliderDescribtion);
             AmbientePage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
             AmbientePage.Location = new Point(4, 4);
             AmbientePage.Name = "AmbientePage";
@@ -119,35 +116,18 @@ namespace Spa_Interaction_Screen
             AmbientePage.TabIndex = 1;
             AmbientePage.Text = "Ambiente";
             // 
-            // Dimmer1ColorSliderDescribtion
+            // ColorPage
             // 
-            Dimmer1ColorSliderDescribtion.AutoSize = true;
-            Dimmer1ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
-            Dimmer1ColorSliderDescribtion.Location = new Point(448, 345);
-            Dimmer1ColorSliderDescribtion.Name = "Dimmer1ColorSliderDescribtion";
-            Dimmer1ColorSliderDescribtion.Size = new Size(94, 25);
-            Dimmer1ColorSliderDescribtion.TabIndex = 5;
-            Dimmer1ColorSliderDescribtion.Text = "Dimmer 1";
-            // 
-            // Dimmer2ColorSliderDescribtion
-            // 
-            Dimmer2ColorSliderDescribtion.AutoSize = true;
-            Dimmer2ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
-            Dimmer2ColorSliderDescribtion.Location = new Point(933, 345);
-            Dimmer2ColorSliderDescribtion.Name = "Dimmer2ColorSliderDescribtion";
-            Dimmer2ColorSliderDescribtion.Size = new Size(94, 25);
-            Dimmer2ColorSliderDescribtion.TabIndex = 8;
-            Dimmer2ColorSliderDescribtion.Text = "Dimmer 2";
-            // 
-            // AmbientelautstärkeColorSliderDescribtion
-            // 
-            AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
-            AmbientelautstärkeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
-            AmbientelautstärkeColorSliderDescribtion.Location = new Point(641, 472);
-            AmbientelautstärkeColorSliderDescribtion.Name = "AmbientelautstärkeColorSliderDescribtion";
-            AmbientelautstärkeColorSliderDescribtion.Size = new Size(184, 25);
-            AmbientelautstärkeColorSliderDescribtion.TabIndex = 10;
-            AmbientelautstärkeColorSliderDescribtion.Text = "Ambiente Lautstärke";
+            ColorPage.BackColor = Color.Black;
+            WartungPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            WartungCodeField.ForeColor = SystemColors.ControlLightLight;
+            ColorPage.Location = new Point(4, 4);
+            ColorPage.Name = "ColorWheel";
+            ColorPage.Padding = new Padding(3);
+            ColorPage.Size = new Size(1396, 678);
+            ColorPage.TabIndex = 6;
+            ColorPage.Text = "Farbe";
+            ColorPage.UseVisualStyleBackColor = true;
             // 
             // GastronomiePage
             // 
@@ -183,7 +163,6 @@ namespace Spa_Interaction_Screen
             MediaPage.Controls.Add(WiFiPasswortLabel);
             MediaPage.Controls.Add(WiFiQRCodePicturebox);
             MediaPage.Controls.Add(TVSettingsTitle);
-            MediaPage.Controls.Add(TVSettingsVolumeColorSliderDescribtion);
             MediaPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
             MediaPage.Location = new Point(4, 4);
             MediaPage.Name = "MediaPage";
@@ -255,15 +234,6 @@ namespace Spa_Interaction_Screen
             TVSettingsTitle.TabIndex = 6;
             TVSettingsTitle.Text = "TV Video Einstellung:";
             // 
-            // TVSettingsVolumeColorSliderDescribtion
-            // 
-            TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
-            TVSettingsVolumeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
-            TVSettingsVolumeColorSliderDescribtion.Location = new Point(1004, 457);
-            TVSettingsVolumeColorSliderDescribtion.Name = "TVSettingsVolumeColorSliderDescribtion";
-            TVSettingsVolumeColorSliderDescribtion.Size = new Size(76, 25);
-            TVSettingsVolumeColorSliderDescribtion.TabIndex = 10;
-            TVSettingsVolumeColorSliderDescribtion.Text = "Volume";            // 
             // TimePage
             // 
             TimePage.BackColor = Color.Black;
@@ -365,6 +335,8 @@ namespace Spa_Interaction_Screen
             UIControl.ResumeLayout(false);
             AmbientePage.ResumeLayout(false);
             AmbientePage.PerformLayout();
+            ColorPage.ResumeLayout(false);
+            ColorPage.PerformLayout();
             GastronomiePage.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)GastronomieWebview).EndInit();
             MediaPage.ResumeLayout(false);
@@ -389,16 +361,20 @@ namespace Spa_Interaction_Screen
 
         //UIControl Pages
         public TabPage AmbientePage;
+        public TabPage ColorPage;
         public TabPage GastronomiePage;
         public TabPage MediaPage;
+        public TabPage TimePage;
         public TabPage ServicePage;
         public TabPage WartungPage;
-        public TabPage TimePage;
 
         //AmbientePage
         public Label Dimmer1ColorSliderDescribtion;
         public Label Dimmer2ColorSliderDescribtion;
         public Label AmbientelautstärkeColorSliderDescribtion;
+
+        //ColorPage
+        public ColorWheel colorWheelElement;
 
         //GastronomiePage
         public Microsoft.Web.WebView2.WinForms.WebView2 GastronomieWebview;

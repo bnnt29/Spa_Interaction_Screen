@@ -10,7 +10,7 @@
         "dependencies": {
           "AudioSwitcher.AudioApi.CoreAudio": "3.0.3",
           "BarCode": "2024.4.4",
-          "ColorPicker.Xamarin.Forms": "1.3.4.21",
+          "Cyotek.Windows.Forms.ColorPicker": "1.7.2",
           "LibVLCSharp.WinForms": "3.8.2",
           "Microsoft.Web.WebView2": "1.0.2420.47",
           "Newtonsoft.Json": "13.0.3",
@@ -100,25 +100,11 @@
           }
         }
       },
-      "ColorMinePortable/2.0.1": {
+      "Cyotek.Windows.Forms.ColorPicker/1.7.2": {
         "runtime": {
-          "lib/netstandard2.0/ColorMinePortable.dll": {
+          "lib/net35/Cyotek.Windows.Forms.ColorPicker.dll": {
             "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
-          }
-        }
-      },
-      "ColorPicker.Xamarin.Forms/1.3.4.21": {
-        "dependencies": {
-          "ColorMinePortable": "2.0.1",
-          "SkiaSharp": "1.60.3",
-          "SkiaSharp.Views.Forms": "1.60.3",
-          "Xamarin.Forms": "4.7.0.968"
-        },
-        "runtime": {
-          "lib/netstandard2.1/ColorPicker.dll": {
-            "assemblyVersion": "1.0.0.0",
-            "fileVersion": "1.0.0.0"
+            "fileVersion": "1.7.0.0"
           }
         }
       },
@@ -633,53 +619,6 @@
           }
         }
       },
-      "SkiaSharp/1.60.3": {
-        "runtime": {
-          "lib/netstandard1.3/SkiaSharp.dll": {
-            "assemblyVersion": "1.60.0.0",
-            "fileVersion": "1.60.3.0"
-          }
-        },
-        "runtimeTargets": {
-          "runtimes/osx/native/libSkiaSharp.dylib": {
-            "rid": "osx",
-            "assetType": "native",
-            "fileVersion": "0.0.0.0"
-          },
-          "runtimes/tizen-armel/native/libSkiaSharp.so": {
-            "rid": "tizen-armel",
-            "assetType": "native",
-            "fileVersion": "0.0.0.0"
-          },
-          "runtimes/tizen-x86/native/libSkiaSharp.so": {
-            "rid": "tizen-x86",
-            "assetType": "native",
-            "fileVersion": "0.0.0.0"
-          },
-          "runtimes/win7-x64/native/libSkiaSharp.dll": {
-            "rid": "win7-x64",
-            "assetType": "native",
-            "fileVersion": "0.0.0.0"
-          },
-          "runtimes/win7-x86/native/libSkiaSharp.dll": {
-            "rid": "win7-x86",
-            "assetType": "native",
-            "fileVersion": "0.0.0.0"
-          }
-        }
-      },
-      "SkiaSharp.Views.Forms/1.60.3": {
-        "dependencies": {
-          "SkiaSharp": "1.60.3",
-          "Xamarin.Forms": "4.7.0.968"
-        },
-        "runtime": {
-          "lib/netstandard1.3/SkiaSharp.Views.Forms.dll": {
-            "assemblyVersion": "1.60.0.0",
-            "fileVersion": "1.60.3.0"
-          }
-        }
-      },
       "System.Configuration.ConfigurationManager/6.0.0": {
         "dependencies": {
           "System.Security.Cryptography.ProtectedData": "6.0.0",
@@ -742,23 +681,7 @@
           "System.Drawing.Common": "6.0.0"
         }
       },
-      "VideoLAN.LibVLC.Windows/3.0.20": {},
-      "Xamarin.Forms/4.7.0.968": {
-        "runtime": {
-          "lib/netstandard2.0/Xamarin.Forms.Core.dll": {
-            "assemblyVersion": "2.0.0.0",
-            "fileVersion": "4.7.0.385"
-          },
-          "lib/netstandard2.0/Xamarin.Forms.Platform.dll": {
-            "assemblyVersion": "2.0.0.0",
-            "fileVersion": "4.7.0.385"
-          },
-          "lib/netstandard2.0/Xamarin.Forms.Xaml.dll": {
-            "assemblyVersion": "2.0.0.0",
-            "fileVersion": "4.7.0.385"
-          }
-        }
-      }
+      "VideoLAN.LibVLC.Windows/3.0.20": {}
     }
   },
   "libraries": {
@@ -802,19 +725,12 @@
       "path": "bitmiracle.libtiff.net/2.4.649",
       "hashPath": "bitmiracle.libtiff.net.2.4.649.nupkg.sha512"
     },
-    "ColorMinePortable/2.0.1": {
+    "Cyotek.Windows.Forms.ColorPicker/1.7.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-NKtXdqaYWxbIHXMgf8xyTDFCk/fGzb1/1DHrRYsv1wm0PRr1uzIwYVlu3QwxLG5D3aHfhh7N6rg1eJEHlPxQqg==",
-      "path": "colormineportable/2.0.1",
-      "hashPath": "colormineportable.2.0.1.nupkg.sha512"
-    },
-    "ColorPicker.Xamarin.Forms/1.3.4.21": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-hscpO0YE03oawsUhB8S2k5M6nXSEniWQOy7QQcC+0wkSKqvQRBQwD6FHkcFWuMKCGIqxG/PlkBc64E2JoWHijA==",
-      "path": "colorpicker.xamarin.forms/1.3.4.21",
-      "hashPath": "colorpicker.xamarin.forms.1.3.4.21.nupkg.sha512"
+      "sha512": "sha512-TMOpL/n14jPk7vO3gqaM7NppBUZWe4oxVh5hCiw6gt6k3GXErshmJ1JlAluAcHkjTnbALnYZXbYStdo4WDk9zQ==",
+      "path": "cyotek.windows.forms.colorpicker/1.7.2",
+      "hashPath": "cyotek.windows.forms.colorpicker.1.7.2.nupkg.sha512"
     },
     "IronSoftware.Common/2024.1.7": {
       "type": "package",
@@ -1019,20 +935,6 @@
       "path": "sixlabors.imagesharp.drawing/2.1.2",
       "hashPath": "sixlabors.imagesharp.drawing.2.1.2.nupkg.sha512"
     },
-    "SkiaSharp/1.60.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-9L8luXSspkXMhRuBx7CPjEVNJ2CJljpc5XMkDUITCQnhuJJadyCwYSWcAsgEqeRqmAimI2TyJWu73BRsvKTFZg==",
-      "path": "skiasharp/1.60.3",
-      "hashPath": "skiasharp.1.60.3.nupkg.sha512"
-    },
-    "SkiaSharp.Views.Forms/1.60.3": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-AwxqM2sskGH0EKCbf1KmKbMq0NEj85k6VuTn8B1ghivCFn2VomsfxtILUsIpSjydE67VdYStVUbn/fEtsHsPgQ==",
-      "path": "skiasharp.views.forms/1.60.3",
-      "hashPath": "skiasharp.views.forms.1.60.3.nupkg.sha512"
-    },
     "System.Configuration.ConfigurationManager/6.0.0": {
       "type": "package",
       "serviceable": true,
@@ -1116,13 +1018,6 @@
       "sha512": "sha512-ahujCn2kTPJSLEpwXu2BHIyv9Ke/iahd367hFwMMHSP9UkSOYC5QekOGFrSxKz22yZP67arcfCgNgDIcV31DpQ==",
       "path": "videolan.libvlc.windows/3.0.20",
       "hashPath": "videolan.libvlc.windows.3.0.20.nupkg.sha512"
-    },
-    "Xamarin.Forms/4.7.0.968": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-VvHI/VXyDZcCLYXywh9A8gVtldD8XCLR8hujZVdlKGh87HIXAUW0b+uLFsvyMB8COwNce0w56ycgD/tXtLgFRA==",
-      "path": "xamarin.forms/4.7.0.968",
-      "hashPath": "xamarin.forms.4.7.0.968.nupkg.sha512"
     }
   }
 }

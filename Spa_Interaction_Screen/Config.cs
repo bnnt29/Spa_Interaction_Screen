@@ -32,9 +32,12 @@ namespace Spa_Interaction_Screen
         public String TimeBackgroundFilePath = null;
         public String ServiceBackgroundFilePath = null;
         public int[] Dimmerchannel = null;
+        public String[] slidernames = null;
         public byte[] HDMISwitchInterval = null;
         public int HDMISwitchchannel = -1;
         public byte[] ObjectLightInterval = null;
+        public String Objectname = null;
+        public int[][] colorwheelvalues;
         public int SystemSettingsChannel = -1;
         public List<Constants.SystemSetting> SystemSettings = null;
         public int ObjectLightchannel = -1;
@@ -42,6 +45,7 @@ namespace Spa_Interaction_Screen
         public int DMXSceneSetting = -1;
         public int DMXSceneSettingChannel = -1;
         public String DMXSceneSettingJson = null;
+        public String VolumeSliderName = null;
         public int Volume = -1;
         public int VolumeChannel = -1;
         public String VolumeJson = null;
@@ -118,11 +122,12 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref ServiceBackgroundFilePath, 0);
             finalizePaths();
             stream.ReadLine();
-            int Dimmerchannelval1 = 0;
-            read_all = getcsvFields(stream, ref Dimmerchannelval1, 0);
-            int Dimmerchannelval2 = 0;
-            read_all = getcsvFields(stream, ref Dimmerchannelval2, 0);
-            Dimmerchannel = new Int32[2] { Dimmerchannelval1-1, Dimmerchannelval2-1 };
+            String[] Dimmerchannelval1 = null;
+            read_all = getcsvFields(stream, ref Dimmerchannelval1, -1);
+            String[] Dimmerchannelval2 = null;
+            read_all = getcsvFields(stream, ref Dimmerchannelval2, -1);
+            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0])-1, Int32.Parse(Dimmerchannelval2[0]) - 1 };
+            slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1] , null};
             String[] field = null;
             read_all = getcsvFields(stream, ref field, -1);
             try
@@ -139,7 +144,8 @@ namespace Spa_Interaction_Screen
             try
             {
                 ObjectLightchannel = Int32.Parse(field[0])-1;
-                ObjectLightInterval = new Byte[2] { Byte.Parse(field[1]), Byte.Parse(field[2])};
+                Objectname = field[1];  
+                ObjectLightInterval = new Byte[2] { Byte.Parse(field[2]), Byte.Parse(field[3])};
             }
             catch (FormatException e)
             {
@@ -147,6 +153,32 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
             }
             String[] ReadFields = null;
+            read_all = getcsvFields(stream, ref ReadFields, -1);
+            colorwheelvalues = new Int32[3][];
+            bool atleastonechannel = false;
+            for (int i=0;i< ReadFields.Length; i++)
+            {
+                int x = 0;
+                colorwheelvalues[i] = new Int32[ReadFields[i].Length];
+                foreach (String number in ReadFields[i].Split(','))
+                {
+                    try
+                    {
+                        colorwheelvalues[i][x++] = Int32.Parse(number.Trim());
+                    }
+                    catch (FormatException e)
+                    {
+                        Debug.Print(e.Message);
+                        Debug.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.");
+                    }
+                    atleastonechannel = true;
+                }
+                Array.Resize(ref colorwheelvalues[i], x);
+            }
+            if (! atleastonechannel)
+            {
+                showcolor = 0;
+            }
             read_all = getcsvFields(stream, ref ReadFields, -1);
             while (ReadFields == null || !ReadFields[0].Equals("System"))
             {
@@ -171,9 +203,10 @@ namespace Spa_Interaction_Screen
             DMXSceneSettingChannel = Int32.Parse(ReadFields[2]);
 
             read_all = getcsvFields(stream, ref ReadFields, -1);
-            VolumeJson = ReadFields[0];
-            Volume = Int32.Parse(ReadFields[1]);
-            VolumeChannel = Int32.Parse(ReadFields[2]);
+            slidernames[2] = ReadFields[0];
+            VolumeJson = ReadFields[1];
+            Volume = Int32.Parse(ReadFields[2]);
+            VolumeChannel = Int32.Parse(ReadFields[3]);
 
             stream.ReadLine();
             if (!read_all)
@@ -261,21 +294,24 @@ namespace Spa_Interaction_Screen
                             scene.id = DMXScenes.Count;
                             scene.ShowText = ReadFields[i++];
                             scene.JsonText = ReadFields[i++];
-                            scene.Channelvalues = new byte[ReadFields.Length - 3];
-                            for (i=i; i < scene.Channelvalues.Length - 1; i++)
+                            scene.Channelvalues = new byte[ReadFields.Length - 2];
+                            int rese;
+                            if (!int.TryParse(ReadFields[ReadFields.Length-1], out rese))
                             {
-                                if (Int32.Parse(ReadFields[i + 2]) > 255 || Int32.Parse(ReadFields[i + 2]) < 0)
+                                scene.ContentPath = ReadFields[ReadFields.Length - 1];
+                                scene.Channelvalues = new byte[ReadFields.Length - 3];
+                            }
+                            int x = i;
+                            for (i=i; i < scene.Channelvalues.Length; i++)
+                            {
+                                if (Int32.Parse(ReadFields[i]) > 255 || Int32.Parse(ReadFields[i]) < 0)
                                 {
-                                    scene.Channelvalues[i] = 0;
+                                    scene.Channelvalues[i-x] = 0;
                                 }
                                 else
                                 {
-                                    scene.Channelvalues[i] = Byte.Parse(ReadFields[i + 2]);
+                                    scene.Channelvalues[i-x] = Byte.Parse(ReadFields[i]);
                                 }
-                            }
-                            if (i < scene.Channelvalues.Length)
-                            {
-                                scene.ContentPath = ReadFields[++i];
                             }
                             DMXScenes.Add(scene);
                             read_all = getcsvFields(stream, ref ReadFields, -1);
@@ -425,7 +461,7 @@ namespace Spa_Interaction_Screen
             int x = 0;
             foreach (String s in field)
             {
-                if (s!=null && !s.StartsWith(CommandDelimiters) && !s.Equals("") && !s.Equals("") && s.Length>0)
+                if (s!=null && !s.StartsWith(CommandDelimiters) && !s.Equals("") && s.Length>0)
                 {
                     res[x++] = s;
                 }
