@@ -1,4 +1,5 @@
-﻿using IronBarCode;
+﻿
+using QRCoder;
 using System.Diagnostics;
 using System.Windows.Forms;
 
@@ -79,7 +80,7 @@ namespace Spa_Interaction_Screen
             slide.Maximum = new decimal(max);
             slide.Minimum = new decimal(0);
             slide.Orientation = Orientation.Horizontal;
-            slide.ScaleDivisions = new decimal(2);
+            slide.ScaleDivisions = new decimal(1);
             slide.ScaleSubDivisions = new decimal(5);
             slide.ShowDivisionsText = false;
             slide.ShowSmallScale = false;
@@ -87,7 +88,7 @@ namespace Spa_Interaction_Screen
             slide.SmallChange = new decimal(4.1701);
             slide.TabIndex = 2;
             slide.ThumbRoundRectSize = new Size(22, 22);
-            slide.ThumbSize = new Size(22, 22);
+            slide.ThumbSize = new Size(30, 30);
             slide.TickAdd = 0F;
             slide.TickDivide = 0F;
             slide.TickStyle = TickStyle.BottomRight;
@@ -160,7 +161,7 @@ namespace Spa_Interaction_Screen
 
             ColorSlider.ColorSlider newslider = null;
             GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(255);
+            newslider = createColorSlide(100);
             form.AmbientePage.Controls.Add(newslider);
             newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
             newslider.Location = new Point(Pos_x, Pos_y);
@@ -176,7 +177,7 @@ namespace Spa_Interaction_Screen
             newslider.ValueChanged += form.Dimmer_Change;
 
             GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(255);
+            newslider = createColorSlide(100);
             form.AmbientePage.Controls.Add(newslider);
             newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
             newslider.Location = new Point(Pos_x, Pos_y);
@@ -218,8 +219,6 @@ namespace Spa_Interaction_Screen
 
         public void createColorPageElements()
         {
-           
-            
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
             form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 2.25), (int)(Constants.windowwidth / 2.25));
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
@@ -388,18 +387,18 @@ namespace Spa_Interaction_Screen
             form.RestrictedAreaTitle.Show();
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, null);
-
+            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
+            /*
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, null);
-
+            */
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset);
+            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer);
+            Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
 
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
@@ -606,12 +605,12 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    old_value = config.DMXScenes[old_scene].Channelvalues[channel];
+                    old_value = (int)((float)((float)(config.DMXScenes[old_scene].Channelvalues[channel]) / (float)255.0) * 100);
                 }
                 if (slider.Value == old_value)
                 {
                     slider.ValueChanged -= form.Dimmer_Change;
-                    slider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[channel];
+                    slider.Value = (int)((float)((float)(config.DMXScenes[config.DMXSceneSetting].Channelvalues[channel]) / (float)255.0) * 100);
                     slider.ValueChanged += form.Dimmer_Change;
                 }
             }
@@ -638,36 +637,43 @@ namespace Spa_Interaction_Screen
             {
                 createTimePageElements();
             }
-            form.UIControl.SelectTab(1);
-            if (config.showcolor > 0)
-            {
-                createColorPageElements();
-                form.UIControl.SelectTab(2);
-            }
-            int red = 0;
-            int green = 0;
-            int blue = 0;
-
-            if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
-            {
-                red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
-            }
-            if (config.colorwheelvalues[1] != null && config.colorwheelvalues[1].Length > 0)
-            {
-                green = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[1][0]];
-            }
-            if (config.colorwheelvalues[2] != null && config.colorwheelvalues[2].Length > 0)
-            {
-                blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
-            }
-            form.colorWheelElement.Color = Color.FromArgb(1, red, green, blue);
-
             if (config.GastroUrl != null && config.GastroUrl.Length >= 0)
             {
                 form.GastronomieWebview.Source = new Uri(config.GastroUrl, UriKind.Absolute);
             }
+            form.UIControl.SelectTab(1);
+            if (config.showcolor > 0)
+            {
+                createColorPageElements();
+                /*
+                 int red = 0;
+                int green = 0;
+                int blue = 0;
+
+                if (config.colorwheelvalues[0] != null && config.colorwheelvalues[0].Length > 0)
+                {
+                    red = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[0][0]];
+                }
+                if (config.colorwheelvalues[1] != null && config.colorwheelvalues[1].Length > 0)
+                {
+                    green = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[1][0]];
+                }
+                if (config.colorwheelvalues[2] != null && config.colorwheelvalues[2].Length > 0)
+                {
+                    blue = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.colorwheelvalues[2][0]];
+                }
+                form.colorWheelElement.Color = Color.FromArgb(1, red, green, blue);
+
+                if (config.GastroUrl != null && config.GastroUrl.Length >= 0)
+                {
+                    form.GastronomieWebview.Source = new Uri(config.GastroUrl, UriKind.Absolute);
+                }
+                */
+                form.UIControl.SelectTab(2);
+            }
+
             int Pos_x, Pos_y;
-            
+
             int notshowenscenes = 2;
             int Numscenes = config.DMXScenes.Count - notshowenscenes;
             Numscenes = Math.Min(Numscenes, Constants.maxscenes);
@@ -700,73 +706,7 @@ namespace Spa_Interaction_Screen
                 form.AmbientePage.BackgroundImageLayout = ImageLayout.Zoom;
                 form.AmbientePage.BackgroundImage = Image.FromFile(config.AmbienteBackgroundFilePath);
             }
-            List<string> strings = GetPasswortWords();
-            String Password = "";
-
-            if (strings == null && strings.Count <= 90)
-            {
-                Random r = new Random();
-                Debug.Print("Fallback random PW generator");
-                for (int i = 0; i < 10; i++)
-                {
-                    if (r.Next(0, 2) > 0)
-                    {
-                        Password += Convert.ToChar(r.Next(65, 91));
-                    }
-                    else
-                    {
-                        Password += Convert.ToChar(r.Next(48, 58));
-                    }
-                }
-            }
-            else
-            {
-                Random rnd = new();
-                int it = rnd.Next(3);
-                Password = Passwordparts(Password, rnd, it);
-                Password += strings[rnd.Next(strings.Count)];
-                if (Password.Length <= 7)
-                {
-                    Password = Passwordparts(Password, rnd, Password.Length + rnd.Next(2));
-                    Password += strings[rnd.Next(strings.Count)];
-                }
-                Password = Passwordparts(Password, rnd, Constants.PasswordLength + rnd.Next(3));
-            }
-            /*
-            GeneratedBarcode qrCode = null;
-            if (config.LogoFilePath != null && config.LogoFilePath.Length >= 0)
-            {
-                QRCodeLogo logo = new QRCodeLogo(config.LogoFilePath);
-                qrCode = QRCodeWriter.CreateQrCodeWithLogo($"WIFI:S:{config.WiFiSSID};T:WPA;P:{Password};;", logo);
-            }
-            else
-            {
-                qrCode = QRCodeWriter.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{Password};;");
-            }
-            qrCode.KeepAspectRatio(true);
-            qrCode.ResizeTo(Constants.Element_width + Constants.Element_height, Constants.Element_width + Constants.Element_height);
-
-            form.WiFiQRCodePicturebox.Size = new Size(Constants.Element_width + Constants.Element_height, Constants.Element_width + Constants.Element_height);
-            form.WiFiQRCodePicturebox.Image = qrCode.Image;
-           */
-            
-
-#if !DEBUG
-            Network.SendTelnet($@"wifi pass {Password}", form);
-#endif
-            
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
-            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
-#if Debug
-            form.WiFiPasswortLabel.Text = Password;
-#else
-            form.WiFiPasswortLabel.Text = "Passwort wird im Debug Modus nicht an den Router gesendet";
-            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y + 25);
-#endif
-            
-            form.WiFiSSIDLabel.Text = config.WiFiSSID;
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
-            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
+            GenNewPassword(out Pos_x, out Pos_y);
 
             if (config.MediaBackgroundFilePath != null && config.MediaBackgroundFilePath.Length > 2 && File.Exists(config.MediaBackgroundFilePath))
             {
@@ -814,6 +754,56 @@ namespace Spa_Interaction_Screen
                 }
                 SetupLabelofTrackbar(s, l, config.slidernames[((int)s.Tag) - 1]);
             }
+        }
+
+        private void GenNewPassword(out int Pos_x, out int Pos_y)
+        {
+            List<string> strings = GetPasswortWords();
+            config.password = "";
+
+            if (strings == null && strings.Count <= 90)
+            {
+                Random r = new Random();
+                Debug.Print("Fallback random PW generator");
+                for (int i = 0; i < 10; i++)
+                {
+                    if (r.Next(0, 2) > 0)
+                    {
+                        config.password += Convert.ToChar(r.Next(65, 91));
+                    }
+                    else
+                    {
+                        config.password += Convert.ToChar(r.Next(48, 58));
+                    }
+                }
+            }
+            else
+            {
+                Random rnd = new();
+                int it = rnd.Next(3);
+                config.password = Passwordparts(config.password, rnd, it);
+                config.password += strings[rnd.Next(strings.Count)];
+                if (config.password.Length <= 7)
+                {
+                    config.password = Passwordparts(config.password, rnd, config.password.Length + rnd.Next(2));
+                    config.password += strings[rnd.Next(strings.Count)];
+                }
+                config.password = Passwordparts(config.password, rnd, Constants.PasswordLength + rnd.Next(3));
+            }
+            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
+
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
+            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
+#if !DEBUG
+            Network.SendTelnet($@"wifi pass {config.password}", form);
+            form.WiFiPasswortLabel.Text = config.password;
+#else
+            form.WiFiPasswortLabel.Text = "Passwort wird im Debug Modus nicht an den Router gesendet";
+            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y + 25);
+#endif
+            form.WiFiSSIDLabel.Text = config.WiFiSSID;
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
+            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
         }
 
         private void setConfigRestricted(Config config)

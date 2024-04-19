@@ -1,7 +1,10 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using Cyotek.Windows.Forms;
+using Newtonsoft.Json.Linq;
+using QRCoder;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Reflection;
 
 
 namespace Spa_Interaction_Screen
@@ -16,6 +19,7 @@ namespace Spa_Interaction_Screen
         public DateTime Sessionend;
         private byte[] changeddimmerchannels;
         private SerialPort serialPort1;
+        private EnttecCom enttec;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
         private bool passwordstillvalid = true;
@@ -23,7 +27,7 @@ namespace Spa_Interaction_Screen
         private Color NumfieldButtonColor = Color.Red;
         private bool passwordwaswrong = false;
         public int currentState = 3;
-        public Screen main;
+        public Screen? main;
         private bool streaming = false;
         private bool vlcclosed = false;
         private int minutes_received = 0;
@@ -32,23 +36,40 @@ namespace Spa_Interaction_Screen
         private UIHelper helper;
         private Network net;
 
+        private Task dmx = null;
+        private Task state = null;
+        private Task windows = null;
+
         public MainForm()
         {
             this.Hide();
-            changeddimmerchannels = new byte[3];
             main = Screen.PrimaryScreen;
+            if(main == null) 
+            {
+                Debug.Print("Could not detect main screen");
+                return;
+            }
+            changeddimmerchannels = new byte[3];
             loadscreen = new Loading(this, main);
             loadscreen.Show();
             loadscreen.updateProgress(10);
             config = new Config(null);
             loadscreen.updateProgress(20);
             net = new Network(this, config);
-            serialPort1 = new SerialPort();
+            /*Old way of creating Com port
+            this.components = new System.ComponentModel.Container();
+            serialPort1 = new SerialPort(this.components);
+            serialPort1.PortName = config.ComPort;
+            serialPort1.BaudRate = 9600;
+            */
+            serialPort1 = new SerialPort(config.ComPort, 9600);
+            enttec = new EnttecCom(this, config);
             loadscreen.updateProgress(30);
             InitializeComponent();
             loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
             loadscreen.updateProgress(50);
+            SendCurrentSceneOverCom();
         }
 
         public async void Main_Load(object sender, EventArgs e)
@@ -58,13 +79,46 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(90);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
 
+            if (vlc != null)
+            {
+                vlc.Show();
+            }
             loadscreen.updateProgress(100);
-            this.Show();
-            vlc.Show();
-            loadscreen.Hide();
+
+            
+
+            dmx = Task.Run(async () =>
+            {
+                while (true)
+                {
+                    SendCurrentSceneOverCom();
+                }
+            });
+
+            windows = Task.Run(() =>
+            {
+                while (true)
+                {
+                    while (Screen.AllScreens.Length < 2)
+                    {
+                        if (Screen.AllScreens.Length == 0)
+                        {
+                            Debug.Print("No Screen detected");
+                            this.Hide();
+                        }
+                        Thread.Sleep(500);
+                    }
+                    Thread.Sleep(500);
+                    while (Screen.AllScreens.Length >= 2)
+                    {
+                        Thread.Sleep(500);
+                    }
+                    Thread.Sleep(500);
+                }
+            });
 
             //TODO: Test the State updater
-            await Task.Run(async () =>
+            state = Task.Run(async () =>
             {
                 while (true)
                 {
@@ -76,14 +130,19 @@ namespace Spa_Interaction_Screen
                     request.id = currentState;
                     request.Raum = config.Room;
                     Network.UDPSender(request, false);
-                    await Task.Delay(config.StateSendInterval * 1000);
+                    Thread.Sleep(config.StateSendInterval * 1000);
                 }
-            });
+            }); 
+            
+            
+            this.Show();
+            loadscreen.Hide();
         }
 
         private void start()
         {
             EnterFullscreen(this, main);
+            loadscreen.updateProgress(60);
             if (config.showtime <= 0)
             {
                 UIControl.Controls.Remove(TimePage);
@@ -99,9 +158,9 @@ namespace Spa_Interaction_Screen
             }
             UIControl.ItemSize = new Size(Constants.windowwidth / tabs, Constants.windowheight - Constants.tabheight);
 
+            loadscreen.updateProgress(70);
             defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
 
-            loadscreen.updateProgress(60);
             Screen TV = null;
             if (Screen.AllScreens.Length > 1)
             {
@@ -120,20 +179,23 @@ namespace Spa_Interaction_Screen
                 //Could be Timing Issue, when TV not yet Registered as  monitor
                 Debug.Print("Second Monitor not found");
                 currentState = 1;
-                vlc.Hide();
-                vlc.Dispose();
-                vlc = null;
+                if (vlc != null)
+                {
+                    vlc.Hide();
+                    vlc.Dispose();
+                    vlc = null;
+                }
             }
             else
             {
                 vlc = new EmbedVLC(this, TV);
             }
 
-            loadscreen.updateProgress(70);
             GastronomieWebview.CoreWebView2InitializationCompleted += webcontentLoaded;
 
             AmbientVolume(config.Volume, 3, null);
-            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true);
+            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, false);
+            //SendCurrentSceneOverCom();
 
             Sessionstart = DateTime.Now;
             Sessionend = DateTime.Now;
@@ -361,11 +423,11 @@ namespace Spa_Interaction_Screen
 
         public void Ambiente_Change_Handler(object sender, EventArgs e)
         {
-            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false);
-
+            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false, true);
+            //SendCurrentSceneOverCom();
         }
 
-        public void Ambiente_Change(Constants.DMXScene? scene, bool force)
+        public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user)
         {
             if (scene == null)
             {
@@ -385,7 +447,7 @@ namespace Spa_Interaction_Screen
             {
                 if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
-                    vlc.changeMedia(scene.ContentPath);
+                    vlc.changeMedia(scene.ContentPath, user);
                     vlc.Show();
                 }
                 else
@@ -394,11 +456,12 @@ namespace Spa_Interaction_Screen
                 }
 
             }
-            SendCurrentSceneOverCom();
+            //SendCurrentSceneOverCom();
         }
 
         private void SendCurrentSceneOverCom()
         {
+            bool noserial = false;
             if (!serialPort1.IsOpen)
             {
                 try
@@ -410,8 +473,28 @@ namespace Spa_Interaction_Screen
                     Debug.Print(ex.Message);
                     Debug.Print("Error when trying to Open Com Port");
                     currentState = 1;
+                    noserial = true;
                 }
             }
+            if(!enttec.isopen())
+            {
+                if (!enttec.connect())
+                {
+                    Debug.Print("Error when trying to Communicate with Enttec Port");
+                    currentState = 1;
+                }
+                else
+                {
+                    noserial = false;
+                }
+            }
+
+            if (noserial)
+            {
+                Thread.Sleep(30);
+                return;
+            }
+
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
             if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
             {
@@ -425,31 +508,21 @@ namespace Spa_Interaction_Screen
             {
                 tempchannelvalues[config.ObjectLightchannel] = changeddimmerchannels[2];
             }
-            foreach (int value in config.colorwheelvalues[0])
+            if (config.HDMISwitchchannel >= 0 && config.HDMISwitchchannel < tempchannelvalues.Length)
             {
-                if (tempchannelvalues.Length > value)
-                {
-                    tempchannelvalues[value] = colorWheelElement.Color.R;
-                }
+                tempchannelvalues[config.HDMISwitchchannel] = (!streaming) ? (byte)255 : (byte)0;
+
             }
-            foreach (int value in config.colorwheelvalues[1])
+            for (int i = 0; i < tempchannelvalues.Length; i++)
             {
-                if (tempchannelvalues.Length > value)
-                {
-                    tempchannelvalues[value] = colorWheelElement.Color.G;
-                }
+                tempchannelvalues[i] = (tempchannelvalues[i] >= 255) ? (byte)254 : tempchannelvalues[i];
             }
-            foreach (int value in config.colorwheelvalues[2])
-            {
-                if (tempchannelvalues.Length > value)
-                {
-                    tempchannelvalues[value] = colorWheelElement.Color.B;
-                }
-            }
+            tempchannelvalues[0] = 255;
             if (serialPort1.IsOpen)
             {
-                serialPort1.Write(tempchannelvalues, 0, config.DMXScenes[config.DMXSceneSetting].Channelvalues.Length);
-                serialPort1.Close();
+                serialPort1.Write(tempchannelvalues, 0, tempchannelvalues.Length);
+                enttec.sendDMX(tempchannelvalues);
+                Thread.Sleep(55);
             }
             else
             {
@@ -477,7 +550,7 @@ namespace Spa_Interaction_Screen
             }
             changeddimmerchannels[2] = config.ObjectLightInterval[Byte.Parse($"{((Button)(sender)).Tag}")];
 
-            SendCurrentSceneOverCom();
+            //SendCurrentSceneOverCom();
         }
 
         private bool changeChannelInAllScenes(byte value, int channel)
@@ -529,7 +602,10 @@ namespace Spa_Interaction_Screen
                 AmbientelautstärkeColorSliderDescribtion.Hide();
                 TVSettingsVolumeColorSliderDescribtion.Hide();
                 streaming = true;
-                vlc.quitMedia();
+                if (vlc != null)
+                {
+                    vlc.quitMedia();
+                }
             }
             else
             {
@@ -543,7 +619,8 @@ namespace Spa_Interaction_Screen
                 AmbientelautstärkeColorSliderDescribtion.Show();
                 TVSettingsVolumeColorSliderDescribtion.Show();
                 streaming = false;
-                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false);
+                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, true);
+                //SendCurrentSceneOverCom();
             }
         }
 
@@ -559,24 +636,59 @@ namespace Spa_Interaction_Screen
             Network.UDPSender(request, true);
         }
 
-        public void closePlayer(object sender, EventArgs e)
+        public void closePlayer_Handler(object sender, EventArgs e)
         {
-            vlc.quitMedia();
-            vlc.Hide();
-            ((Button)(sender)).Click -= closePlayer;
-            ((Button)(sender)).Click += OpenPlayer;
+            closePlayer(false);
+            ((Button)(sender)).Click -= closePlayer_Handler;
+            ((Button)(sender)).Click += OpenPlayer_Handler;
             ((Button)(sender)).Text = "Öffne den Player";
-            vlcclosed = true;
         }
 
-        public void OpenPlayer(object sender, EventArgs e)
+        public void closePlayer(bool screenissue)
         {
-            vlc.Show();
-            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false);
-            ((Button)(sender)).Click -= OpenPlayer;
-            ((Button)(sender)).Click += closePlayer;
+            if (vlc != null)
+            {
+                vlc.quitMedia();
+                vlc.Hide();
+            }
+            vlcclosed = true;
+            if(screenissue) 
+            { 
+                foreach (Button b in helper.RestrictedPageButtons)
+                {
+                    if (b != null && ((String)b.Tag).Length > 0 && ((String)b.Tag).Equals("VLCClose"))
+                    {
+                        b.Hide();
+                    }
+                }
+            }
+        }
+
+
+        public void OpenPlayer_Handler(object sender, EventArgs e)
+        {
+            OpenPlayer();
+            ((Button)(sender)).Click -= OpenPlayer_Handler;
+            ((Button)(sender)).Click += closePlayer_Handler;
             ((Button)(sender)).Text = "Schließe den Player";
+        }
+
+        public void OpenPlayer()
+        {
+            if (vlc != null)
+            {
+                vlc.Show();
+            }
+            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, false);
+            //SendCurrentSceneOverCom();
             vlcclosed = false;
+            foreach (Button b in helper.RestrictedPageButtons)
+            {
+                if (b != null && ((String)b.Tag).Length > 0 && ((String)b.Tag).Equals("VLCClose"))
+                {
+                    b.Show();
+                }
+            }
         }
 
         public void AmbientVolume_Handler(object sender, EventArgs e)
@@ -621,9 +733,9 @@ namespace Spa_Interaction_Screen
                     currentState = 1;
                     return;
                 }
-                changeddimmerchannels[index] = (byte)((ColorSlider.ColorSlider)(sender)).Value;
+                changeddimmerchannels[index] = (byte)(int)((float)((float)((ColorSlider.ColorSlider)sender).Value/100.0)*255);
             }
-            SendCurrentSceneOverCom();
+            //SendCurrentSceneOverCom();
         }
 
         public void ColorChanged_Handler(object sender, EventArgs e)
@@ -631,23 +743,58 @@ namespace Spa_Interaction_Screen
             ColorWheel colorWheel = (ColorWheel)sender;
             if (colorWheel != null)
             {
-                Color c = colorWheel.Color;
-                //ColorPage.BackColor = c;
-                SendCurrentSceneOverCom();
+                if (colorWheelElement.Color.R != 0)
+                {
+                    foreach (int value in config.colorwheelvalues[0])
+                    {
+                        if (config.DMXScenes[2].Channelvalues.Length > value)
+                        {
+                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.R;
+                        }
+                    }
+                }
+                if (colorWheelElement.Color.G != 0)
+                {
+                    foreach (int value in config.colorwheelvalues[1])
+                    {
+                        if (config.DMXScenes[2].Channelvalues.Length > value)
+                        {
+                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.G;
+                        }
+                    }
+                }
+                if (colorWheelElement.Color.B != 0)
+                {
+                    foreach (int value in config.colorwheelvalues[2])
+                    {
+                        if (config.DMXScenes[2].Channelvalues.Length > value)
+                        {
+                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.B;
+                        }
+                    }
+                }
+                Ambiente_Change(config.DMXScenes[2], true, true);
             }
         }
 
-        public void reset(object sender, EventArgs e)
+        public void reset_Handler(object sender, EventArgs e)
+        {
+            reset();
+        }
+
+        public void reset()
         {
             this.Hide();
             loadscreen.Show();
             loadscreen.updateProgress(20);
             logout();
             Config c = new Config(config);
+            loadscreen.updateProgress(40);
             config = c;
             net.changeconfig(c);
             helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
+            loadscreen.updateProgress(50);
             start();
             UIControl.SelectTab(0);
             loadscreen.updateProgress(100);
@@ -668,6 +815,41 @@ namespace Spa_Interaction_Screen
                 }
             }
             return r;
+        }
+        public bool generateQRCode(PictureBox p, int pixelsize, bool quietzone, int size, bool inv)
+        {
+            QRCodeGenerator qrCodegen = new QRCodeGenerator();
+            QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{config.password};;", QRCodeGenerator.ECCLevel.H, true);
+            QRCode qrCode = new QRCode(qrCodeData);
+            Bitmap qrCodeImage = null;
+            Color a = Color.White;
+            Color b = Color.Black;
+            if (config.LogoFilePath != null && config.LogoFilePath.Length >= 0)
+            {
+                qrCodeImage = qrCode.GetGraphic(pixelsize, (!inv) ? a : b, (inv) ? a : b, (Bitmap)Bitmap.FromFile(config.LogoFilePath), 20, 1, quietzone, Color.Transparent);
+            }
+            else
+            {
+                qrCodeImage = qrCode.GetGraphic(pixelsize, (!inv) ? a : b, (inv) ? a : b, quietzone);
+            }
+
+            p.Size = new Size(size, size);
+            if(qrCodeImage == null)
+            {
+                return false;
+            }
+            p.Image = qrCodeImage;
+            return true;
+        }
+
+        public void NewSession_Handler(object sender, EventArgs e)
+        {
+            NewSession();
+        }
+
+        public void NewSession()
+        {
+            reset();
         }
     }
 }

@@ -5,12 +5,17 @@ namespace Spa_Interaction_Screen
 {
     public class Config
     {
+        //current generated wifi password
+        public String password = null;
+
         //Config
         public int Room = -1;
         public int TotalRooms = -1;
         public String[] IPZentrale = null;
         public int PortZentrale = -1;
         public int StateSendInterval = -1;
+        public String ComPort = null;
+        public String EnttecComPort = null;
         public String[] Wartungspin = null;
         public int Sitzungsdauer = -1;
         public String GastroUrl = null;
@@ -100,6 +105,8 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref IPZentrale, -1);
             read_all = getcsvFields(stream, ref PortZentrale, 0);
             read_all = getcsvFields(stream, ref StateSendInterval, 0);
+            read_all = getcsvFields(stream, ref ComPort, 0);
+            read_all = getcsvFields(stream, ref EnttecComPort, 0);
             read_all = getcsvFields(stream, ref Wartungspin, -1);
             read_all = getcsvFields(stream, ref Sitzungsdauer, 0);
             read_all = getcsvFields(stream, ref GastroUrl, 0);
@@ -115,19 +122,24 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref MediaBackgroundFilePath, 0);
             read_all = getcsvFields(stream, ref TimeBackgroundFilePath, 0);
             read_all = getcsvFields(stream, ref ServiceBackgroundFilePath, 0);
-            finalizePaths();
+            finalizePaths(out PasswordFilePath, PasswordFilePath);
+            finalizePaths(out LogoFilePath, LogoFilePath);
+            finalizePaths(out AmbienteBackgroundFilePath, AmbienteBackgroundFilePath);
+            finalizePaths(out MediaBackgroundFilePath, MediaBackgroundFilePath);
+            finalizePaths(out TimeBackgroundFilePath, TimeBackgroundFilePath);
+            finalizePaths(out ServiceBackgroundFilePath, ServiceBackgroundFilePath);
             stream.ReadLine();
             String[] Dimmerchannelval1 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval1, -1);
             String[] Dimmerchannelval2 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval2, -1);
-            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]) - 1, Int32.Parse(Dimmerchannelval2[0]) - 1 };
+            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]), Int32.Parse(Dimmerchannelval2[0]) };
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
             read_all = getcsvFields(stream, ref field, -1);
             try
             {
-                HDMISwitchchannel = Int32.Parse(field[0]) - 1;
+                HDMISwitchchannel = Int32.Parse(field[0]);
                 HDMISwitchInterval = new Byte[2] { Byte.Parse(field[1]), Byte.Parse(field[2]) };
             }
             catch (FormatException e)
@@ -135,10 +147,11 @@ namespace Spa_Interaction_Screen
                 Debug.Print(e.Message);
                 Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
             }
+            field = null;
             read_all = getcsvFields(stream, ref field, -1);
             try
             {
-                ObjectLightchannel = Int32.Parse(field[0]) - 1;
+                ObjectLightchannel = Int32.Parse(field[0]);
                 Objectname = field[1];
                 ObjectLightInterval = new Byte[2] { Byte.Parse(field[2]), Byte.Parse(field[3]) };
             }
@@ -294,6 +307,7 @@ namespace Spa_Interaction_Screen
                             if (!int.TryParse(ReadFields[ReadFields.Length - 1], out rese))
                             {
                                 scene.ContentPath = ReadFields[ReadFields.Length - 1];
+                                finalizePaths(out scene.ContentPath, scene.ContentPath);
                                 scene.Channelvalues = new byte[ReadFields.Length - 3];
                             }
                             int x = i;
@@ -345,63 +359,20 @@ namespace Spa_Interaction_Screen
             stream.Close();
         }
 
-        private void finalizePaths()
+        private void finalizePaths(out String? sp, String s)
         {
-            if (PasswordFilePath != null)
+            if (s != null)
             {
-                if (PasswordFilePath.Length >= 0)
+                if (s.Length >= 0)
                 {
-                    PasswordFilePath = $@"{PasswordFilePath.ToLower()}";
+                    s = $@"{s.ToLower()}";
                 }
                 else
                 {
-                    PasswordFilePath = null;
+                    s = null;
                 }
             }
-            if (LogoFilePath != null)
-            {
-                if (LogoFilePath.Length >= 0)
-                {
-                    LogoFilePath = $@"{LogoFilePath.ToLower()}";
-                }
-                else
-                {
-                    LogoFilePath = null;
-                }
-            }
-            if (AmbienteBackgroundFilePath != null)
-            {
-                if (AmbienteBackgroundFilePath.Length >= 0)
-                {
-                    AmbienteBackgroundFilePath = $@"{AmbienteBackgroundFilePath.ToLower()}";
-                }
-                else
-                {
-                    AmbienteBackgroundFilePath = null;
-                }
-            }
-            if (MediaBackgroundFilePath != null)
-            {
-                if (MediaBackgroundFilePath.Length >= 0)
-                {
-                    MediaBackgroundFilePath = $@"{MediaBackgroundFilePath.ToLower()}";
-                }
-                else
-                {
-                    MediaBackgroundFilePath = null;
-                }
-            }
-            if (ServiceBackgroundFilePath != null)
-            {
-                if (ServiceBackgroundFilePath.Length >= 0)
-                {
-                    ServiceBackgroundFilePath = $@"{ServiceBackgroundFilePath.ToLower()}";
-                }
-                else
-                {
-                    ServiceBackgroundFilePath = null;
-                }
-            }
+            sp = s;
         }
 
         public bool getcsvFields<T>(StreamReader stream, ref T variable, int index)

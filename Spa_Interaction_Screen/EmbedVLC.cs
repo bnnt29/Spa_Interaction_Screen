@@ -1,6 +1,10 @@
 ﻿using LibVLCSharp.Shared;
 using LibVLCSharp.WinForms;
+using PlanwerkLichtSpa.Properties;
 using System.Diagnostics;
+using System.Resources;
+using System.Runtime.CompilerServices;
+using System.Windows.Forms;
 
 namespace Spa_Interaction_Screen
 {
@@ -8,17 +12,18 @@ namespace Spa_Interaction_Screen
     {
 
         private LibVLC libvlc;
+        private MainForm main = null;
         private Task? keepVideoalive = null;
         private bool runvideo = false;
         private LibVLCSharp.WinForms.VideoView TVvideoView;
-        private PictureBox TVPictureView;
+        private PictureBox welcomeqr;
         private String currentlyshowing;
 
         public EmbedVLC(MainForm f, Screen screen)
         {
             InitializeComponent();
-
-            f.EnterFullscreen(this, screen);
+            main = f;
+            main.EnterFullscreen(this, screen);
             createElements();
 
             Core.Initialize();
@@ -47,44 +52,59 @@ namespace Spa_Interaction_Screen
             TVvideoView.Hide();
             Controls.Add(TVvideoView);
             // Make VideoView control
-
             // 
-            // pictureBox1
+            // welcomeqr
             // 
-            TVPictureView = new PictureBox();
-            ((System.ComponentModel.ISupportInitialize)TVPictureView).BeginInit();
-
-            TVPictureView.BackColor = Color.Black;
-            TVPictureView.Dock = DockStyle.Fill;
-            TVPictureView.Location = new Point(0, 0);
-            TVPictureView.SizeMode = PictureBoxSizeMode.Zoom;
-            TVPictureView.Name = "pictureBox1";
-            TVPictureView.Size = new Size(this.Width, this.Height);
-            TVPictureView.TabIndex = 1;
-            TVPictureView.TabStop = false;
-            TVPictureView.Hide();
-            Controls.Add(TVPictureView);
+            welcomeqr = new PictureBox();
+            ((System.ComponentModel.ISupportInitialize)welcomeqr).BeginInit();
+            welcomeqr.BackColor = Color.Black;
+            welcomeqr.Name = "qrbox";
+            welcomeqr.TabIndex = 1;
+            welcomeqr.TabStop = false;
+            welcomeqr.Size = new Size(424, 332);
+            welcomeqr.SizeMode = PictureBoxSizeMode.Zoom;
+            Controls.Add(welcomeqr);
+            newsession();
         }
 
         public void quitMedia()
         {
             runvideo = false;
-            TVPictureView.Hide();
+            this.BackgroundImage = null;
             TVvideoView.Hide();
-            TVPictureView.Image = null;
             TVvideoView.MediaPlayer.Media = null;
             currentlyshowing = null;
         }
 
-        public void changeMedia(String link)
+        public void newsession()
+        {
+            if (main.generateQRCode(welcomeqr, 29, true, (int)(Constants.Element_width * 1.5), true))
+            {
+                welcomeqr.Location = new Point(this.Width / 2 - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
+                welcomeqr.BringToFront();
+                welcomeqr.Show();
+            }
+            else
+            {
+                welcomeqr.Hide();
+            }
+        }
+
+        public void changeMedia(String link, bool user)
         {
             if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
             {
+#if DEBUG
                 Debug.Print($"Already showing: {link}");
+#endif
                 return;
             }
             Debug.Print($"Showing {link}");
             quitMedia();
+            if (user)
+            {
+                welcomeqr.Hide();
+            }
             int index = link.LastIndexOf('.');
             switch (link.Substring(index))
             {
@@ -141,7 +161,6 @@ namespace Spa_Interaction_Screen
             currentlyshowing = link;
 
             TVvideoView.Show();
-            TVvideoView.BringToFront();
 
             runvideo = true;
             /*
@@ -157,6 +176,7 @@ namespace Spa_Interaction_Screen
             });
             */
             //keepVideoalive.Start();
+            welcomeqr.BringToFront();
 
         }
 
@@ -170,11 +190,9 @@ namespace Spa_Interaction_Screen
 
             Image image = Image.FromFile(link);
 
-            TVPictureView.Image = image;
+            this.BackgroundImage = image;
             currentlyshowing = link;
-
-            TVPictureView.Show();
-            TVPictureView.BringToFront();
+            welcomeqr.BringToFront();
         }
     }
 }

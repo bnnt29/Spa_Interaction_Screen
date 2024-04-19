@@ -39,6 +39,10 @@
         public const int maxSaunaSettings = 6;
         public static Color selected_color = Color.Green;
 
+        //USB
+        public const int waitfordmxanswer = 10;
+        public const int waittonextcheck = 100;
+
         public class SystemSetting
         {
             public int startvalue = -1;//inclusive

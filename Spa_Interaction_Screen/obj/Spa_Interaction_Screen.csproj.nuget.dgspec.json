@@ -49,10 +49,6 @@
               "target": "Package",
               "version": "[3.0.3, )"
             },
-            "BarCode": {
-              "target": "Package",
-              "version": "[2024.4.4, )"
-            },
             "Cyotek.Windows.Forms.ColorPicker": {
               "target": "Package",
               "version": "[1.7.2, )"
@@ -68,6 +64,10 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
+            },
+            "QRCoder": {
+              "target": "Package",
+              "version": "[1.4.3, )"
             },
             "System.IO.Ports": {
               "target": "Package",

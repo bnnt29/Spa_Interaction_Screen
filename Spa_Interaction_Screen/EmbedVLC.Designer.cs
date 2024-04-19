@@ -37,7 +37,6 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(800, 450);
-            Controls.Add(TVPictureView);
             Name = "EmbedVLC";
             StartPosition = FormStartPosition.Manual;
             Text = "EmbedVLC";
