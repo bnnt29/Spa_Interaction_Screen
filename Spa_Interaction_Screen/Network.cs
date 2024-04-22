@@ -266,7 +266,6 @@ namespace Spa_Interaction_Screen
             int port_number = config.PortRouter;
             NetworkStream stream = null;
             Debug.Print("Telnet1");
-            Debug.Flush();
             try
             {
                 TcpClient client = new TcpClient(ip_address, port_number);

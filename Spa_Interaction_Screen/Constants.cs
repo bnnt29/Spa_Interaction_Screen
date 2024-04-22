@@ -4,7 +4,7 @@
     {
         public const int PasswordLength = 12;
         public const String Configpath = @"C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\ConfigFile.csv";
-        public const String CurrentVersion = "1.0";
+        public const String CurrentVersion = "1.1";
         public const int UDPReceivePort = 50100;
 
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
@@ -42,18 +42,19 @@
         //USB
         public const int waitfordmxanswer = 10;
         public const int waittonextcheck = 100;
+        public const int sendtimeout = 32;
 
         public class SystemSetting
         {
-            public int startvalue = -1;//inclusive
-            public int endvalue = -1;//inclusive
             public String JsonText = null;
         }
         public class SessionSetting
         {
             public int id = -1;
+            /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
+            */
             public int JsonValue = -1;
             public String? ShowText = null;
         }
@@ -61,8 +62,10 @@
         public class ServicesSetting
         {
             public int id = -1;
+            /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
+            */
             public String JsonText = null;
             public String ShowText = null;
         }
@@ -77,7 +80,7 @@
         }
 
 
-        public static Button createButton(int width, int height, int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, TabPage tp, MainForm form, EventHandler? ev)
+        public static Button createButton(int width, int height, int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev)
         {
             Button b = null;
             createButton(Pos_x, Pos_y, bl, Text, Tag, tp, form, ev, out b);
@@ -85,13 +88,13 @@
             return b;
         }
 
-        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, TabPage tp, MainForm form, EventHandler? ev)
+        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev)
         {
             Button b = new Button();
             createButton(Pos_x, Pos_y, bl, Text, Tag, tp, form, ev, out b);
         }
 
-        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, TabPage tp, MainForm form, EventHandler? ev, out Button? b)
+        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev, out Button? b)
         {
             Point point = new Point(Pos_x, Pos_y);
             b = Constants.createButton((bl != null) ? bl.Count : -1, Text, Tag, point);

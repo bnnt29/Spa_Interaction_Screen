@@ -219,11 +219,20 @@ namespace Spa_Interaction_Screen
 
         public void createColorPageElements()
         {
+            int Posx, Posy;
+            GetDynamicPosition(1, 0, out Posx, out Posy, 0, 0, false);
+            Label label = new Label();
+            label.AutoSize = true;
+            label.ForeColor = SystemColors.ControlLightLight;
+            label.Text = "Ambientebeleuchtungsfarbe";
+            form.ColorPage.Controls.Add(label);
+            label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy);
+
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
-            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 2.25), (int)(Constants.windowwidth / 2.25));
-            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), (Constants.tabheight / 2) - (form.colorWheelElement.Size.Height / 2));
-            form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
+            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3)); 
             form.ColorPage.Controls.Add(form.colorWheelElement);
+            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight- (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2)+(label.Location.Y + label.Size.Height));
+            form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
             form.ColorPage.BackColor = Color.Black;
         }
 
@@ -618,10 +627,16 @@ namespace Spa_Interaction_Screen
 
         public void setActiveDMXScene(int index)
         {
+            if(config == null)
+            {
+                return;
+            }
             int old = config.DMXSceneSetting;
             if (index < config.DMXScenes.Count && index >= 0)
             {
                 config.DMXSceneSetting = index;
+                config.prevscene = (byte[]) config.DMXScenes[old].Channelvalues.Clone();
+                config.lastchangetime = DateTime.Now;
             }
             UpdateActiveDMXScene(old);
         }
@@ -790,20 +805,28 @@ namespace Spa_Interaction_Screen
                 }
                 config.password = Passwordparts(config.password, rnd, Constants.PasswordLength + rnd.Next(3));
             }
-            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
-            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
 #if !DEBUG
+            
+            form.loadscreen.Debugtext($"Sending Password \"{config.password}\" to the router", true);
             Network.SendTelnet($@"wifi pass {config.password}", form);
+
+
             form.WiFiPasswortLabel.Text = config.password;
 #else
             form.WiFiPasswortLabel.Text = "Passwort wird im Debug Modus nicht an den Router gesendet";
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y + 25);
 #endif
+
+            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
+
+            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
+
             form.WiFiSSIDLabel.Text = config.WiFiSSID;
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
             form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
+            form.loadscreen.Debugtext($"", false);
         }
 
         private void setConfigRestricted(Config config)
@@ -820,5 +843,6 @@ namespace Spa_Interaction_Screen
             config.DMXScenes[1].ButtonElement = b;
             selectButton(b, config.DMXSceneSetting == 1, Constants.selected_color);
         }
+
     }
 }

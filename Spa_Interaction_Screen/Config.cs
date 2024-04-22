@@ -1,10 +1,16 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Data.SqlTypes;
+using System.Diagnostics;
 using static Spa_Interaction_Screen.Constants;
 
 namespace Spa_Interaction_Screen
 {
     public class Config
     {
+        public bool allread = false;
+        public byte[] prevscene = null;
+        public DateTime lastchangetime;
+
         //current generated wifi password
         public String password = null;
 
@@ -16,6 +22,7 @@ namespace Spa_Interaction_Screen
         public int StateSendInterval = -1;
         public String ComPort = null;
         public String EnttecComPort = null;
+        public int FadeTime = -1;
         public String[] Wartungspin = null;
         public int Sitzungsdauer = -1;
         public String GastroUrl = null;
@@ -36,26 +43,19 @@ namespace Spa_Interaction_Screen
         public byte[] HDMISwitchInterval = null;
         public int HDMISwitchchannel = -1;
         public byte[] ObjectLightInterval = null;
+        public int ObjectLightchannel = -1;
         public String Objectname = null;
         public int[][] colorwheelvalues;
-        public int SystemSettingsChannel = -1;
         public List<Constants.SystemSetting> SystemSettings = null;
-        public int ObjectLightchannel = -1;
         public int SessionSetting = -1;
         public int DMXSceneSetting = -1;
-        public int DMXSceneSettingChannel = -1;
         public String DMXSceneSettingJson = null;
         public String VolumeSliderName = null;
         public int Volume = -1;
-        public int VolumeChannel = -1;
         public String VolumeJson = null;
-        public int StateChannel = -1;
         public List<Constants.SessionSetting> SessionSettings = null;
-        public int SessionChannel = -1;
         public List<Constants.ServicesSetting> ServicesSettings = null;
-        public int ServicesChannel = -1;
         public List<Constants.DMXScene> DMXScenes = null;
-        public int DMXScenesChannel = -1;
 
         public Config(Config? c)
         {
@@ -100,28 +100,35 @@ namespace Spa_Interaction_Screen
                 return;
             }
             bool read_all = true;
-            read_all = getcsvFields(stream, ref Room, 0);
-            read_all = getcsvFields(stream, ref TotalRooms, 0);
-            read_all = getcsvFields(stream, ref IPZentrale, -1);
-            read_all = getcsvFields(stream, ref PortZentrale, 0);
-            read_all = getcsvFields(stream, ref StateSendInterval, 0);
-            read_all = getcsvFields(stream, ref ComPort, 0);
-            read_all = getcsvFields(stream, ref EnttecComPort, 0);
-            read_all = getcsvFields(stream, ref Wartungspin, -1);
-            read_all = getcsvFields(stream, ref Sitzungsdauer, 0);
-            read_all = getcsvFields(stream, ref GastroUrl, 0);
-            read_all = getcsvFields(stream, ref WiFiSSID, 0);
-            read_all = getcsvFields(stream, ref WiFiAPIPassword, 0);
-            read_all = getcsvFields(stream, ref IPRouter, -1);
-            read_all = getcsvFields(stream, ref PortRouter, 0);
-            read_all = getcsvFields(stream, ref showtime, 0);
-            read_all = getcsvFields(stream, ref showcolor, 0);
-            read_all = getcsvFields(stream, ref PasswordFilePath, 0);
-            read_all = getcsvFields(stream, ref LogoFilePath, 0);
-            read_all = getcsvFields(stream, ref AmbienteBackgroundFilePath, 0);
-            read_all = getcsvFields(stream, ref MediaBackgroundFilePath, 0);
-            read_all = getcsvFields(stream, ref TimeBackgroundFilePath, 0);
-            read_all = getcsvFields(stream, ref ServiceBackgroundFilePath, 0);
+            read_all = getcsvFields(stream, ref Room, 0, false, read_all); 
+            read_all = getcsvFields(stream, ref TotalRooms, 0, false, read_all);
+            read_all = getcsvFields(stream, ref IPZentrale, -1, false, read_all);
+            read_all = getcsvFields(stream, ref PortZentrale, 0, false, read_all);
+            read_all = getcsvFields(stream, ref StateSendInterval, 0, false, read_all);
+            read_all = getcsvFields(stream, ref ComPort, 0, false, read_all);
+            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
+            read_all = getcsvFields(stream, ref FadeTime, 0, false, read_all);
+            read_all = getcsvFields(stream, ref Wartungspin, -1, false, read_all);
+            read_all = getcsvFields(stream, ref Sitzungsdauer, 0, false, read_all);
+            read_all = getcsvFields(stream, ref GastroUrl, 0, false, read_all);
+            read_all = getcsvFields(stream, ref WiFiSSID, 0, false, read_all);
+            read_all = getcsvFields(stream, ref WiFiAPIPassword, 0, false, read_all);
+            read_all = getcsvFields(stream, ref IPRouter, -1, false, read_all);
+            read_all = getcsvFields(stream, ref PortRouter, 0, false, read_all);
+            read_all = getcsvFields(stream, ref showtime, 0, false, read_all);
+            read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
+            read_all = getcsvFields(stream, ref PasswordFilePath, 0, false, read_all);
+            read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref AmbienteBackgroundFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref MediaBackgroundFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref TimeBackgroundFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref ServiceBackgroundFilePath, 0, true, read_all);
+            if (!read_all)
+            {
+                Debug.Print("Something went wrong in reading the single Variables (x01)");
+                stream.Close();
+                return;
+            }
             finalizePaths(out PasswordFilePath, PasswordFilePath);
             finalizePaths(out LogoFilePath, LogoFilePath);
             finalizePaths(out AmbienteBackgroundFilePath, AmbienteBackgroundFilePath);
@@ -130,13 +137,21 @@ namespace Spa_Interaction_Screen
             finalizePaths(out ServiceBackgroundFilePath, ServiceBackgroundFilePath);
             stream.ReadLine();
             String[] Dimmerchannelval1 = null;
-            read_all = getcsvFields(stream, ref Dimmerchannelval1, -1);
+            read_all = getcsvFields(stream, ref Dimmerchannelval1, -1, false, read_all);
             String[] Dimmerchannelval2 = null;
-            read_all = getcsvFields(stream, ref Dimmerchannelval2, -1);
-            Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]), Int32.Parse(Dimmerchannelval2[0]) };
+            read_all = getcsvFields(stream, ref Dimmerchannelval2, -1, false, read_all);
+            try
+            {
+                Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]), Int32.Parse(Dimmerchannelval2[0]) };
+            }
+            catch (FormatException e)
+            {
+                Debug.Print(e.Message);
+                Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
+            }
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
-            read_all = getcsvFields(stream, ref field, -1);
+            read_all = getcsvFields(stream, ref field, -1, false, read_all);
             try
             {
                 HDMISwitchchannel = Int32.Parse(field[0]);
@@ -148,7 +163,7 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
             }
             field = null;
-            read_all = getcsvFields(stream, ref field, -1);
+            read_all = getcsvFields(stream, ref field, -1, false, read_all);
             try
             {
                 ObjectLightchannel = Int32.Parse(field[0]);
@@ -161,18 +176,18 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
             }
             String[] ReadFields = null;
-            read_all = getcsvFields(stream, ref ReadFields, -1);
+            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             colorwheelvalues = new Int32[3][];
             bool atleastonechannel = false;
             for (int i = 0; i < ReadFields.Length; i++)
             {
-                int x = 0;
+                int y = 0;
                 colorwheelvalues[i] = new Int32[ReadFields[i].Length];
                 foreach (String number in ReadFields[i].Split(','))
                 {
                     try
                     {
-                        colorwheelvalues[i][x++] = Int32.Parse(number.Trim());
+                        colorwheelvalues[i][y++] = Int32.Parse(number.Trim());
                     }
                     catch (FormatException e)
                     {
@@ -181,121 +196,101 @@ namespace Spa_Interaction_Screen
                     }
                     atleastonechannel = true;
                 }
-                Array.Resize(ref colorwheelvalues[i], x);
+                Array.Resize(ref colorwheelvalues[i], y);
             }
             if (!atleastonechannel)
             {
                 showcolor = 0;
             }
-            read_all = getcsvFields(stream, ref ReadFields, -1);
             while (ReadFields == null || !ReadFields[0].Equals("System"))
             {
-                read_all = getcsvFields(stream, ref ReadFields, -1);
+                read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             }
-            SystemSettingsChannel = Int32.Parse(ReadFields[1]);
             SystemSettings = new List<SystemSetting>();
             for (int i = 0; i < 4; i++)
             {
-                read_all = getcsvFields(stream, ref ReadFields, -1);
+                read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                 SystemSetting s = new SystemSetting();
-                s.startvalue = Int32.Parse(ReadFields[0]);
-                s.endvalue = Int32.Parse(ReadFields[1]);
-                s.JsonText = ReadFields[2];
+                s.JsonText = ReadFields[0];
                 SystemSettings.Add(s);
             }
 
             stream.ReadLine();
-            read_all = getcsvFields(stream, ref ReadFields, -1);
+            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             DMXSceneSettingJson = ReadFields[0];
             DMXSceneSetting = Int32.Parse(ReadFields[1]);
-            DMXSceneSettingChannel = Int32.Parse(ReadFields[2]);
 
-            read_all = getcsvFields(stream, ref ReadFields, -1);
+            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             slidernames[2] = ReadFields[0];
             VolumeJson = ReadFields[1];
             Volume = Int32.Parse(ReadFields[2]);
-            VolumeChannel = Int32.Parse(ReadFields[3]);
 
-            stream.ReadLine();
             if (!read_all)
             {
-                Debug.Print("Something went wrong in reading the single Variables");
+                Debug.Print("Something went wrong in reading the single Variables (x02)");
                 stream.Close();
                 return;
             }
-            while (ReadFields == null || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
+            while (!read_all || ReadFields == null || ReadFields.Length <= 0 || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
             {
-                read_all = getcsvFields(stream, ref ReadFields, -1);
+                read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             }
             if (!read_all)
             {
-                Debug.Print("Something went wrong in reading the bunch Variables");
+                Debug.Print("Something went wrong in reading the bunch Variables (x03)");
                 stream.Close();
                 return;
             }
             SessionSettings = new List<SessionSetting>();
             ServicesSettings = new List<ServicesSetting>();
             DMXScenes = new List<DMXScene>();
-            while (read_all)
+            int x = 3 * 21;
+            while (x>=0)
             {
+                x--;
+                if(stream == null || stream.EndOfStream)
+                {
+                    read_all= true;
+                    break;
+                }
+                if (ReadFields == null)
+                {
+                    ReadFields = new string[1];
+                }
                 switch (ReadFields[0])
                 {
                     case "Session":
-                        if (SessionChannel < 0 && ReadFields.Length > 1)
-                        {
-                            SessionChannel = Int32.Parse(ReadFields[1]);
-                        }
-                        read_all = getcsvFields(stream, ref ReadFields, -1);
-                        while (ReadFields == null || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        while (read_all && ReadFields != null && ReadFields.Length>0 && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes"))
                         {
                             SessionSetting si = new SessionSetting();
                             si.id = SessionSettings.Count;
-                            si.startvalue = Int32.Parse(ReadFields[0]);
-                            si.endvalue = Int32.Parse(ReadFields[1]);
-                            si.JsonValue = Int32.Parse(ReadFields[2]);
+                            si.JsonValue = Int32.Parse(ReadFields[0]);
                             if (ReadFields.Length > 3)
                             {
-                                si.ShowText = ReadFields[3];
+                                si.ShowText = ReadFields[1];
                             }
                             SessionSettings.Add(si);
-                            read_all = getcsvFields(stream, ref ReadFields, -1);
-                            if (!read_all)
-                            {
-                                Debug.Print($"Something went wrong in reading the Session Variables: {SessionSettings.Count}");
-                                break;
-                            }
+                            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
+                        read_all = true;
                         break;
                     case "Services":
-                        if (ServicesChannel < 0 && ReadFields.Length > 1)
-                        {
-                            ServicesChannel = Int32.Parse(ReadFields[1]);
-                        }
-                        read_all = getcsvFields(stream, ref ReadFields, -1);
-                        while (ReadFields == null || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Session") && !ReadFields[0].Equals("DMXScenes"))
                         {
                             ServicesSetting si = new ServicesSetting();
                             si.id = ServicesSettings.Count;
-                            int ind = 0;
-                            if (ReadFields.Length > 3)
-                            {
-                                si.startvalue = Int32.Parse(ReadFields[ind++]);
-                                si.endvalue = Int32.Parse(ReadFields[ind++]);
-                            }
-                            si.ShowText = ReadFields[ind++];
-                            si.JsonText = ReadFields[ind++];
-                            ServicesSettings.Add(si);
-                            read_all = getcsvFields(stream, ref ReadFields, -1);
-                            if (!read_all)
-                            {
-                                Debug.Print($"Something went wrong in reading the Services Variables: {ServicesSettings.Count}");
-                                break;
-                            }
+                            si.JsonText = ReadFields[0];
+                            si.ShowText = ReadFields[1];
+                            ServicesSettings.Add(si); 
+                            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
+                        read_all=true;
                         break;
                     case "DMXScenes":
-                        read_all = getcsvFields(stream, ref ReadFields, -1);
-                        while (ReadFields == null || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services"))
                         {
                             DMXScene scene = new DMXScene();
                             int i = 0;
@@ -310,31 +305,32 @@ namespace Spa_Interaction_Screen
                                 finalizePaths(out scene.ContentPath, scene.ContentPath);
                                 scene.Channelvalues = new byte[ReadFields.Length - 3];
                             }
-                            int x = i;
+                            int y = i;
                             for (i = i; i < scene.Channelvalues.Length; i++)
                             {
                                 if (Int32.Parse(ReadFields[i]) > 255 || Int32.Parse(ReadFields[i]) < 0)
                                 {
-                                    scene.Channelvalues[i - x] = 0;
+                                    scene.Channelvalues[i - y] = 0;
                                 }
                                 else
                                 {
-                                    scene.Channelvalues[i - x] = Byte.Parse(ReadFields[i]);
+                                    scene.Channelvalues[i - y] = Byte.Parse(ReadFields[i]);
                                 }
                             }
                             DMXScenes.Add(scene);
-                            read_all = getcsvFields(stream, ref ReadFields, -1);
-                            if (!read_all)
-                            {
-                                Debug.Print($"Something went wrong in reading the DMXScenes Variables: {DMXScenes.Count}");
-                                break;
-                            }
+                            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
+                        read_all = true;
                         break;
                     default:
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         break;
                 }
-                read_all = getcsvFields(stream, ref ReadFields, -1);
+            }
+            stream.Close();
+            if (!read_all)
+            {
+                return;
             }
             while (DMXScenes.Count < 2)
             {
@@ -356,7 +352,7 @@ namespace Spa_Interaction_Screen
                 }
                 DMXScenes.Add(scene);
             }
-            stream.Close();
+            allread = true;
         }
 
         private void finalizePaths(out String? sp, String s)
@@ -375,17 +371,24 @@ namespace Spa_Interaction_Screen
             sp = s;
         }
 
-        public bool getcsvFields<T>(StreamReader stream, ref T variable, int index)
+        public bool getcsvFields<T>(StreamReader stream, ref T variable, int index, bool canbeempty, bool lasttry)
         {
-            dynamic dynamicVariable = variable;
+            variable = default(T); 
             if (stream == null || stream.EndOfStream)
             {
                 return false;
             }
-            String[] s = stripComments(stream.ReadLine().Split(Delimiter[0]), Delimiter[1]);
+            String line = stream.ReadLine();
+            if (!lasttry)
+            {
+                Debug.Print("Something went wrong in reading the single Variables (x05)");
+                stream.Close();
+                return false;
+            }
+            String[] s = stripComments(line.Split(Delimiter[0]), Delimiter[1]);
             if (s == null || s.Length <= 0)
             {
-                return false;
+                return canbeempty;
             }
             if (index >= 0 && s.Length >= index)
             {

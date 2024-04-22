@@ -53,12 +53,12 @@ namespace Spa_Interaction_Screen
 
         public void sendDMX(byte[] channels)
         {
-            if(channels==null || channels.Length<=0 || port==null || port.IsOpen)
+            if(channels==null || channels.Length<=0 || port==null || !port.IsOpen)
             {
                 return;
             }
             Debug.Print($"Sending {channels.Length} + startbyte to enttec DMX sender");
-            byte[] temp = new byte[513];
+            byte[] temp = new byte[50];
             Buffer.BlockCopy(channels, 0, temp,1, channels.Length);
             temp = DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.SEND_DMX_PACKET_REQUEST_LABEL, temp);
             port.Write(temp, 0, temp.Length);
@@ -73,7 +73,7 @@ namespace Spa_Interaction_Screen
         {
             if (port == null)
             {
-                port = new SerialPort(config.EnttecComPort, 9600, Parity.None, 8, StopBits.One);
+                port = new SerialPort(config.EnttecComPort, 38400, Parity.None, 8, StopBits.One);
             }
             if(!port.IsOpen)
             {
@@ -83,8 +83,10 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
+#if !DEBUG
                     Debug.Print(ex.Message);
                     Debug.Print("Error when trying to Open Enttec Port");
+#endif
                     form.currentState = 1;
                     return false;
                 }
@@ -93,30 +95,24 @@ namespace Spa_Interaction_Screen
             {
                 return true;
             }
-
             Task t = waitforusb(Port_SerialDataReceived, DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.GET_WIDGET_SERIAL_NUMBER_LABEL));
 
-            while (!t.IsCompleted)
+            t.Wait();
+
+            if (t.IsFaulted || error_while_receiving)
             {
-                if(t.IsFaulted || error_while_receiving)
-                {
-                    return false;
-                }
-                Thread.Sleep(10);
+                return false;
             }
 
 
             t = waitforusb(Port_ParamsDataReceived, DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.GET_WIDGET_PARAMS_LABEL));
 
-            while (!t.IsCompleted)
-            {
-                if (t.IsFaulted || error_while_receiving)
-                {
-                    return false;
-                }
-                Thread.Sleep(10);
-            }
+            t.Wait();
 
+            if (t.IsFaulted || error_while_receiving)
+            {
+                return false;
+            }
             return true;
         }
 

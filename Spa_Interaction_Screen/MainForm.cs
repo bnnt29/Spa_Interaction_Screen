@@ -5,6 +5,7 @@ using QRCoder;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Reflection;
+using static QRCoder.PayloadGenerator.SwissQrCode;
 
 
 namespace Spa_Interaction_Screen
@@ -12,7 +13,7 @@ namespace Spa_Interaction_Screen
     public partial class MainForm : Form
     {
         private EmbedVLC vlc;
-        private Loading loadscreen;
+        public Loading loadscreen;
 
         System.Windows.Forms.Timer t = null;
         public DateTime Sessionstart;
@@ -40,6 +41,8 @@ namespace Spa_Interaction_Screen
         private Task state = null;
         private Task windows = null;
 
+        private bool exitProgramm = false;
+
         public MainForm()
         {
             this.Hide();
@@ -52,9 +55,25 @@ namespace Spa_Interaction_Screen
             changeddimmerchannels = new byte[3];
             loadscreen = new Loading(this, main);
             loadscreen.Show();
+            loadscreen.Activate();
             loadscreen.updateProgress(10);
-            config = new Config(null);
+            InitializeComponent();
+            this.Hide();
             loadscreen.updateProgress(20);
+            while ((config == null || !config.allread) && !exitProgramm)
+            {
+                config = new Config(null);
+                loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", true);
+                loadscreen.exitp(true);
+            }
+            if (exitProgramm)
+            {
+                Application.Exit();
+                return;
+            }
+            loadscreen.Debugtext("", false);
+            loadscreen.exitp(false);
+            loadscreen.updateProgress(30);
             net = new Network(this, config);
             /*Old way of creating Com port
             this.components = new System.ComponentModel.Container();
@@ -64,8 +83,6 @@ namespace Spa_Interaction_Screen
             */
             serialPort1 = new SerialPort(config.ComPort, 9600);
             enttec = new EnttecCom(this, config);
-            loadscreen.updateProgress(30);
-            InitializeComponent();
             loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
             loadscreen.updateProgress(50);
@@ -74,7 +91,13 @@ namespace Spa_Interaction_Screen
 
         public async void Main_Load(object sender, EventArgs e)
         {
+            if (exitProgramm)
+            {
+                Application.Exit();
+                return;
+            }
             this.Hide();
+
             start();
             loadscreen.updateProgress(90);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
@@ -83,18 +106,38 @@ namespace Spa_Interaction_Screen
             {
                 vlc.Show();
             }
+
+            setupThreads();
             loadscreen.updateProgress(100);
+            this.TopMost = false;
+            loadscreen.TopMost = true;
+            for(int i = 0; i < UIControl.TabCount; i++)
+            {
+                UIControl.SelectTab(i);
+                Application.DoEvents();
+            }
+            UIControl.SelectTab(0);
+            this.Show();
+            EnterFullscreen(this, main);
+            loadscreen.Hide();
+            loadscreen.Close();
+            loadscreen = null;
+            if (exitProgramm)
+            {
+                Application.Exit();
+            }
+        }
 
-            
-
-            dmx = Task.Run(async () =>
+        private void setupThreads()
+        {
+            dmx = Task.Run(() =>
             {
                 while (true)
                 {
                     SendCurrentSceneOverCom();
+                    Application.DoEvents();
                 }
             });
-
             windows = Task.Run(() =>
             {
                 while (true)
@@ -132,11 +175,7 @@ namespace Spa_Interaction_Screen
                     Network.UDPSender(request, false);
                     Thread.Sleep(config.StateSendInterval * 1000);
                 }
-            }); 
-            
-            
-            this.Show();
-            loadscreen.Hide();
+            });
         }
 
         private void start()
@@ -236,10 +275,16 @@ namespace Spa_Interaction_Screen
             {
                 Hours += DateTime.Now.TimeOfDay.Hours.ToString();
             }
-            clock.Text = $"{Hours}:{Minutes}";
-            clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
-            timer.Text = config.SessionSettings[minutes_received].ShowText;
-            timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
+            if(clock != null)
+            {
+                clock.Text = $"{Hours}:{Minutes}";
+                clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
+            }
+            if (timer != null)
+            {
+                timer.Text = config.SessionSettings[minutes_received].ShowText;
+                timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
+            }
             /*
             timer.Text = $"{((DateTime.Now.Subtract(Sessionstart).Minutes - config.Sitzungsdauer) * (-1)).ToString()}";
             timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
@@ -462,37 +507,32 @@ namespace Spa_Interaction_Screen
         private void SendCurrentSceneOverCom()
         {
             bool noserial = false;
-            if (!serialPort1.IsOpen)
-            {
-                try
-                {
-                    serialPort1.Open();
-                }
-                catch (Exception ex)
-                {
-                    Debug.Print(ex.Message);
-                    Debug.Print("Error when trying to Open Com Port");
-                    currentState = 1;
-                    noserial = true;
-                }
-            }
+            Task con = null;
             if(!enttec.isopen())
             {
-                if (!enttec.connect())
+                con = Task.Run(() =>
                 {
-                    Debug.Print("Error when trying to Communicate with Enttec Port");
-                    currentState = 1;
-                }
-                else
-                {
-                    noserial = false;
-                }
-            }
-
-            if (noserial)
-            {
-                Thread.Sleep(30);
-                return;
+                    /*if (!serialPort1.IsOpen)
+                    {
+                        try
+                        {
+                            serialPort1.Open();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.Print(ex.Message);
+                            Debug.Print("Error when trying to Open Com Port");
+                            currentState = 1;
+                            noserial = true;
+                        }
+                    }*/
+                    if (!enttec.connect())
+                    {
+                        Debug.Print("Error when trying to Communicate with Enttec Port");
+                        currentState = 1;
+                    }
+                });
+                
             }
 
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
@@ -511,24 +551,41 @@ namespace Spa_Interaction_Screen
             if (config.HDMISwitchchannel >= 0 && config.HDMISwitchchannel < tempchannelvalues.Length)
             {
                 tempchannelvalues[config.HDMISwitchchannel] = (!streaming) ? (byte)255 : (byte)0;
-
             }
             for (int i = 0; i < tempchannelvalues.Length; i++)
             {
                 tempchannelvalues[i] = (tempchannelvalues[i] >= 255) ? (byte)254 : tempchannelvalues[i];
             }
             tempchannelvalues[0] = 255;
+            byte[] fade = new byte[tempchannelvalues.Length];
+            int fadesteps = config.FadeTime / Constants.sendtimeout;
+            if(DateTime.Now.Millisecond - config.lastchangetime.Millisecond <= config.FadeTime && config.prevscene != null)
+            {
+                for(int i = 0; i < tempchannelvalues.Length; i++)
+                {
+                    fade[i] = (byte)((((int)config.prevscene[i] - (int)tempchannelvalues[i])/fadesteps)*(int)Math.Round((double)(DateTime.Now.Millisecond - config.lastchangetime.Millisecond) / (double)Constants.sendtimeout));  
+                }
+            }
+            con.Wait();
             if (serialPort1.IsOpen)
             {
-                serialPort1.Write(tempchannelvalues, 0, tempchannelvalues.Length);
-                enttec.sendDMX(tempchannelvalues);
-                Thread.Sleep(55);
+                //serialPort1.Write(tempchannelvalues, 0, tempchannelvalues.Length);
             }
             else
             {
                 currentState = 1;
-                System.Console.WriteLine("unable to open Serial Port");
+                //Debug.Print("unable to open Serial Port");
             }
+            if (enttec.isopen())
+            {
+                enttec.sendDMX(tempchannelvalues);
+            }
+            else
+            {
+                currentState = 1;
+                Debug.Print("unable to open Serial Port");
+            }
+            Thread.Sleep((int)(Constants.sendtimeout));
         }
 
         public void Ambiente_Design_Handler(object sender, EventArgs e)
@@ -619,7 +676,7 @@ namespace Spa_Interaction_Screen
                 AmbientelautstärkeColorSliderDescribtion.Show();
                 TVSettingsVolumeColorSliderDescribtion.Show();
                 streaming = false;
-                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, true);
+                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, true);
                 //SendCurrentSceneOverCom();
             }
         }
@@ -703,6 +760,10 @@ namespace Spa_Interaction_Screen
         public void AmbientVolume(Decimal Value, int? tag, object? sender)
         {
             defaultPlaybackDevice.Volume = Decimal.ToDouble(Value);
+            if (helper.FormColorSlides == null)
+            {
+                return;
+            }
             foreach (ColorSlider.ColorSlider slider in helper.FormColorSlides)
             {
                 if (slider != null && ((int?)(slider.Tag)) == tag && !slider.Equals((ColorSlider.ColorSlider)(sender)))
@@ -785,6 +846,7 @@ namespace Spa_Interaction_Screen
         public void reset()
         {
             this.Hide();
+            loadscreen = new Loading(this, main);
             loadscreen.Show();
             loadscreen.updateProgress(20);
             logout();
@@ -801,6 +863,8 @@ namespace Spa_Interaction_Screen
             this.Show();
             vlc.Show();
             loadscreen.Hide();
+            loadscreen.Close();
+            loadscreen = null;
         }
 
         public String ArraytoString(String[] array, int until)
@@ -850,6 +914,24 @@ namespace Spa_Interaction_Screen
         public void NewSession()
         {
             reset();
+        }
+
+        public void ExitProgramm(object sender, EventArgs e)
+        {
+            exitProgramm = true;
+            if (dmx != null)
+            {
+                dmx.Dispose();
+            }
+            if (state != null)
+            {
+                state.Dispose();
+            }
+            if (windows != null)
+            {
+                windows.Dispose();
+            }
+            Application.Exit();
         }
     }
 }
