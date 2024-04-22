@@ -28,13 +28,22 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print($"Send {req.type} Request to {req.destination}:{req.port} with {req.label}, {req.id}");
             }
-            Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            UdpClient client = new UdpClient();
             IPAddress serverAddr = IPAddress.Parse(req.destination);
             IPEndPoint endPoint = new IPEndPoint(serverAddr, req.port);
             string text = assembleJsonString(req);
             byte[] send_buffer = Encoding.ASCII.GetBytes(text);
-
-            sock.SendTo(send_buffer, endPoint);
+            int num = 0;
+            try
+            {
+                num = client.Send(send_buffer, send_buffer.Length, endPoint);
+            }
+            catch (Exception e)
+            {
+                Debug.Print(e.Message);
+            }
+            Debug.Print($"[{req.type}]Bytes send via UDP: {num}");
+            Debug.Print(text);
         }
 
         private static String assembleJsonString(RequestJson req)
@@ -43,7 +52,7 @@ namespace Spa_Interaction_Screen
             s += $"\"type\":{req.type}";
             if (req.Raum != null)
             {
-                s += $",\"room\":{req.type}";
+                s += $",\"room\":{req.Raum}";
             }
             if (req.label != null)
             {
@@ -51,7 +60,7 @@ namespace Spa_Interaction_Screen
             }
             if (req.id != null)
             {
-                s += $",\"room\":{req.id}";
+                s += $",\"id\":{req.id}";
             }
             if (req.values != null)
             {
@@ -63,7 +72,7 @@ namespace Spa_Interaction_Screen
                 s += "]";
             }
             s += "}";
-            return "";
+            return s;
         }
 
         public class RequestJson
@@ -266,9 +275,11 @@ namespace Spa_Interaction_Screen
             int port_number = config.PortRouter;
             NetworkStream stream = null;
             Debug.Print("Telnet1");
+            TcpClient client = null;
+            String response = null;
             try
             {
-                TcpClient client = new TcpClient(ip_address, port_number);
+                client = new TcpClient(ip_address, port_number);
 #if DEBUG
                 Debug.WriteLine("[Communication] : [EstablishConnection] : Success connecting to : {0}, port: {1}", ip_address, port_number);
 #endif
@@ -290,12 +301,14 @@ namespace Spa_Interaction_Screen
 #if DEBUG
             Debug.Write("Sent : {0}", command);
 #endif
-
+            /*
             // Receive response
-            string response = ReadMessage(stream);
+            response = ReadMessage(stream);
 #if DEBUG
             Debug.WriteLine("Received : {0}", response);
 #endif
+            */
+            client.Close();
             return response;
         }
         public static string ReadMessage(NetworkStream stream)

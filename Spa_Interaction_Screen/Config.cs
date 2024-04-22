@@ -30,8 +30,10 @@ namespace Spa_Interaction_Screen
         public String WiFiAPIPassword = null;
         public String[] IPRouter = null;
         public int PortRouter = -1;
-        public int showtime = -1;
-        public int showcolor = -1;
+        public bool showtime = false;
+        public bool showcolor = false;
+        public int Logoposition = -1;
+        public bool[] showLogo = null;
         public String PasswordFilePath = null;
         public String LogoFilePath = null;
         public String AmbienteBackgroundFilePath = null;
@@ -59,7 +61,130 @@ namespace Spa_Interaction_Screen
 
         public Config(Config? c)
         {
-            if (!File.Exists(Constants.Configpath))
+            if (!LoadPreConfig())
+            {
+                Debug.Print("Problem in loading PreConfig");
+                return;
+            }
+            LoadContentConfig();
+        }
+
+        private bool LoadPreConfig()
+        {
+            if (!File.Exists(Constants.PreConfigPath))
+            {
+                Debug.Print("Config not Found ");
+                return false;
+            }
+            StreamReader stream = null;
+            try
+            {
+                stream = File.OpenText(Constants.PreConfigPath);
+            }
+            catch (IOException ex)
+            {
+                Debug.Print(ex.Message);
+                Debug.Print("Could not open Config File");
+            }
+            if (stream == null)
+            {
+                return false;
+            }
+            String res = null;
+            while ((res == null || res.Length <= 0) && !stream.EndOfStream)
+            {
+                res = stream.ReadLine();
+            }
+            if (stream.EndOfStream)
+            {
+                Debug.Print("Reached End of file unexpectedly. No Data Read.");
+                stream.Close();
+                return false;
+            }
+            String[] data = res.Split(Constants.PreConfigDelimiter);
+            Debug.Print($"CSV Version: {data[1]}");
+            if (!data[1].Equals(Constants.CurrentVersion))
+            {
+                Debug.Print("Config doesnt have the Correct Version");
+                stream.Close();
+                return false;
+            }
+            Constants.ContentPath = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower()+"\\";
+            try 
+            {
+                Constants.PasswordLength = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.UDPReceivePort = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+            }
+            catch (FormatException e)
+            { 
+                Debug.Print(e.Message);
+                return false;
+            }
+            Char[] seps = new Char[2];
+            seps[0] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
+            seps[1] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
+            Constants.Delimiter = seps;
+            Constants.Sonderzeichen = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray();
+            try
+            {
+                Constants.maxscenes = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.maxhelps = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.XButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.YButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.InlineUntilXButtons = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+            }
+            catch (FormatException e)
+            {
+                Debug.Print(e.Message);
+                return false;
+            }
+            try
+            {
+                Constants.noCOM = Boolean.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower());
+                Constants.noNet = Boolean.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower());
+            }
+            catch (FormatException e)
+            {
+                Debug.Print(e.Message);
+                return false;
+            }
+            try
+            {
+                Constants.Logoposxdist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.Logoposydist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.Logoxsize = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.Logoysize = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+            }
+            catch (FormatException e)
+            {
+                Debug.Print(e.Message);
+                return false;
+            }
+            return true;
+        }
+
+        private String ReadPreConfig(StreamReader stream)
+        {
+            String s = "";
+            if(stream == null || stream.EndOfStream)
+            {
+                return s;
+            }
+            try
+            {
+                s = stream.ReadLine();
+            }catch (IOException e)
+            {
+                Debug.Print(e.Message);
+            }
+            return (s!=null)?s:"";
+        }
+
+        private void LoadContentConfig()
+        {
+            String Path = Constants.ContentPath + "ConfigFile.csv";
+            Debug.Print($"Using {Path} for the MainConfig Path");
+            if (!File.Exists(Path))
             {
                 Debug.Print("Config not Found ");
                 return;
@@ -67,7 +192,7 @@ namespace Spa_Interaction_Screen
             StreamReader stream = null;
             try
             {
-                stream = File.OpenText(Constants.Configpath);
+                stream = File.OpenText(Path);
             }
             catch (IOException ex)
             {
@@ -79,7 +204,7 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            String res = stream.ReadLine();
+            String res = null;
 
             while ((res == null || res.Length <= 0) && !stream.EndOfStream)
             {
@@ -100,7 +225,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             bool read_all = true;
-            read_all = getcsvFields(stream, ref Room, 0, false, read_all); 
+            read_all = getcsvFields(stream, ref Room, 0, false, read_all);
             read_all = getcsvFields(stream, ref TotalRooms, 0, false, read_all);
             read_all = getcsvFields(stream, ref IPZentrale, -1, false, read_all);
             read_all = getcsvFields(stream, ref PortZentrale, 0, false, read_all);
@@ -117,6 +242,28 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref PortRouter, 0, false, read_all);
             read_all = getcsvFields(stream, ref showtime, 0, false, read_all);
             read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
+            String[] sl = null;
+            read_all = getcsvFields(stream, ref sl, -1, false, read_all);
+            try
+            {
+                Logoposition = Int32.Parse(sl[0]);
+            }
+            catch(FormatException e)
+            {
+                Debug.Print(e.Message);
+            }
+            showLogo = new bool[7];
+            try
+            {
+                for(int i = 0;i< showLogo.Length; i++)
+                {
+                    showLogo[i] = Boolean.Parse(sl[i + 1]);
+                }
+            }
+            catch (FormatException e)
+            {
+                Debug.Print(e.Message);
+            }
             read_all = getcsvFields(stream, ref PasswordFilePath, 0, false, read_all);
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref AmbienteBackgroundFilePath, 0, true, read_all);
@@ -200,7 +347,7 @@ namespace Spa_Interaction_Screen
             }
             if (!atleastonechannel)
             {
-                showcolor = 0;
+                showcolor = false;
             }
             while (ReadFields == null || !ReadFields[0].Equals("System"))
             {
@@ -245,12 +392,12 @@ namespace Spa_Interaction_Screen
             ServicesSettings = new List<ServicesSetting>();
             DMXScenes = new List<DMXScene>();
             int x = 3 * 21;
-            while (x>=0)
+            while (x >= 0)
             {
                 x--;
-                if(stream == null || stream.EndOfStream)
+                if (stream == null || stream.EndOfStream)
                 {
-                    read_all= true;
+                    read_all = true;
                     break;
                 }
                 if (ReadFields == null)
@@ -261,7 +408,7 @@ namespace Spa_Interaction_Screen
                 {
                     case "Session":
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                        while (read_all && ReadFields != null && ReadFields.Length>0 && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes"))
+                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes"))
                         {
                             SessionSetting si = new SessionSetting();
                             si.id = SessionSettings.Count;
@@ -283,10 +430,10 @@ namespace Spa_Interaction_Screen
                             si.id = ServicesSettings.Count;
                             si.JsonText = ReadFields[0];
                             si.ShowText = ReadFields[1];
-                            ServicesSettings.Add(si); 
+                            ServicesSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
-                        read_all=true;
+                        read_all = true;
                         break;
                     case "DMXScenes":
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -295,8 +442,8 @@ namespace Spa_Interaction_Screen
                             DMXScene scene = new DMXScene();
                             int i = 0;
                             scene.id = DMXScenes.Count;
-                            scene.ShowText = ReadFields[i++];
                             scene.JsonText = ReadFields[i++];
+                            scene.ShowText = ReadFields[i++];
                             scene.Channelvalues = new byte[ReadFields.Length - 2];
                             int rese;
                             if (!int.TryParse(ReadFields[ReadFields.Length - 1], out rese))
@@ -352,6 +499,7 @@ namespace Spa_Interaction_Screen
                 }
                 DMXScenes.Add(scene);
             }
+            prevscene = new byte[DMXScenes[0].Channelvalues.Length];
             allread = true;
         }
 
@@ -361,7 +509,7 @@ namespace Spa_Interaction_Screen
             {
                 if (s.Length >= 0)
                 {
-                    s = $@"{s.ToLower()}";
+                    s = $@"{Constants.ContentPath}{s.ToLower()}";
                 }
                 else
                 {

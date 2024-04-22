@@ -18,12 +18,14 @@ namespace Spa_Interaction_Screen
         private LibVLCSharp.WinForms.VideoView TVvideoView;
         private PictureBox welcomeqr;
         private String currentlyshowing;
+        private Screen scrn;
 
         public EmbedVLC(MainForm f, Screen screen)
         {
             InitializeComponent();
             main = f;
-            main.EnterFullscreen(this, screen);
+            scrn = screen;
+            main.EnterFullscreen(this, scrn);
             createElements();
 
             Core.Initialize();
@@ -61,7 +63,6 @@ namespace Spa_Interaction_Screen
             welcomeqr.Name = "qrbox";
             welcomeqr.TabIndex = 1;
             welcomeqr.TabStop = false;
-            welcomeqr.Size = new Size(424, 332);
             welcomeqr.SizeMode = PictureBoxSizeMode.Zoom;
             Controls.Add(welcomeqr);
             newsession();
@@ -78,7 +79,7 @@ namespace Spa_Interaction_Screen
 
         public void newsession()
         {
-            if (main.generateQRCode(welcomeqr, 29, true, (int)(Constants.Element_width * 1.5), true))
+            if (main.generateQRCode(welcomeqr, 29, true, (int)(scrn.Bounds.Width*0.2), true))
             {
                 welcomeqr.Location = new Point(this.Width / 2 - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
                 welcomeqr.BringToFront();

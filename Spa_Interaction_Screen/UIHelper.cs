@@ -10,7 +10,10 @@ namespace Spa_Interaction_Screen
         private MainForm form;
         private Config config;
 
+        public List<TabPage> tabs = new List<TabPage>();
+
         public List<ColorSlider.ColorSlider> FormColorSlides = new List<ColorSlider.ColorSlider>();
+        public List<PictureBox> Logos = new List<PictureBox>();
         public List<Control> AllElements = new List<Control>();
 
         public List<Button> AmbientePageButtons = new List<Button>();
@@ -104,7 +107,15 @@ namespace Spa_Interaction_Screen
         {
             //Form Lists
             {
+                tabs = new List<TabPage>();
+                tabs.Add(form.AmbientePage);
+                tabs.Add(form.ColorPage);
+                tabs.Add(form.GastronomiePage);
+                tabs.Add(form.MediaPage);
+                tabs.Add(form.ServicePage);
+                tabs.Add(form.WartungPage);
                 FormColorSlides = new List<ColorSlider.ColorSlider>();
+                Logos = new List<PictureBox>();
                 AllElements = new List<Control>();
             }
 
@@ -226,12 +237,12 @@ namespace Spa_Interaction_Screen
             label.ForeColor = SystemColors.ControlLightLight;
             label.Text = "Ambientebeleuchtungsfarbe";
             form.ColorPage.Controls.Add(label);
-            label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy);
+            label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy-15);
 
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
             form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3)); 
             form.ColorPage.Controls.Add(form.colorWheelElement);
-            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight- (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2)+(label.Location.Y + label.Size.Height));
+            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
             form.ColorPage.BackColor = Color.Black;
         }
@@ -351,16 +362,16 @@ namespace Spa_Interaction_Screen
             int Pos_x, Pos_y = 0;
             form.WartungCodeField.Text = "Pin eingeben:";
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0, false);
-            form.WartungCodeField.Location = new Point(Constants.windowwidth / 2 - form.WartungCodeField.Size.Width / 2, Pos_y);
+            form.WartungCodeField.Location = new Point(Constants.windowwidth / 2 - form.WartungCodeField.Size.Width / 2, Pos_y-15);
             form.WartungCodeField.Show();
 
             form.RestrictedAreaDescribtion.Text = "Zugriff nur für Mitarbeiter";
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0.8, false);
-            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaDescribtion.Size.Width / 2, Pos_y);
+            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaDescribtion.Size.Width / 2, Pos_y-40);
             form.RestrictedAreaDescribtion.Show();
 
             int startx = Constants.windowwidth / 2 - ((3 * Constants.Element_height + 3 * Constants.Element_y_padding) / 2);
-            int starty = Constants.windowheight / 2 - Constants.Element_height * 2;
+            int starty = Constants.windowheight / 2 - Constants.Element_height * 2 - 50;
 
             for (int i = 0; i < 3; i++)
             {
@@ -395,21 +406,21 @@ namespace Spa_Interaction_Screen
             form.RestrictedAreaTitle.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y);
             form.RestrictedAreaTitle.Show();
 
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
             /*
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, null);
             */
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
 
-            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
             setConfigRestricted(config);
         }
@@ -635,7 +646,6 @@ namespace Spa_Interaction_Screen
             if (index < config.DMXScenes.Count && index >= 0)
             {
                 config.DMXSceneSetting = index;
-                config.prevscene = (byte[]) config.DMXScenes[old].Channelvalues.Clone();
                 config.lastchangetime = DateTime.Now;
             }
             UpdateActiveDMXScene(old);
@@ -648,7 +658,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             config = c;
-            if (config.showtime > 0)
+            if (config.showtime)
             {
                 createTimePageElements();
             }
@@ -657,7 +667,7 @@ namespace Spa_Interaction_Screen
                 form.GastronomieWebview.Source = new Uri(config.GastroUrl, UriKind.Absolute);
             }
             form.UIControl.SelectTab(1);
-            if (config.showcolor > 0)
+            if (config.showcolor)
             {
                 createColorPageElements();
                 /*
@@ -721,7 +731,7 @@ namespace Spa_Interaction_Screen
                 form.AmbientePage.BackgroundImageLayout = ImageLayout.Zoom;
                 form.AmbientePage.BackgroundImage = Image.FromFile(config.AmbienteBackgroundFilePath);
             }
-            GenNewPassword(out Pos_x, out Pos_y);
+            GenNewPassword();
 
             if (config.MediaBackgroundFilePath != null && config.MediaBackgroundFilePath.Length > 2 && File.Exists(config.MediaBackgroundFilePath))
             {
@@ -769,9 +779,55 @@ namespace Spa_Interaction_Screen
                 }
                 SetupLabelofTrackbar(s, l, config.slidernames[((int)s.Tag) - 1]);
             }
+            while (Logos.Count > 0)
+            {
+                PictureBox Log = Logos[0];
+                Log.Parent.Controls.Remove(Log);
+                Log.Hide();
+                Logos.Remove(Log);
+                Log.Dispose();
+            }
+            for(int i = 0;i < config.showLogo.Length;i++)
+            {
+                if (config.showLogo[i])
+                {
+                    PictureBox Logoview = new PictureBox();
+                    Logoview.SizeMode = PictureBoxSizeMode.Zoom;
+                    try
+                    {
+                        Logoview.Image = Image.FromFile(config.LogoFilePath);
+                    }catch(IOException e) 
+                    { 
+                        Debug.Print(e.Message);
+                    }
+                    Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
+                    int posx, posy = 0;
+                    if (config.Logoposition % 2 == 0)
+                    {
+                        posx=(Constants.windowwidth - Constants.Logoposxdist) - Constants.Logoxsize;
+                    }
+                    else
+                    {
+                        posx = Constants.Logoposxdist;
+                    }
+                    if (config.Logoposition>2)
+                    {
+                        posy = (Constants.tabheight - Constants.Logoposydist) - Constants.Logoysize;
+                    }
+                    else
+                    {
+                        posy = Constants.Logoposydist;
+                    }
+                    Logoview.Location = new Point(posx, posy);
+                    Logoview.TabStop = false;
+                    Logos.Add(Logoview);
+                    tabs[i].Controls.Add(Logoview);
+                    Logoview.BringToFront();
+                }
+            }
         }
 
-        private void GenNewPassword(out int Pos_x, out int Pos_y)
+        private async void GenNewPassword()
         {
             List<string> strings = GetPasswortWords();
             config.password = "";
@@ -806,28 +862,35 @@ namespace Spa_Interaction_Screen
                 config.password = Passwordparts(config.password, rnd, Constants.PasswordLength + rnd.Next(3));
             }
 
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
-#if !DEBUG
-            
             form.loadscreen.Debugtext($"Sending Password \"{config.password}\" to the router", true);
-            Network.SendTelnet($@"wifi pass {config.password}", form);
+            Task x = Task.Run(() =>
+            {
+                try
+                {
+                    Network.SendTelnet($@"wifi pass {config.password}", form);
+                }
+                catch (Exception e)
+                {
+                    Debug.Print(e.Message);
+                }
+            });
+            int Pos_x, Pos_y; 
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
+            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
 
-
-            form.WiFiPasswortLabel.Text = config.password;
-#else
-            form.WiFiPasswortLabel.Text = "Passwort wird im Debug Modus nicht an den Router gesendet";
-            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y + 25);
-#endif
-
-            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
-
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
 
             form.WiFiSSIDLabel.Text = config.WiFiSSID;
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
-            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
+
+            form.WiFiPasswortLabel.Text = config.password;
+
+            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
+
             form.loadscreen.Debugtext($"", false);
+            await x;
         }
+
 
         private void setConfigRestricted(Config config)
         {
@@ -837,7 +900,7 @@ namespace Spa_Interaction_Screen
             }
             int Pos_x, Pos_y;
 
-            GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(4, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Button b = null;
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[1].ShowText, config.DMXScenes[1], form.WartungPage, form, form.Ambiente_Change_Handler, out b);
             config.DMXScenes[1].ButtonElement = b;

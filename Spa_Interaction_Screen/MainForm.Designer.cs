@@ -149,7 +149,7 @@ namespace Spa_Interaction_Screen
             GastronomieWebview.Location = new Point(3, 3);
             GastronomieWebview.Name = "GastronomieWebview";
             GastronomieWebview.Size = new Size(1390, 672);
-            GastronomieWebview.Source = new Uri("https://www.foreveryoungspa.com/", UriKind.Absolute);
+            GastronomieWebview.Source = new Uri(Constants.PreConfigGastroURL, UriKind.Absolute);
             GastronomieWebview.TabIndex = 1;
             GastronomieWebview.ZoomFactor = 1D;
             // 
@@ -214,7 +214,14 @@ namespace Spa_Interaction_Screen
             // 
             // WiFiQRCodePicturebox
             // 
-            WiFiQRCodePicturebox.Image = (Image)resources.GetObject("WiFiQRCodePicturebox.Image");
+            WiFiQRCodePicturebox.Image = null;
+            try
+            {
+                WiFiQRCodePicturebox.Image = Image.FromFile(@"C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\QRplaceholderstillcreating.png");
+            }catch(IOException e) 
+            {
+                Debug.Print(e.Message);
+            }
             WiFiQRCodePicturebox.Location = new Point(124, 164);
             WiFiQRCodePicturebox.Name = "WiFiQRCodePicturebox";
             WiFiQRCodePicturebox.Size = new Size(424, 332);

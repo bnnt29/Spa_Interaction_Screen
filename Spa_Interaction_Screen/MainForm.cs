@@ -19,8 +19,6 @@ namespace Spa_Interaction_Screen
         public DateTime Sessionstart;
         public DateTime Sessionend;
         private byte[] changeddimmerchannels;
-        private SerialPort serialPort1;
-        private EnttecCom enttec;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
         private bool passwordstillvalid = true;
@@ -35,7 +33,9 @@ namespace Spa_Interaction_Screen
 
         private Config config;
         private UIHelper helper;
-        private Network net;
+        private Network? net = null;
+        private EnttecCom? enttec = null;
+        private SerialPort? serialPort1 = null;
 
         private Task dmx = null;
         private Task state = null;
@@ -52,6 +52,7 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Could not detect main screen");
                 return;
             }
+            Constants.recalcsizes(main.Bounds.Size.Width, main.Bounds.Size.Height);
             changeddimmerchannels = new byte[3];
             loadscreen = new Loading(this, main);
             loadscreen.Show();
@@ -74,15 +75,21 @@ namespace Spa_Interaction_Screen
             loadscreen.Debugtext("", false);
             loadscreen.exitp(false);
             loadscreen.updateProgress(30);
-            net = new Network(this, config);
+            if (!Constants.noNet)
+            {
+                net = new Network(this, config);
+            }
             /*Old way of creating Com port
             this.components = new System.ComponentModel.Container();
             serialPort1 = new SerialPort(this.components);
             serialPort1.PortName = config.ComPort;
             serialPort1.BaudRate = 9600;
             */
-            serialPort1 = new SerialPort(config.ComPort, 9600);
-            enttec = new EnttecCom(this, config);
+            if (!Constants.noCOM)
+            {
+                serialPort1 = new SerialPort(config.ComPort, 9600);
+                enttec = new EnttecCom(this, config);
+            }
             loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
             loadscreen.updateProgress(50);
@@ -161,9 +168,9 @@ namespace Spa_Interaction_Screen
             });
 
             //TODO: Test the State updater
-            state = Task.Run(async () =>
+            state = Task.Run(() =>
             {
-                while (true)
+                while (true && !Constants.noNet)
                 {
                     Network.RequestJson request = new Network.RequestJson();
 
@@ -172,7 +179,7 @@ namespace Spa_Interaction_Screen
                     request.type = "Status";
                     request.id = currentState;
                     request.Raum = config.Room;
-                    Network.UDPSender(request, false);
+                    Network.UDPSender(request, true);
                     Thread.Sleep(config.StateSendInterval * 1000);
                 }
             });
@@ -182,20 +189,24 @@ namespace Spa_Interaction_Screen
         {
             EnterFullscreen(this, main);
             loadscreen.updateProgress(60);
-            if (config.showtime <= 0)
+            if (!config.showtime)
             {
                 UIControl.Controls.Remove(TimePage);
             }
-            if (config.showcolor <= 0)
+            if (!config.showcolor)
             {
                 UIControl.Controls.Remove(ColorPage);
             }
-            int tabs = 5;
-            if (config.showtime > 0)
+            int tabs = 5; 
+            if (config.showcolor)
             {
                 tabs++;
             }
-            UIControl.ItemSize = new Size(Constants.windowwidth / tabs, Constants.windowheight - Constants.tabheight);
+            if (config.showtime)
+            {
+                tabs++;
+            }
+            UIControl.ItemSize = new Size((Constants.windowwidth-tabs) / tabs, Constants.windowheight - Constants.tabheight);
 
             loadscreen.updateProgress(70);
             defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
@@ -241,7 +252,7 @@ namespace Spa_Interaction_Screen
             Sessionend = Sessionend.AddMinutes(config.Sitzungsdauer);
 
             loadscreen.updateProgress(80);
-            if (config.showtime > 0)
+            if (config.showtime)
             {
                 t = new System.Windows.Forms.Timer();
                 t.Interval = 500;
@@ -356,7 +367,7 @@ namespace Spa_Interaction_Screen
             {
                 pinfield.Text += "* ";
             }
-            pinfield.Location = new Point((Constants.windowwidth - pinfield.Size.Width) / 2, Pos_y);
+            pinfield.Location = new Point((Constants.windowwidth - pinfield.Size.Width) / 2, Pos_y-30);
             if (passwordwaswrong)
             {
                 foreach (Button b in helper.WartungPageButtons)
@@ -506,9 +517,13 @@ namespace Spa_Interaction_Screen
 
         private void SendCurrentSceneOverCom()
         {
+            if (Constants.noCOM)
+            {
+                return;
+            }
             bool noserial = false;
             Task con = null;
-            if(!enttec.isopen())
+            if (!enttec.isopen())
             {
                 con = Task.Run(() =>
                 {
@@ -558,14 +573,20 @@ namespace Spa_Interaction_Screen
             }
             tempchannelvalues[0] = 255;
             byte[] fade = new byte[tempchannelvalues.Length];
-            int fadesteps = config.FadeTime / Constants.sendtimeout;
-            if(DateTime.Now.Millisecond - config.lastchangetime.Millisecond <= config.FadeTime && config.prevscene != null)
+            int millis = DateTime.Now.Millisecond - config.lastchangetime.Millisecond;
+            if(millis <= config.FadeTime && config.prevscene != null)
             {
-                for(int i = 0; i < tempchannelvalues.Length; i++)
+                double fadesteps = (config.FadeTime - millis) / Constants.sendtimeout;
+                for (int i = 0; i < tempchannelvalues.Length; i++)
                 {
-                    fade[i] = (byte)((((int)config.prevscene[i] - (int)tempchannelvalues[i])/fadesteps)*(int)Math.Round((double)(DateTime.Now.Millisecond - config.lastchangetime.Millisecond) / (double)Constants.sendtimeout));  
+                    if(fadesteps == 0)
+                    {
+                        break;
+                    }
+                    fade[i] += (byte)((double)(config.prevscene[i] - tempchannelvalues[i])/fadesteps);  
                 }
             }
+            config.prevscene = fade;
             con.Wait();
             if (serialPort1.IsOpen)
             {
@@ -578,7 +599,7 @@ namespace Spa_Interaction_Screen
             }
             if (enttec.isopen())
             {
-                enttec.sendDMX(tempchannelvalues);
+                enttec.sendDMX(fade);
             }
             else
             {
@@ -683,6 +704,10 @@ namespace Spa_Interaction_Screen
 
         public void Service_Request_Handle(object sender, EventArgs e)
         {
+            if (Constants.noNet)
+            {
+                return;
+            }
             Network.RequestJson request = new Network.RequestJson();
 
             request.destination = ArraytoString(config.IPZentrale, 4);
@@ -853,7 +878,10 @@ namespace Spa_Interaction_Screen
             Config c = new Config(config);
             loadscreen.updateProgress(40);
             config = c;
-            net.changeconfig(c);
+            if (!Constants.noNet)
+            {
+                net.changeconfig(c);
+            }
             helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
             loadscreen.updateProgress(50);

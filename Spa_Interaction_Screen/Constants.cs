@@ -1,42 +1,44 @@
-﻿namespace Spa_Interaction_Screen
+﻿using System.Runtime.CompilerServices;
+
+namespace Spa_Interaction_Screen
 {
     public static class Constants
     {
-        public const int PasswordLength = 12;
-        public const String Configpath = @"C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\ConfigFile.csv";
+        //Constants
         public const String CurrentVersion = "1.1";
-        public const int UDPReceivePort = 50100;
-
+        public static String PreConfigPath = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\AdminConfig";
+        public const String PreConfigGastroURL = @"https://www.lieferando.de/";
+        public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
 
+        //PreConfig
+        public static String ContentPath = null;
+        public static int PasswordLength = 12;
+        public static int UDPReceivePort = 50100;
         private static Char[] delimiter = new Char[] { ';', '#' };
         private static Char[] sonderzeichen = new Char[] { '!', '?', '_' };
+        public static int maxscenes = 12;
+        public static int maxhelps = 12;
+        public static int XButtonCount = 5;
+        public static int YButtonCount = 5;
+        public static int InlineUntilXButtons = 5;
+        public static bool noCOM = false;
+        public static bool noNet = false;
+        public static int Logoposxdist = 50;
+        public static int Logoposydist = 50;
+        public static int Logoxsize = 50;
+        public static int Logoysize = 50;
 
-        public static Char[] Delimiter
-        {
-            get { return delimiter; }
-        }
-
-        public static Char[] Sonderzeichen
-        {
-            get { return sonderzeichen; }
-        }
 
         //UI
-        public const int windowwidth = 1420;
-        public const int windowheight = 800;
-        public const int XButtonCount = 5;
-        public const int YButtonCount = 5;
-        public const int tabheight = (int)((double)windowheight * 0.87);
-        public const int Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.87);
-        public const int Element_x_padding = (int)((double)windowwidth / (XButtonCount + 1)) - Element_width;
-        public const int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
-        public const int Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
-        public const int InlineUntilXButtons = 5;
-        public const int maxscenes = 12;
-        public const int maxhelps = 12;
-        public const int maxSaunaSettings = 6;
+        public static int windowwidth = 1420;
+        public static int windowheight = 800;
+        public static int tabheight = (int)((double)windowheight * 0.87);
+        public static int Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.87);
+        public static int Element_x_padding = (int)((double)windowwidth / (XButtonCount + 1)) - Element_width;
+        public static int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
+        public static int Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
         public static Color selected_color = Color.Green;
 
         //USB
@@ -48,6 +50,7 @@
         {
             public String JsonText = null;
         }
+
         public class SessionSetting
         {
             public int id = -1;
@@ -79,6 +82,28 @@
             public Button ButtonElement = null;
         }
 
+        public static Char[] Delimiter
+        {
+            get { return delimiter; }
+            set { delimiter = value; }
+        }
+
+        public static Char[] Sonderzeichen
+        {
+            get { return sonderzeichen; }
+            set { sonderzeichen = value;}
+        }
+
+        public static void recalcsizes(int Hight, int Width)
+        {
+            windowwidth = Hight;
+            windowheight = Width;
+            tabheight = (int)((double)windowheight * 0.87);
+            Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.87);
+            Element_x_padding = (int)((double)windowwidth / (XButtonCount + 1)) - Element_width;
+            Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
+            Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
+        }
 
         public static Button createButton(int width, int height, int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev)
         {
