@@ -83,7 +83,7 @@ namespace Spa_Interaction_Screen
             // 
             // UIControl
             // 
-            UIControl.Alignment = TabAlignment.Bottom;
+            UIControl.Alignment = TabAlignment.Top;
             UIControl.Controls.Add(AmbientePage);
             UIControl.Controls.Add(ColorPage);
             UIControl.Controls.Add(GastronomiePage);
@@ -105,10 +105,11 @@ namespace Spa_Interaction_Screen
             // 
             // AmbientePage
             // 
-            AmbientePage.BackColor = Color.Black;
+            AmbientePage.BackColor = Constants.Background;
             AmbientePage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
             AmbientePage.Location = new Point(4, 4);
             AmbientePage.Name = "AmbientePage";
+            ContextMenuStrip contextMenuStrip = new ContextMenuStrip();//TODO
             AmbientePage.Padding = new Padding(3);
             AmbientePage.RightToLeft = RightToLeft.No;
             AmbientePage.Size = new Size(1396, 678);
@@ -117,34 +118,34 @@ namespace Spa_Interaction_Screen
             // 
             // ColorPage
             // 
-            ColorPage.BackColor = Color.Black;
-            WartungPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            WartungCodeField.ForeColor = SystemColors.ControlLightLight;
+            ColorPage.BackColor = Constants.Background;
+            ColorPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            ColorPage.ForeColor = Constants.Text;
             ColorPage.Location = new Point(4, 4);
             ColorPage.Name = "ColorWheel";
             ColorPage.Padding = new Padding(3);
             ColorPage.Size = new Size(1396, 678);
             ColorPage.TabIndex = 6;
             ColorPage.Text = "Farbe";
-            ColorPage.UseVisualStyleBackColor = true;
             // 
             // GastronomiePage
             // 
             GastronomiePage.Controls.Add(GastronomieWebview);
+            GastronomiePage.BackColor = Constants.Background;
             GastronomiePage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            GastronomiePage.ForeColor = Constants.Text;
             GastronomiePage.Location = new Point(4, 4);
             GastronomiePage.Name = "GastronomiePage";
             GastronomiePage.Padding = new Padding(3);
             GastronomiePage.Size = new Size(1396, 678);
             GastronomiePage.TabIndex = 2;
             GastronomiePage.Text = "Gastronomie";
-            GastronomiePage.UseVisualStyleBackColor = true;
             // 
             // GastronomieWebview
             // 
             GastronomieWebview.AllowExternalDrop = true;
             GastronomieWebview.CreationProperties = null;
-            GastronomieWebview.DefaultBackgroundColor = Color.White;
+            GastronomieWebview.DefaultBackgroundColor = Constants.Background;
             GastronomieWebview.Dock = DockStyle.Fill;
             GastronomieWebview.Location = new Point(3, 3);
             GastronomieWebview.Name = "GastronomieWebview";
@@ -155,14 +156,15 @@ namespace Spa_Interaction_Screen
             // 
             // MediaPage
             // 
-            MediaPage.BackColor = Color.Black;
             MediaPage.Controls.Add(WiFiSSIDTitle);
             MediaPage.Controls.Add(WiFiSSIDLabel);
             MediaPage.Controls.Add(WiFiPasswordTitle);
             MediaPage.Controls.Add(WiFiPasswortLabel);
             MediaPage.Controls.Add(WiFiQRCodePicturebox);
             MediaPage.Controls.Add(TVSettingsTitle);
+            MediaPage.BackColor = Constants.Background;
             MediaPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            MediaPage.ForeColor = Constants.Text;
             MediaPage.Location = new Point(4, 4);
             MediaPage.Name = "MediaPage";
             MediaPage.Padding = new Padding(3);
@@ -173,8 +175,9 @@ namespace Spa_Interaction_Screen
             // WiFiSSIDTitle
             // 
             WiFiSSIDTitle.AutoSize = true;
-            WiFiSSIDTitle.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            WiFiSSIDTitle.ForeColor = SystemColors.ControlLightLight;
+            WiFiSSIDTitle.BackColor = Constants.Background;
+            WiFiSSIDTitle.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            WiFiSSIDTitle.ForeColor = Constants.Text;
             WiFiSSIDTitle.Location = new Point(598, 244);
             WiFiSSIDTitle.Name = "WiFiSSIDTitle";
             WiFiSSIDTitle.Size = new Size(117, 25);
@@ -184,7 +187,7 @@ namespace Spa_Interaction_Screen
             // WiFiSSIDLabel
             // 
             WiFiSSIDLabel.AutoSize = true;
-            WiFiSSIDLabel.ForeColor = SystemColors.ControlLightLight;
+            WiFiSSIDLabel.ForeColor = Constants.Text;
             WiFiSSIDLabel.Location = new Point(598, 293);
             WiFiSSIDLabel.Name = "WiFiSSIDLabel";
             WiFiSSIDLabel.Size = new Size(191, 25);
@@ -195,7 +198,7 @@ namespace Spa_Interaction_Screen
             // 
             WiFiPasswordTitle.AutoSize = true;
             WiFiPasswordTitle.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            WiFiPasswordTitle.ForeColor = SystemColors.ControlLightLight;
+            WiFiPasswordTitle.ForeColor = Constants.Text;
             WiFiPasswordTitle.Location = new Point(598, 347);
             WiFiPasswordTitle.Name = "WiFiPasswordTitle";
             WiFiPasswordTitle.Size = new Size(148, 25);
@@ -205,7 +208,7 @@ namespace Spa_Interaction_Screen
             // WiFiPasswortLabel
             // 
             WiFiPasswortLabel.AutoSize = true;
-            WiFiPasswortLabel.ForeColor = SystemColors.ControlLightLight;
+            WiFiPasswortLabel.ForeColor = Constants.Text;
             WiFiPasswortLabel.Location = new Point(598, 397);
             WiFiPasswortLabel.Name = "WiFiPasswortLabel";
             WiFiPasswortLabel.Size = new Size(227, 25);
@@ -222,6 +225,7 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print(e.Message);
             }
+            WiFiQRCodePicturebox.BackColor = Constants.Background;
             WiFiQRCodePicturebox.Location = new Point(124, 164);
             WiFiQRCodePicturebox.Name = "WiFiQRCodePicturebox";
             WiFiQRCodePicturebox.Size = new Size(424, 332);
@@ -233,7 +237,7 @@ namespace Spa_Interaction_Screen
             // 
             TVSettingsTitle.AutoSize = true;
             TVSettingsTitle.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            TVSettingsTitle.ForeColor = SystemColors.ControlLightLight;
+            TVSettingsTitle.ForeColor = Constants.Text;
             TVSettingsTitle.Location = new Point(906, 175);
             TVSettingsTitle.Name = "TVSettingsTitle";
             TVSettingsTitle.Size = new Size(192, 25);
@@ -242,22 +246,22 @@ namespace Spa_Interaction_Screen
             // 
             // TimePage
             // 
-            TimePage.BackColor = Color.Black;
-            WartungPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            WartungCodeField.ForeColor = SystemColors.ControlLightLight;
+            TimePage.BackColor = Constants.Background;
+            TimePage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            TimePage.ForeColor = Constants.Text;
             TimePage.Location = new Point(4, 4);
             TimePage.Name = "TimePage";
             TimePage.Padding = new Padding(3);
             TimePage.Size = new Size(1396, 678);
             TimePage.TabIndex = 6;
             TimePage.Text = "Uhr";
-            TimePage.UseVisualStyleBackColor = true;
             // 
             // ServicePage
             // 
-            ServicePage.BackColor = Color.Black;
             ServicePage.Controls.Add(HowCanIHelpYouDescribtion);
+            ServicePage.BackColor = Constants.Background;
             ServicePage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            ServicePage.ForeColor = Constants.Text;
             ServicePage.Location = new Point(4, 4);
             ServicePage.Name = "ServicePage";
             ServicePage.Padding = new Padding(3);
@@ -269,7 +273,7 @@ namespace Spa_Interaction_Screen
             // 
             HowCanIHelpYouDescribtion.AutoSize = true;
             HowCanIHelpYouDescribtion.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            HowCanIHelpYouDescribtion.ForeColor = SystemColors.ControlLightLight;
+            HowCanIHelpYouDescribtion.ForeColor = Constants.Text;
             HowCanIHelpYouDescribtion.Location = new Point(526, 389);
             HowCanIHelpYouDescribtion.Name = "HowCanIHelpYouDescribtion";
             HowCanIHelpYouDescribtion.Size = new Size(226, 25);
@@ -278,11 +282,12 @@ namespace Spa_Interaction_Screen
             // 
             // WartungPage
             // 
-            WartungPage.BackColor = Color.Black;
             WartungPage.Controls.Add(WartungCodeField);
             WartungPage.Controls.Add(RestrictedAreaDescribtion);
             WartungPage.Controls.Add(RestrictedAreaTitle);
+            WartungPage.BackColor = Constants.Background;
             WartungPage.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            WartungPage.ForeColor = Constants.Text;
             WartungPage.Location = new Point(4, 4);
             WartungPage.Name = "WartungPage";
             WartungPage.Padding = new Padding(3);
@@ -294,7 +299,7 @@ namespace Spa_Interaction_Screen
             // 
             WartungCodeField.AutoSize = true;
             WartungCodeField.Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            WartungCodeField.ForeColor = SystemColors.ControlLightLight;
+            WartungCodeField.ForeColor = Constants.Text;
             WartungCodeField.Location = new Point(577, 58);
             WartungCodeField.Name = "WartungCodeField";
             WartungCodeField.Size = new Size(89, 25);
@@ -305,7 +310,7 @@ namespace Spa_Interaction_Screen
             // 
             RestrictedAreaDescribtion.AutoSize = true;
             RestrictedAreaDescribtion.Font = new Font("Segoe UI", 14F, FontStyle.Italic, GraphicsUnit.Point, 0);
-            RestrictedAreaDescribtion.ForeColor = SystemColors.ControlLightLight;
+            RestrictedAreaDescribtion.ForeColor = Constants.Text;
             RestrictedAreaDescribtion.Location = new Point(511, 173);
             RestrictedAreaDescribtion.Name = "RestrictedAreaDescribtion";
             RestrictedAreaDescribtion.Size = new Size(249, 25);
@@ -316,7 +321,7 @@ namespace Spa_Interaction_Screen
             // 
             RestrictedAreaTitle.AutoSize = true;
             RestrictedAreaTitle.Font = new Font("Segoe UI", 22F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            RestrictedAreaTitle.ForeColor = SystemColors.ControlLightLight;
+            RestrictedAreaTitle.ForeColor = Constants.Text;
             RestrictedAreaTitle.Location = new Point(438, 263);
             RestrictedAreaTitle.Name = "RestrictedAreaTitle";
             RestrictedAreaTitle.Size = new Size(435, 41);

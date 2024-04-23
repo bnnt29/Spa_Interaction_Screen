@@ -45,6 +45,10 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "dependencies": {
+            "ArtNetSharp": {
+              "target": "Package",
+              "version": "[0.0.20, )"
+            },
             "AudioSwitcher.AudioApi.CoreAudio": {
               "target": "Package",
               "version": "[3.0.3, )"
@@ -56,6 +60,10 @@
             "LibVLCSharp.WinForms": {
               "target": "Package",
               "version": "[3.8.2, )"
+            },
+            "Microsoft.Toolkit.Diagnostics": {
+              "target": "Package",
+              "version": "[7.1.0, )"
             },
             "Microsoft.Web.WebView2": {
               "target": "Package",

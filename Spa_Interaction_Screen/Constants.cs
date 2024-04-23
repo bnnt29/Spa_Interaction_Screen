@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using BrbVideoManager.Controls;
+using System.Runtime.CompilerServices;
 
 namespace Spa_Interaction_Screen
 {
@@ -40,6 +41,12 @@ namespace Spa_Interaction_Screen
         public static int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
         public static int Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
         public static Color selected_color = Color.Green;
+        public static Color Background = Color.Blue;
+        public static Color Text = Color.Black;
+        public static Color Button = Color.Yellow;
+        public static Color ButtonText = Color.Black;
+        public static Color NumfieldErrorButtonColor = Color.Red;
+
 
         //USB
         public const int waitfordmxanswer = 10;
@@ -134,7 +141,7 @@ namespace Spa_Interaction_Screen
 
         public static Button createButton(int TabIndex, String Text, object? Tag, Point p)
         {
-            Button b = new Button();
+            RoundedButton b = new BrbVideoManager.Controls.RoundedButton();
             b.Size = new Size(Constants.Element_width, Constants.Element_height);
             if (TabIndex > 0)
             {
@@ -142,9 +149,14 @@ namespace Spa_Interaction_Screen
             }
             b.Tag = Tag;
             b.Text = Text;
+            b.BorderRadius = (Constants.Element_width>Constants.Element_height)? Constants.Element_width: Constants.Element_height;
+            b.BorderWidth = 5;
+            b.BorderDownColor = Constants.Text;
+            b.BackColor = Constants.Button;
+            b.AutoEllipsis = true;
             b.UseVisualStyleBackColor = true;
             b.Location = p;
-            return b;
+            return (Button)b;
         }
     }
 }

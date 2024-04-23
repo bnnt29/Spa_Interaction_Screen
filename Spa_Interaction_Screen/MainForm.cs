@@ -23,7 +23,6 @@ namespace Spa_Interaction_Screen
         private int currentPasswordindex = 0;
         private bool passwordstillvalid = true;
         private Label pinfield = null;
-        private Color NumfieldButtonColor = Color.Red;
         private bool passwordwaswrong = false;
         public int currentState = 3;
         public Screen? main;
@@ -357,7 +356,7 @@ namespace Spa_Interaction_Screen
                 pinfield = new Label();
                 pinfield.AutoSize = true;
                 pinfield.Font = new Font("Segoe UI", 16F, FontStyle.Bold, GraphicsUnit.Point, 0);
-                pinfield.ForeColor = SystemColors.ControlLightLight;
+                pinfield.ForeColor = Constants.Text;
                 pinfield.Name = "PinField";
                 WartungPage.Controls.Add(pinfield);
                 pinfield.Show();
@@ -372,9 +371,9 @@ namespace Spa_Interaction_Screen
             {
                 foreach (Button b in helper.WartungPageButtons)
                 {
-                    helper.selectButton(b, false, NumfieldButtonColor);
+                    helper.selectButton(b, false, Constants.NumfieldErrorButtonColor);
                 }
-                RestrictedAreaDescribtion.ForeColor = SystemColors.ControlLightLight;
+                RestrictedAreaDescribtion.ForeColor = Constants.Text;
                 passwordwaswrong = !passwordwaswrong;
             }
             if (currentPasswordindex == 6)
@@ -388,9 +387,9 @@ namespace Spa_Interaction_Screen
                 {
                     foreach (Button b in helper.WartungPageButtons)
                     {
-                        helper.selectButton(b, true, NumfieldButtonColor);
+                        helper.selectButton(b, true, Constants.NumfieldErrorButtonColor);
                     }
-                    RestrictedAreaDescribtion.ForeColor = Color.Red;
+                    RestrictedAreaDescribtion.ForeColor = Constants.Text;
                     passwordwaswrong = true;
                 }
                 if (pinfield != null)
@@ -587,7 +586,10 @@ namespace Spa_Interaction_Screen
                 }
             }
             config.prevscene = fade;
-            con.Wait();
+            if(con != null)
+            {
+                con.Wait();
+            }
             if (serialPort1.IsOpen)
             {
                 //serialPort1.Write(tempchannelvalues, 0, tempchannelvalues.Length);

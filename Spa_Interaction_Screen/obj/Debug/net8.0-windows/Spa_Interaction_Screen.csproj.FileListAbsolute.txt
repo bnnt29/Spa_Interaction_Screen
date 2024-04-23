@@ -977,3 +977,12 @@ C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\ob
 C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\obj\Debug\net8.0-windows\ref\Spa_Interaction_Screen.dll
 C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\QRCoder.dll
 C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\ENTTEC.Devices.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Toolkit.Diagnostics.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\ArtNetSharp.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.Options.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Microsoft.Extensions.Primitives.dll
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\RDMSharp.dll

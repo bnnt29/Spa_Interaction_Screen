@@ -10,7 +10,7 @@ maxhelps%12
 XButtonCount%5
 YButtonCount%5
 InlineuntilXButtons%5
-noCom%false
+noCom%true
 noNet%false
 Logoposxdist%50
 Logoposydist%50

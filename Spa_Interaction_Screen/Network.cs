@@ -269,7 +269,7 @@ namespace Spa_Interaction_Screen
 
             return values;
         }
-        public static String SendTelnet(String command, MainForm f)
+        public static async void SendTelnet(String command, MainForm f)
         {
             String ip_address = f.ArraytoString(config.IPRouter, 4);
             int port_number = config.PortRouter;
@@ -279,44 +279,91 @@ namespace Spa_Interaction_Screen
             String response = null;
             try
             {
-                client = new TcpClient(ip_address, port_number);
+                client = new TcpClient();
+                await client.ConnectAsync(ip_address, port_number);
+
+                
 #if DEBUG
-                Debug.WriteLine("[Communication] : [EstablishConnection] : Success connecting to : {0}, port: {1}", ip_address, port_number);
+                Debug.Print($"[Communication] : [EstablishConnection] : Success connecting to : {ip_address}, port: {port_number}");
 #endif
                 stream = client.GetStream();
             }
             catch (Exception e)
             {
-
-                Debug.WriteLine("[Communication] : [EstablishConnection] : Failed while connecting to : {0}, port: {1}", ip_address, port_number);
+                Debug.Print($"[Communication] : [EstablishConnection] : Failed while connecting to : {ip_address}, port: {port_number}");
                 Debug.Print(e.Message);
             }
             if (stream == null)
             {
-                return "";
+                return;
             }
-            // Send command
-            Byte[] data = System.Text.Encoding.ASCII.GetBytes(command);
-            stream.Write(data, 0, data.Length);
-#if DEBUG
-            Debug.Write("Sent : {0}", command);
-#endif
             /*
-            // Receive response
-            response = ReadMessage(stream);
+            while(!stream.CanRead)
+            {
+                
+            }
+            if (stream.CanRead)
+            {
+                response = ReadMessage(stream);
 #if DEBUG
-            Debug.WriteLine("Received : {0}", response);
+                Debug.Print($"Received: {response}");
 #endif
-            */
+            }
+            if (stream.CanRead)
+            {
+                response = ReadMessage(stream);
+#if DEBUG
+                Debug.Print($"Received: {response}");
+#endif
+            }*/
+            Debug.Print("Finished reading");
+            StreamWriter writer = new StreamWriter(stream);
+            // Send command
+            Byte[] data = System.Text.ASCIIEncoding.ASCII.GetBytes(command+"\n");
+            while (!stream.CanWrite)
+            {
+
+            }
+            writer.Write(data);
+            stream.Write(data, 0, data.Length);
+            //stream.Write(data, 0, data.Length);
+#if DEBUG
+            Debug.Print($"Sent: {command}");
+#endif
+            while (!stream.CanRead)
+            {
+
+            }
+            // Receive response
+            if (stream.CanRead)
+            {
+                response = ReadMessage(stream);
+#if DEBUG
+                Debug.Print($"Received: {response}");
+#endif
+            }
+            if (stream.CanRead)
+            {
+                response = ReadMessage(stream);
+#if DEBUG
+                Debug.Print($"Received: {response}");
+#endif
+            }
+            if (stream.CanRead)
+            {
+                response = ReadMessage(stream);
+#if DEBUG
+                Debug.Print($"Received: {response}");
+#endif
+            }
             client.Close();
-            return response;
         }
         public static string ReadMessage(NetworkStream stream)
         {
             // Receive response
             Byte[] responseData = new byte[256];
             Int32 numberOfBytesRead = stream.Read(responseData, 0, responseData.Length);
-            string response = System.Text.Encoding.ASCII.GetString(responseData, 0, numberOfBytesRead);
+            string response = Encoding.UTF8.GetString(responseData, 0, numberOfBytesRead);
 
             if (response == "SEND_COMMAND_AGAIN")
             {

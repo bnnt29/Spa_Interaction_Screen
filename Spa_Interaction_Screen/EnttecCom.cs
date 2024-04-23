@@ -43,7 +43,7 @@ namespace Spa_Interaction_Screen
             }
             if (i == Constants.waitfordmxanswer)
             {
-                error_while_receiving = true;
+                error_while_receiving = false;
                 Debug.Print($"Couldnt receive an Answer for {i * Constants.waittonextcheck} ms");
             }
             port.DataReceived -= ev;
@@ -58,7 +58,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             Debug.Print($"Sending {channels.Length} + startbyte to enttec DMX sender");
-            byte[] temp = new byte[50];
+            byte[] temp = new byte[20];
             Buffer.BlockCopy(channels, 0, temp,1, channels.Length);
             temp = DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.SEND_DMX_PACKET_REQUEST_LABEL, temp);
             port.Write(temp, 0, temp.Length);
@@ -73,7 +73,7 @@ namespace Spa_Interaction_Screen
         {
             if (port == null)
             {
-                port = new SerialPort(config.EnttecComPort, 38400, Parity.None, 8, StopBits.One);
+                port = new SerialPort(config.EnttecComPort, 9600, Parity.None, 8, StopBits.One);
             }
             if(!port.IsOpen)
             {
@@ -95,24 +95,6 @@ namespace Spa_Interaction_Screen
             {
                 return true;
             }
-            Task t = waitforusb(Port_SerialDataReceived, DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.GET_WIDGET_SERIAL_NUMBER_LABEL));
-
-            t.Wait();
-
-            if (t.IsFaulted || error_while_receiving)
-            {
-                return false;
-            }
-
-
-            t = waitforusb(Port_ParamsDataReceived, DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.GET_WIDGET_PARAMS_LABEL));
-
-            t.Wait();
-
-            if (t.IsFaulted || error_while_receiving)
-            {
-                return false;
-            }
             return true;
         }
 
@@ -122,9 +104,10 @@ namespace Spa_Interaction_Screen
             {
                 int bufferSize = 1024;
                 Byte[] buffer = new Byte[bufferSize];
-                //var readData = port.Read(buffer, 0, bufferSize);
+                var readData = port.Read(buffer, 0, bufferSize);
                 IMessageDeviceHandler<DmxUsbProParamsType> handler = Fabric.Instance.GetDmxUsbProMessageHandler<DmxUsbProParamsType>();
                 handler.HandleMessage(buffer);
+                
                 if (handler.MessageReady)
                 {
                     DmxUsbProParamsType message = handler.GetMessage();

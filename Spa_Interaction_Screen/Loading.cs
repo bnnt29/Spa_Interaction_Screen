@@ -16,7 +16,7 @@ namespace Spa_Interaction_Screen
             InitializeComponent();
             form = f;
             form.EnterFullscreen(this, screen);
-            this.BackColor = Color.Black;
+            this.BackColor = Constants.Background;
             addcomponents();
             exit_b = Constants.createButton(Constants.Element_width, Constants.Element_height, 0, 0, null, "ExitProgramm", null, this, null, form.ExitProgramm);
             exit_b.Location = new Point((this.Size.Width/2)-(exit_b.Size.Width/2),(progressBar.Location.Y-exit_b.Height)-10);
@@ -40,7 +40,7 @@ namespace Spa_Interaction_Screen
             {
                 DebugText = new Label();
                 DebugText.AutoSize = true;
-                DebugText.ForeColor = SystemColors.ControlLightLight;
+                DebugText.ForeColor = Constants.Text;
                 this.Controls.Add(DebugText);
                 DebugText.Show();
             }

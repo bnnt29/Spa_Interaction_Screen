@@ -12,6 +12,16 @@
   <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <SourceRoot Include="C:\Users\Berni\.nuget\packages\" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Content Include="$(NuGetPackageRoot)artnetsharp\0.0.20\contentFiles\any\net8.0\Icons\ArtNetSharp.ico" Condition="Exists('$(NuGetPackageRoot)artnetsharp\0.0.20\contentFiles\any\net8.0\Icons\ArtNetSharp.ico')">
+      <NuGetPackageId>ArtNetSharp</NuGetPackageId>
+      <NuGetPackageVersion>0.0.20</NuGetPackageVersion>
+      <NuGetItemType>Content</NuGetItemType>
+      <Pack>false</Pack>
+      <Private>False</Private>
+      <Link>Icons\ArtNetSharp.ico</Link>
+    </Content>
+  </ItemGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <PkgMicrosoft_Web_WebView2 Condition=" '$(PkgMicrosoft_Web_WebView2)' == '' ">C:\Users\Berni\.nuget\packages\microsoft.web.webview2\1.0.2420.47</PkgMicrosoft_Web_WebView2>
   </PropertyGroup>

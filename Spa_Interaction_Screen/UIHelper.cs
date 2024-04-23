@@ -38,7 +38,7 @@ namespace Spa_Interaction_Screen
         {
             form = f;
 
-            form.GastronomieWebview.BackColor = Color.Black;
+            form.GastronomieWebview.BackColor = Constants.Background;
 
             SetupElementsLists();
 
@@ -64,7 +64,7 @@ namespace Spa_Interaction_Screen
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
             ColorSlider.ColorSlider slide = new ColorSlider.ColorSlider();
-            slide.BackColor = Color.Black;
+            slide.BackColor = Constants.Background;
             slide.ElapsedInnerColor = Color.Green;
             slide.ElapsedPenColorBottom = Color.Green;
             slide.ElapsedPenColorTop = Color.Green;
@@ -73,11 +73,11 @@ namespace Spa_Interaction_Screen
             slide.BarPenColorTop = Color.White;
             slide.BarInnerColor = Color.White;
 
-            slide.ThumbInnerColor = Color.Blue;
+            slide.ThumbInnerColor = Constants.Button;
             slide.ThumbOuterColor = Color.White;
-            slide.ThumbPenColor = Color.Blue;
+            slide.ThumbPenColor = Constants.Button;
 
-            slide.TickColor = Color.White;
+            slide.TickColor = Constants.Text;
 
             slide.BorderRoundRectSize = new Size(8, 8);
             slide.Maximum = new decimal(max);
@@ -97,7 +97,7 @@ namespace Spa_Interaction_Screen
             slide.TickStyle = TickStyle.BottomRight;
             slide.Value = new decimal(0);
             slide.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            slide.ForeColor = SystemColors.ControlLightLight;
+            slide.ForeColor = Constants.Text;
             slide.ShowDivisionsText = true;
             slide.ShowSmallScale = true;
             return slide;
@@ -183,7 +183,7 @@ namespace Spa_Interaction_Screen
             FormColorSlides.Add(newslider);
             form.Dimmer1ColorSliderDescribtion = new Label();
             form.Dimmer1ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer1ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text;
             form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
             newslider.ValueChanged += form.Dimmer_Change;
 
@@ -199,7 +199,7 @@ namespace Spa_Interaction_Screen
             FormColorSlides.Add(newslider);
             form.Dimmer2ColorSliderDescribtion = new Label();
             form.Dimmer2ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer2ColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text;
             form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
             newslider.ValueChanged += form.Dimmer_Change;
 
@@ -223,7 +223,7 @@ namespace Spa_Interaction_Screen
 
             form.AmbientelautstärkeColorSliderDescribtion = new Label();
             form.AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
-            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = Constants.Text;
             form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderDescribtion);
             FormColorSlides.Add(newslider);
         }
@@ -234,7 +234,7 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(1, 0, out Posx, out Posy, 0, 0, false);
             Label label = new Label();
             label.AutoSize = true;
-            label.ForeColor = SystemColors.ControlLightLight;
+            label.ForeColor = Constants.Text;
             label.Text = "Ambientebeleuchtungsfarbe";
             form.ColorPage.Controls.Add(label);
             label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy-15);
@@ -244,7 +244,7 @@ namespace Spa_Interaction_Screen
             form.ColorPage.Controls.Add(form.colorWheelElement);
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
-            form.ColorPage.BackColor = Color.Black;
+            form.ColorPage.BackColor = Constants.Background;
         }
 
         public void createMediaPageElements()
@@ -289,7 +289,7 @@ namespace Spa_Interaction_Screen
 
             form.TVSettingsVolumeColorSliderDescribtion = new Label();
             form.TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
-            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = SystemColors.ControlLightLight;
+            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = Constants.Text;
             form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderDescribtion);
         }
 
@@ -297,13 +297,13 @@ namespace Spa_Interaction_Screen
         {
             int Pos_x, Pos_y = 0;
 
-            form.TimePage.BackColor = Color.Black;
+            form.TimePage.BackColor = Constants.Background;
 
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0, true);
             form.clock = new Label();
             form.clock.AutoSize = true;
             form.clock.Font = new Font("Segoe UI", 100F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            form.clock.ForeColor = SystemColors.ControlLightLight;
+            form.clock.ForeColor = Constants.Text;
             form.clock.Name = "Clock";
             form.clock.TabIndex = 1;
             form.clock.BackColor = Color.Transparent;
@@ -327,7 +327,7 @@ namespace Spa_Interaction_Screen
             form.timer = new Label();
             form.timer.AutoSize = true;
             form.timer.Font = new Font("Segoe UI", 55F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            form.timer.ForeColor = SystemColors.ControlLightLight;
+            form.timer.ForeColor = Constants.Text;
             form.timer.Name = "Timer";
             //form.clock.Text = "00";
             form.timer.TabIndex = 3;
@@ -867,7 +867,9 @@ namespace Spa_Interaction_Screen
             {
                 try
                 {
-                    Network.SendTelnet($@"wifi pass {config.password}", form);
+                    Network.SendTelnet($@"wifi ssid WiFi_Zimmer{config.Room}", form);
+                    Network.SendTelnet($@"pass refresh", form); 
+                    Network.SendTelnet($@"pass ?", form);
                 }
                 catch (Exception e)
                 {
