@@ -4,7 +4,9 @@ using Newtonsoft.Json.Linq;
 using QRCoder;
 using System.Diagnostics;
 using System.IO.Ports;
+using System.Linq;
 using System.Reflection;
+using System.Windows.Forms;
 using static QRCoder.PayloadGenerator.SwissQrCode;
 
 
@@ -12,7 +14,7 @@ namespace Spa_Interaction_Screen
 {
     public partial class MainForm : Form
     {
-        private EmbedVLC vlc;
+        public EmbedVLC vlc;
         public Loading loadscreen;
 
         System.Windows.Forms.Timer t = null;
@@ -30,17 +32,21 @@ namespace Spa_Interaction_Screen
         private bool vlcclosed = false;
         private int minutes_received = 0;
 
-        private Config config;
-        private UIHelper helper;
-        private Network? net = null;
-        private EnttecCom? enttec = null;
-        private SerialPort? serialPort1 = null;
+        private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
+        private List<Buttonfader> timecoloredbuttons = new List<Buttonfader>();
+
+        public Config config;
+        public UIHelper helper;
+        public Network? net = null;
+        public EnttecCom? enttec = null;
+        public SerialPort? serialPort1 = null;
 
         private Task dmx = null;
         private Task state = null;
         private Task windows = null;
 
         private bool exitProgramm = false;
+        public bool HandleCreate = false;
 
         public MainForm()
         {
@@ -74,6 +80,10 @@ namespace Spa_Interaction_Screen
             loadscreen.Debugtext("", false);
             loadscreen.exitp(false);
             loadscreen.updateProgress(30);
+            this.HandleCreated += new EventHandler((sender, args) =>
+            {
+                HandleCreate = true;
+            });
             if (!Constants.noNet)
             {
                 net = new Network(this, config);
@@ -91,6 +101,7 @@ namespace Spa_Interaction_Screen
             }
             loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
+            helper.init();
             loadscreen.updateProgress(50);
             SendCurrentSceneOverCom();
         }
@@ -110,7 +121,7 @@ namespace Spa_Interaction_Screen
 
             if (vlc != null)
             {
-                vlc.Show();
+                vlc.showthis();
             }
 
             setupThreads();
@@ -122,6 +133,13 @@ namespace Spa_Interaction_Screen
                 UIControl.SelectTab(i);
                 Application.DoEvents();
             }
+
+
+            ButtonColorTimer.Interval = Constants.buttonupdatemillis;
+            ButtonColorTimer.Tick += UpdateButtoncolor;
+            ButtonColorTimer.Enabled = true;
+
+
             UIControl.SelectTab(0);
             this.Show();
             EnterFullscreen(this, main);
@@ -178,7 +196,10 @@ namespace Spa_Interaction_Screen
                     request.type = "Status";
                     request.id = currentState;
                     request.Raum = config.Room;
-                    Network.UDPSender(request, true);
+                    if (net.SendTCPMessage(request, null))
+                    {
+                        Debug.Print($"Message sent sucessfully");
+                    }
                     Thread.Sleep(config.StateSendInterval * 1000);
                 }
             });
@@ -205,7 +226,7 @@ namespace Spa_Interaction_Screen
             {
                 tabs++;
             }
-            UIControl.ItemSize = new Size((Constants.windowwidth-tabs) / tabs, Constants.windowheight - Constants.tabheight);
+            UIControl.ItemSize = new Size((Constants.windowwidth-tabs) / tabs, UIControl.ItemSize.Height);
 
             loadscreen.updateProgress(70);
             defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
@@ -230,7 +251,7 @@ namespace Spa_Interaction_Screen
                 currentState = 1;
                 if (vlc != null)
                 {
-                    vlc.Hide();
+                    vlc.hidethis();
                     vlc.Dispose();
                     vlc = null;
                 }
@@ -254,7 +275,7 @@ namespace Spa_Interaction_Screen
             if (config.showtime)
             {
                 t = new System.Windows.Forms.Timer();
-                t.Interval = 500;
+                t.Interval = 1000;
                 t.Tick += timer_tick;
                 t.Enabled = true;
             }
@@ -355,8 +376,8 @@ namespace Spa_Interaction_Screen
             {
                 pinfield = new Label();
                 pinfield.AutoSize = true;
-                pinfield.Font = new Font("Segoe UI", 16F, FontStyle.Bold, GraphicsUnit.Point, 0);
-                pinfield.ForeColor = Constants.Text;
+                pinfield.Font = Constants.Standart_font;
+                pinfield.ForeColor = Constants.Text_color;
                 pinfield.Name = "PinField";
                 WartungPage.Controls.Add(pinfield);
                 pinfield.Show();
@@ -366,14 +387,14 @@ namespace Spa_Interaction_Screen
             {
                 pinfield.Text += "* ";
             }
-            pinfield.Location = new Point((Constants.windowwidth - pinfield.Size.Width) / 2, Pos_y-30);
+            pinfield.Location = new Point((Constants.windowwidth - pinfield.Size.Width) / 2, Pos_y);
             if (passwordwaswrong)
             {
                 foreach (Button b in helper.WartungPageButtons)
                 {
-                    helper.selectButton(b, false, Constants.NumfieldErrorButtonColor);
+                    helper.selectButton(b, false, Constants.NumfieldErrorButton_color);
                 }
-                RestrictedAreaDescribtion.ForeColor = Constants.Text;
+                RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                 passwordwaswrong = !passwordwaswrong;
             }
             if (currentPasswordindex == 6)
@@ -387,9 +408,13 @@ namespace Spa_Interaction_Screen
                 {
                     foreach (Button b in helper.WartungPageButtons)
                     {
-                        helper.selectButton(b, true, Constants.NumfieldErrorButtonColor);
+                        if (containsfadingbutton(b))
+                        {
+                            removefadingbutton(b);
+                        }
+                        helper.selectButton(b, true, Constants.NumfieldErrorButton_color);
                     }
-                    RestrictedAreaDescribtion.ForeColor = Constants.Text;
+                    RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                     passwordwaswrong = true;
                 }
                 if (pinfield != null)
@@ -402,6 +427,12 @@ namespace Spa_Interaction_Screen
                 }
                 currentPasswordindex = 0;
                 passwordstillvalid = true;
+            }
+            else
+            {
+                ((Button)sender).BackColor = Constants.alternative_color;
+                ((Button)sender).Click -= Numberfield_Click;
+                addcolortimedButton(((Button)sender), 250, Constants.Button_color, Numberfield_Click);
             }
         }
 
@@ -431,6 +462,15 @@ namespace Spa_Interaction_Screen
 #if !DEBUG
             logout();
 #endif
+            if (passwordwaswrong)
+            {
+                foreach (Button b in helper.WartungPageButtons)
+                {
+                    helper.selectButton(b, false, Constants.NumfieldErrorButton_color);
+                }
+                RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
+                passwordwaswrong = !passwordwaswrong;
+            }
         }
 
         private void logout()
@@ -481,7 +521,6 @@ namespace Spa_Interaction_Screen
             Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false, true);
             //SendCurrentSceneOverCom();
         }
-
         public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user)
         {
             if (scene == null)
@@ -503,7 +542,7 @@ namespace Spa_Interaction_Screen
                 if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
                     vlc.changeMedia(scene.ContentPath, user);
-                    vlc.Show();
+                    vlc.showthis();
                 }
                 else
                 {
@@ -717,7 +756,13 @@ namespace Spa_Interaction_Screen
             request.type = "Service";
             request.Raum = config.Room;
             request.label = ((String?)((Button)(sender)).Tag);
-            Network.UDPSender(request, true);
+            if (net.SendTCPMessage(request, null))
+            {
+                Debug.Print($"Message sent sucessfully");
+            }
+            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).Click -= Service_Request_Handle;
+            addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Service_Request_Handle);
         }
 
         public void closePlayer_Handler(object sender, EventArgs e)
@@ -733,7 +778,7 @@ namespace Spa_Interaction_Screen
             if (vlc != null)
             {
                 vlc.quitMedia();
-                vlc.Hide();
+                vlc.hidethis();
             }
             vlcclosed = true;
             if(screenissue) 
@@ -761,7 +806,7 @@ namespace Spa_Interaction_Screen
         {
             if (vlc != null)
             {
-                vlc.Show();
+                vlc.showthis();
             }
             Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, false);
             //SendCurrentSceneOverCom();
@@ -891,7 +936,7 @@ namespace Spa_Interaction_Screen
             UIControl.SelectTab(0);
             loadscreen.updateProgress(100);
             this.Show();
-            vlc.Show();
+            vlc.showthis();
             loadscreen.Hide();
             loadscreen.Close();
             loadscreen = null;
@@ -918,9 +963,9 @@ namespace Spa_Interaction_Screen
             Bitmap qrCodeImage = null;
             Color a = Color.White;
             Color b = Color.Black;
-            if (config.LogoFilePath != null && config.LogoFilePath.Length >= 0)
+            if (config.QRLogoFilePath != null && config.QRLogoFilePath.Length >= 0)
             {
-                qrCodeImage = qrCode.GetGraphic(pixelsize, (!inv) ? a : b, (inv) ? a : b, (Bitmap)Bitmap.FromFile(config.LogoFilePath), 20, 1, quietzone, Color.Transparent);
+                qrCodeImage = qrCode.GetGraphic(pixelsize, (!inv) ? a : b, (inv) ? a : b, (Bitmap)Bitmap.FromFile(config.QRLogoFilePath), 25, 1, quietzone, Color.Transparent);
             }
             else
             {
@@ -962,6 +1007,112 @@ namespace Spa_Interaction_Screen
                 windows.Dispose();
             }
             Application.Exit();
+        }
+
+        public void tabControl_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            TabPage page = UIControl.TabPages[e.Index];
+            Rectangle paddedBounds = e.Bounds;
+            paddedBounds.Inflate(0, 2);
+            paddedBounds.Offset(0, 2);
+            e.Graphics.FillRectangle(new SolidBrush((e.State == DrawItemState.Selected) ? Constants.Background_color : Constants.alternative_color), paddedBounds);
+
+            paddedBounds = e.Bounds;
+            int yOffset = (e.State == DrawItemState.Selected) ? -2 : 1;
+            paddedBounds.Offset(1, yOffset);
+            TextRenderer.DrawText(e.Graphics, page.Text, e.Font, paddedBounds, page.ForeColor);
+        }
+
+        struct Buttonfader
+        {
+            public Buttonfader(Button b, DateTime until, Color to, EventHandler eh)
+            {
+                this.b = b;
+                this.eh = eh;
+                this.until = until;
+                this.to = to;
+            }
+            public Button b;
+            public EventHandler eh;
+            public DateTime until;
+            public Color to;
+        }
+        public bool containsfadingbutton(Button b)
+        {
+            foreach (Buttonfader bf in timecoloredbuttons)
+            {
+                if (bf.b == b)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool removefadingbutton(Button b)
+        {
+            for (int i = 0;i < timecoloredbuttons.Count;i++)
+            {
+                if (timecoloredbuttons[i].b == b)
+                {
+                    timecoloredbuttons.RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void addcolortimedButton(Button b, long millis, Color to, EventHandler eh)
+        {
+            DateTime until = DateTime.Now.AddMilliseconds(millis);
+            Buttonfader bf = new Buttonfader(b, until, to, eh);
+            Debug.Print($"TargetColor: {to.R} {to.G} {to.B}");
+            timecoloredbuttons.Add(bf);
+        }
+
+        public void UpdateButtoncolor(object sender, EventArgs e)
+        {
+            for(int i = 0;i < timecoloredbuttons.Count;i++)
+            {
+                Buttonfader bf = timecoloredbuttons[i];
+                if (DateTime.Now >= bf.until)
+                {
+                    bf.b.BackColor = bf.to;
+                    timecoloredbuttons.Remove(bf);
+                    bf.b.Click += bf.eh;
+                    i--;
+                }
+                else
+                {
+                    int r = bf.to.R - bf.b.BackColor.R;
+                    int g = bf.to.G - bf.b.BackColor.G;
+                    int b = bf.to.B - bf.b.BackColor.B;
+
+                    double steps = bf.until.Millisecond - DateTime.Now.Millisecond;
+                    steps /= Constants.buttonupdatemillis;
+
+                    if(steps > 0)
+                    {
+                        r = (int)Math.Floor(r / steps) + bf.b.BackColor.R;
+                        g = (int)Math.Floor(g / steps) + bf.b.BackColor.G;
+                        b = (int)Math.Floor(b / steps) + bf.b.BackColor.B;
+                    }
+                    else
+                    {
+                        r = bf.b.BackColor.R;
+                        g = bf.b.BackColor.G;
+                        b = bf.b.BackColor.B;
+                    }
+
+                    r = (r >= 0) ? (r <= 255) ? r : 255 : 0;
+                    g = (g >= 0) ? (g <= 255) ? g : 255 : 0;
+                    b = (b >= 0) ? (b <= 255) ? b : 255 : 0;
+
+                    Color fade = Color.FromArgb(r, g, b);
+
+                    bf.b.BackColor = fade;
+                }
+            }
         }
     }
 }

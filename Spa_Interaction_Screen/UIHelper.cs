@@ -38,10 +38,28 @@ namespace Spa_Interaction_Screen
         {
             form = f;
 
-            form.GastronomieWebview.BackColor = Constants.Background;
+            form.BackColor = Constants.alternative_color;
+            form.ForeColor = Constants.alternative_color;
+
+            form.GastronomieWebview.BackColor = Constants.Background_color;
+
+            form.UIControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+            form.UIControl.DrawItem += form.tabControl_DrawItem;
 
             SetupElementsLists();
 
+#if DEBUG
+            this.createdebugUI();
+#endif
+            if (c == null)
+            {
+                return;
+            }
+            config = c;
+        }
+
+        public void init()
+        {
             createAmbientePageElements();
 
             createMediaPageElements();
@@ -52,11 +70,7 @@ namespace Spa_Interaction_Screen
             removeRestrictedPageElements();
 
             createWartungPageElements();
-
-#if DEBUG
-            this.createdebugUI();
-#endif
-            setConfig(c);
+            setConfig(config);
         }
 
 
@@ -64,7 +78,7 @@ namespace Spa_Interaction_Screen
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
             ColorSlider.ColorSlider slide = new ColorSlider.ColorSlider();
-            slide.BackColor = Constants.Background;
+            slide.BackColor = Constants.Background_color;
             slide.ElapsedInnerColor = Color.Green;
             slide.ElapsedPenColorBottom = Color.Green;
             slide.ElapsedPenColorTop = Color.Green;
@@ -73,11 +87,11 @@ namespace Spa_Interaction_Screen
             slide.BarPenColorTop = Color.White;
             slide.BarInnerColor = Color.White;
 
-            slide.ThumbInnerColor = Constants.Button;
+            slide.ThumbInnerColor = Constants.Button_color;
             slide.ThumbOuterColor = Color.White;
-            slide.ThumbPenColor = Constants.Button;
+            slide.ThumbPenColor = Constants.Button_color;
 
-            slide.TickColor = Constants.Text;
+            slide.TickColor = Constants.Text_color;
 
             slide.BorderRoundRectSize = new Size(8, 8);
             slide.Maximum = new decimal(max);
@@ -96,8 +110,8 @@ namespace Spa_Interaction_Screen
             slide.TickDivide = 0F;
             slide.TickStyle = TickStyle.BottomRight;
             slide.Value = new decimal(0);
-            slide.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            slide.ForeColor = Constants.Text;
+            slide.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            slide.ForeColor = Constants.Text_color;
             slide.ShowDivisionsText = true;
             slide.ShowSmallScale = true;
             return slide;
@@ -183,7 +197,7 @@ namespace Spa_Interaction_Screen
             FormColorSlides.Add(newslider);
             form.Dimmer1ColorSliderDescribtion = new Label();
             form.Dimmer1ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text;
+            form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
             newslider.ValueChanged += form.Dimmer_Change;
 
@@ -199,7 +213,7 @@ namespace Spa_Interaction_Screen
             FormColorSlides.Add(newslider);
             form.Dimmer2ColorSliderDescribtion = new Label();
             form.Dimmer2ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text;
+            form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
             newslider.ValueChanged += form.Dimmer_Change;
 
@@ -223,7 +237,7 @@ namespace Spa_Interaction_Screen
 
             form.AmbientelautstärkeColorSliderDescribtion = new Label();
             form.AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
-            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = Constants.Text;
+            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderDescribtion);
             FormColorSlides.Add(newslider);
         }
@@ -234,7 +248,7 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(1, 0, out Posx, out Posy, 0, 0, false);
             Label label = new Label();
             label.AutoSize = true;
-            label.ForeColor = Constants.Text;
+            label.ForeColor = Constants.Text_color;
             label.Text = "Ambientebeleuchtungsfarbe";
             form.ColorPage.Controls.Add(label);
             label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy-15);
@@ -244,7 +258,7 @@ namespace Spa_Interaction_Screen
             form.ColorPage.Controls.Add(form.colorWheelElement);
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
-            form.ColorPage.BackColor = Constants.Background;
+            form.ColorPage.BackColor = Constants.Background_color;
         }
 
         public void createMediaPageElements()
@@ -289,7 +303,7 @@ namespace Spa_Interaction_Screen
 
             form.TVSettingsVolumeColorSliderDescribtion = new Label();
             form.TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
-            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = Constants.Text;
+            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderDescribtion);
         }
 
@@ -297,13 +311,13 @@ namespace Spa_Interaction_Screen
         {
             int Pos_x, Pos_y = 0;
 
-            form.TimePage.BackColor = Constants.Background;
+            form.TimePage.BackColor = Constants.Background_color;
 
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0, true);
             form.clock = new Label();
             form.clock.AutoSize = true;
-            form.clock.Font = new Font("Segoe UI", 100F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            form.clock.ForeColor = Constants.Text;
+            form.clock.Font = new Font("Segoe UI", 120F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            form.clock.ForeColor = Constants.Text_color;
             form.clock.Name = "Clock";
             form.clock.TabIndex = 1;
             form.clock.BackColor = Color.Transparent;
@@ -326,8 +340,8 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 2, true);
             form.timer = new Label();
             form.timer.AutoSize = true;
-            form.timer.Font = new Font("Segoe UI", 55F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            form.timer.ForeColor = Constants.Text;
+            form.timer.Font = Constants.Standart_font;
+            form.timer.ForeColor = Constants.Text_color;
             form.timer.Name = "Timer";
             //form.clock.Text = "00";
             form.timer.TabIndex = 3;
@@ -360,27 +374,30 @@ namespace Spa_Interaction_Screen
         public void createWartungPageElements()
         {
             int Pos_x, Pos_y = 0;
+            /*
             form.WartungCodeField.Text = "Pin eingeben:";
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0, false);
             form.WartungCodeField.Location = new Point(Constants.windowwidth / 2 - form.WartungCodeField.Size.Width / 2, Pos_y-15);
             form.WartungCodeField.Show();
-
+            */
             form.RestrictedAreaDescribtion.Text = "Zugriff nur für Mitarbeiter";
-            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 0.8, false);
-            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaDescribtion.Size.Width / 2, Pos_y-40);
+            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, -0.1, false);
+            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y); 
             form.RestrictedAreaDescribtion.Show();
 
-            int startx = Constants.windowwidth / 2 - ((3 * Constants.Element_height + 3 * Constants.Element_y_padding) / 2);
-            int starty = Constants.windowheight / 2 - Constants.Element_height * 2 - 50;
+            int pad_padding = ((int)1.2 * Constants.Element_y_padding);
+
+            int startx = Constants.windowwidth / 2 - ((3 * Constants.Element_height + 3 * pad_padding) / 2);
+            int starty = Constants.windowheight / 2 - ((4 * Constants.Element_height + 4 * pad_padding) / 2);
 
             for (int i = 0; i < 3; i++)
             {
                 for (int e = 0; e < 3; e++)
                 {
-                    Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (e * (Constants.Element_height + Constants.Element_y_padding)), starty + (i * (Constants.Element_height + Constants.Element_y_padding)), WartungPageButtons, $"{3 * i + e + 1}", 3 * i + e + 1, form.WartungPage, form, form.Numberfield_Click);
+                    Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (e * (Constants.Element_height + pad_padding)), starty + (i * (Constants.Element_height + pad_padding)), WartungPageButtons, $"{3 * i + e + 1}", 3 * i + e + 1, form.WartungPage, form, form.Numberfield_Click);
                 }
             }
-            Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (1 * (Constants.Element_height + Constants.Element_y_padding)), starty + (3 * (Constants.Element_height + Constants.Element_y_padding)), WartungPageButtons, $"{0}", 0, form.WartungPage, form, form.Numberfield_Click);
+            Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (1 * (Constants.Element_height + pad_padding)), starty + (3 * (Constants.Element_height + pad_padding)), WartungPageButtons, $"{0}", 0, form.WartungPage, form, form.Numberfield_Click);
         }
 
         public void removeWartungPageElements()
@@ -582,12 +599,11 @@ namespace Spa_Interaction_Screen
             if (b == null) return;
             if (select)
             {
-                b.UseVisualStyleBackColor = false;
                 b.BackColor = c;
             }
             else
             {
-                b.UseVisualStyleBackColor = true;
+                b.BackColor = Constants.Button_color;
             }
 
         }
@@ -745,6 +761,7 @@ namespace Spa_Interaction_Screen
             }
 
             form.HowCanIHelpYouDescribtion.Text = config.ServicesSettings[0].ShowText;
+            form.HowCanIHelpYouDescribtion.Location = new Point((Constants.windowwidth/2)-(form.HowCanIHelpYouDescribtion.Size.Width/2), form.HowCanIHelpYouDescribtion.Location.Y);
 
             int Numhelps = Math.Min(config.ServicesSettings.Count - 1, Constants.maxhelps);
             for (int i = 1; i < config.ServicesSettings.Count && i <= Constants.maxhelps; i++)
@@ -787,7 +804,24 @@ namespace Spa_Interaction_Screen
                 Logos.Remove(Log);
                 Log.Dispose();
             }
-            for(int i = 0;i < config.showLogo.Length;i++)
+            int posx, posy = 0;
+            if (config.Logoposition % 2 == 0)
+            {
+                posx = (Constants.windowwidth - Constants.Logoposxdist) - Constants.Logoxsize;
+            }
+            else
+            {
+                posx = Constants.Logoposxdist;
+            }
+            if (config.Logoposition > 2)
+            {
+                posy = (Constants.tabheight - Constants.Logoposydist) - Constants.Logoysize;
+            }
+            else
+            {
+                posy = Constants.Logoposydist;
+            }
+            for (int i = 0;i < config.showLogo.Length;i++)
             {
                 if (config.showLogo[i])
                 {
@@ -801,23 +835,6 @@ namespace Spa_Interaction_Screen
                         Debug.Print(e.Message);
                     }
                     Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
-                    int posx, posy = 0;
-                    if (config.Logoposition % 2 == 0)
-                    {
-                        posx=(Constants.windowwidth - Constants.Logoposxdist) - Constants.Logoxsize;
-                    }
-                    else
-                    {
-                        posx = Constants.Logoposxdist;
-                    }
-                    if (config.Logoposition>2)
-                    {
-                        posy = (Constants.tabheight - Constants.Logoposydist) - Constants.Logoysize;
-                    }
-                    else
-                    {
-                        posy = Constants.Logoposydist;
-                    }
                     Logoview.Location = new Point(posx, posy);
                     Logoview.TabStop = false;
                     Logos.Add(Logoview);
@@ -829,8 +846,9 @@ namespace Spa_Interaction_Screen
 
         private async void GenNewPassword()
         {
-            List<string> strings = GetPasswortWords();
             config.password = "";
+            /*
+            List<string> strings = GetPasswortWords();
 
             if (strings == null && strings.Count <= 90)
             {
@@ -863,19 +881,15 @@ namespace Spa_Interaction_Screen
             }
 
             form.loadscreen.Debugtext($"Sending Password \"{config.password}\" to the router", true);
-            Task x = Task.Run(() =>
+            */
+            
+            if (form != null && form.net != null)
             {
-                try
-                {
-                    Network.SendTelnet($@"wifi ssid WiFi_Zimmer{config.Room}", form);
-                    Network.SendTelnet($@"pass refresh", form); 
-                    Network.SendTelnet($@"pass ?", form);
-                }
-                catch (Exception e)
-                {
-                    Debug.Print(e.Message);
-                }
-            });
+                form.net.setuprouter(form);
+            }
+
+            form.loadscreen.Debugtext($"Setting up Wifi Router", false);
+
             int Pos_x, Pos_y; 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
             form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
@@ -890,7 +904,19 @@ namespace Spa_Interaction_Screen
             form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
 
             form.loadscreen.Debugtext($"", false);
-            await x;
+        }
+
+        public void setnewPassword()
+        {
+            if (form != null)
+            {
+                form.WiFiPasswortLabel.Text = config.password;
+                form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
+                if (form.vlc != null)
+                {
+                    form.vlc.newsession();
+                }
+            }
         }
 
 

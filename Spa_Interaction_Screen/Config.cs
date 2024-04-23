@@ -19,6 +19,7 @@ namespace Spa_Interaction_Screen
         public int TotalRooms = -1;
         public String[] IPZentrale = null;
         public int PortZentrale = -1;
+        public int LocalPort = -1;
         public int StateSendInterval = -1;
         public String ComPort = null;
         public String EnttecComPort = null;
@@ -27,7 +28,6 @@ namespace Spa_Interaction_Screen
         public int Sitzungsdauer = -1;
         public String GastroUrl = null;
         public String WiFiSSID = null;
-        public String WiFiAPIPassword = null;
         public String[] IPRouter = null;
         public int PortRouter = -1;
         public bool showtime = false;
@@ -36,6 +36,7 @@ namespace Spa_Interaction_Screen
         public bool[] showLogo = null;
         public String PasswordFilePath = null;
         public String LogoFilePath = null;
+        public String QRLogoFilePath = null;
         public String AmbienteBackgroundFilePath = null;
         public String MediaBackgroundFilePath = null;
         public String TimeBackgroundFilePath = null;
@@ -229,6 +230,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref TotalRooms, 0, false, read_all);
             read_all = getcsvFields(stream, ref IPZentrale, -1, false, read_all);
             read_all = getcsvFields(stream, ref PortZentrale, 0, false, read_all);
+            read_all = getcsvFields(stream, ref LocalPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref StateSendInterval, 0, false, read_all);
             read_all = getcsvFields(stream, ref ComPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
@@ -237,7 +239,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref Sitzungsdauer, 0, false, read_all);
             read_all = getcsvFields(stream, ref GastroUrl, 0, false, read_all);
             read_all = getcsvFields(stream, ref WiFiSSID, 0, false, read_all);
-            read_all = getcsvFields(stream, ref WiFiAPIPassword, 0, false, read_all);
+            WiFiSSID = WiFiSSID.Replace("[Room]", $"{Room}");
             read_all = getcsvFields(stream, ref IPRouter, -1, false, read_all);
             read_all = getcsvFields(stream, ref PortRouter, 0, false, read_all);
             read_all = getcsvFields(stream, ref showtime, 0, false, read_all);
@@ -266,6 +268,7 @@ namespace Spa_Interaction_Screen
             }
             read_all = getcsvFields(stream, ref PasswordFilePath, 0, false, read_all);
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref QRLogoFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref AmbienteBackgroundFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref MediaBackgroundFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref TimeBackgroundFilePath, 0, true, read_all);
@@ -278,6 +281,7 @@ namespace Spa_Interaction_Screen
             }
             finalizePaths(out PasswordFilePath, PasswordFilePath);
             finalizePaths(out LogoFilePath, LogoFilePath);
+            finalizePaths(out QRLogoFilePath, QRLogoFilePath);
             finalizePaths(out AmbienteBackgroundFilePath, AmbienteBackgroundFilePath);
             finalizePaths(out MediaBackgroundFilePath, MediaBackgroundFilePath);
             finalizePaths(out TimeBackgroundFilePath, TimeBackgroundFilePath);

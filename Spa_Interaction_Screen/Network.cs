@@ -1,27 +1,41 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Drawing.Imaging;
 using System.Net;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.IO;
+using Newtonsoft.Json.Linq;
+using ArtNetSharp;
 
 namespace Spa_Interaction_Screen
 {
     public class Network
     {
-        private static MainForm form;
-        private static Config config;
+        private MainForm form;
+        private Config config;
+        public List<TcpClient> tcpClients = new List<TcpClient>();
+        private Task connectClients = null;
+        public List<Task> ListeningClients = new List<Task>();
+        private TcpClient routerclient = null;
+        private Task ListenRouter = null;
+        public bool routeranswered = false;
 
         public Network(MainForm f, Config c)
         {
             form = f;
             config = c;
+            StartTCPServer();
         }
 
         public void changeconfig(Config c)
         {
             config = c;
         }
-
+        /*
         public static void UDPSender(RequestJson req, bool debug)
         {
             if (debug)
@@ -45,7 +59,7 @@ namespace Spa_Interaction_Screen
             Debug.Print($"[{req.type}]Bytes send via UDP: {num}");
             Debug.Print(text);
         }
-
+        */
         private static String assembleJsonString(RequestJson req)
         {
             String s = "{";
@@ -85,7 +99,7 @@ namespace Spa_Interaction_Screen
             public int? id = null;
             public int[]? values = null;
         }
-
+        /*
         public Task UDPReceiver()
         {
             Task t = Task.Run(async () =>
@@ -115,8 +129,8 @@ namespace Spa_Interaction_Screen
             t.Start();
             return t;
         }
-
-        private void handleReceivedUDP(Dictionary<String, Object>? Json)
+        */
+        private void handleReceivedNet(Dictionary<String, Object>? Json)
         {
             if (Json == null)
             {
@@ -157,7 +171,6 @@ namespace Spa_Interaction_Screen
                     break;
             }
         }
-
         private static void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
             Debug.Print("Not yet implemented");
@@ -219,7 +232,7 @@ namespace Spa_Interaction_Screen
                 int index = -1;
                 if (json.ContainsKey("id"))
                 {
-                    index = (int)json["id"];
+                    index = (int)(long)json["id"];
 
                 }
                 else if (json.ContainsKey("label"))
@@ -236,19 +249,19 @@ namespace Spa_Interaction_Screen
                             index = i;
                         }
                     }
-                    if (index >= 0 && index < c.DMXScenes.Count)
-                    {
-                        //TODO: Implement Update Method to update UI correctly and send data
-                        c.DMXSceneSetting = index;
-                    }
-                    else
-                    {
-                        Debug.Print("DMXScene Paket id out of range");
-                    }
                 }
                 else
                 {
                     Debug.Print("DMXScene Paket doesn't contain necesarry Keys (\"id\" or \"label\") to identify the scene to be edited");
+                }
+                if (index >= 0 && index < c.DMXScenes.Count)
+                {
+                    //TODO: Implement Update Method to update UI correctly and send data
+                    f.Ambiente_Change(c.DMXScenes[index], true, true);
+                }
+                else
+                {
+                    Debug.Print("DMXScene Paket id out of range");
                 }
             }
         }
@@ -262,61 +275,181 @@ namespace Spa_Interaction_Screen
             Debug.Print("Not yet implemented");
         }
 
-        private static Dictionary<String, Object>? parse(byte[] json)
+        private static String parse(byte[] json)
         {
-            var jsonString = System.Text.Encoding.Default.GetString(json);
-            Dictionary<String, Object>? values = JsonConvert.DeserializeObject<Dictionary<String, Object>>(jsonString);
-
-            return values;
+            String jsonString = "";
+            try
+            {
+                jsonString = System.Text.Encoding.Default.GetString(json);
+            }catch(Exception e)
+            {
+                Debug.Print(e.Message);
+                return null;
+            }
+            Debug.Print(jsonString);
+            return jsonString;
         }
-        public static async void SendTelnet(String command, MainForm f)
+
+        public void receivedMessage(byte[] bytes, TcpClient cl, bool isTelnet, Network net)
         {
+            if(parse(bytes) == null)
+            {
+                return;
+            }
+            String m = parse(bytes);
+            if (isTelnet)
+            {
+                if (m.Contains("WMedia"))
+                {
+                    net.routeranswered = true;
+                    Debug.Print("Received Router answer");
+                }
+                handleReceivedTel(m);
+            }else
+            {
+                Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
+                handleReceivedNet(keyValuePairs);
+            }
+        }
+
+        private void handleReceivedTel(String m)
+        {
+            Debug.Print(m);
+            if (m.Contains("#pass") && m.Contains("OK"))
+            {
+                String[] lines = m.Split("WMedia>");
+                foreach(String line in lines)
+                {
+                    if (line.StartsWith('#') && line.Contains("pass") && line.Contains(":"))
+                    {
+                        String p = line.Split(":")[1].Split("OK")[0];
+                        config.password = p;
+                        break;
+                    }
+                }
+                form.helper.setnewPassword();
+            }
+        }
+
+        public void setuprouter(MainForm f)
+        {
+            connectrouter(f);
+            while(!routeranswered)
+            {
+
+            }
+            SendTelnet($@"wifi ssid {config.WiFiSSID}");
+            while (!routeranswered)
+            {
+
+            }
+            routerclient.Close();
+            connectrouter(f);
+            while (!routeranswered)
+            {
+
+            }
+            String pass = "";
+            Random rnd = new Random();
+            for(int i =0; i<8; i++)
+            {
+                pass += $"{rnd.Next(9)}";
+            }
+            SendTelnet($@"pass {pass}");
+            Debug.Print("Router Set");
+            while (!routeranswered)
+            {
+
+            }
+            routerclient.Close();
+            connectrouter(f);
+            while (!routeranswered)
+            {
+
+            }
+            SendTelnet($@"pass ?");
+            while (!routeranswered)
+            {
+
+            }
+        }
+
+        private void connectrouter(MainForm f)
+        {
+            if(routerclient != null && routerclient.Connected)
+            {
+                return;
+            }
             String ip_address = f.ArraytoString(config.IPRouter, 4);
             int port_number = config.PortRouter;
             NetworkStream stream = null;
-            Debug.Print("Telnet1");
-            TcpClient client = null;
             String response = null;
             try
             {
-                client = new TcpClient();
-                await client.ConnectAsync(ip_address, port_number);
+                routerclient = new TcpClient();
+                routerclient.Connect(ip_address, port_number);
 
-                
-#if DEBUG
                 Debug.Print($"[Communication] : [EstablishConnection] : Success connecting to : {ip_address}, port: {port_number}");
-#endif
-                stream = client.GetStream();
             }
             catch (Exception e)
             {
                 Debug.Print($"[Communication] : [EstablishConnection] : Failed while connecting to : {ip_address}, port: {port_number}");
                 Debug.Print(e.Message);
             }
+            if(routerclient == null)
+            {
+                Debug.Print("Error when tried to connect to Entec Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.");
+            }
+            {
+                ListenRouter = Task.Run(() => listenTCPConnection(routerclient, this, true));
+            }
+        }
+        public bool SendTelnet(String command)
+        {
+            if (command == null || routerclient == null || !routerclient.Connected)
+            {
+                Debug.Print("Couldnt Send Telnet to router. Check if Router is reachable.");
+                return false;
+            }
+            NetworkStream ns = routerclient.GetStream();
+
+            Byte[] data = Encoding.Default.GetBytes(command + "\n");
+            try
+            {
+                ns.Write(data, 0, data.Length);
+                routeranswered = false;
+            }
+            catch (Exception ex)
+            {
+                switch (ex)
+                {
+                    case ArgumentNullException:
+                    case ArgumentOutOfRangeException:
+                    case InvalidOperationException:
+                    case IOException:
+                        Debug.Print(ex.Message);
+                        break;
+                }
+                return false;
+            }
+
+            Debug.Print($"Sent: {command}");
+            return true;
+        }
+
+        /*
+        public async void SendTelnet(String command, MainForm f)
+        {
+            String ip_address = f.ArraytoString(config.IPRouter, 4);
+            int port_number = config.PortRouter;
+            NetworkStream stream = null;
+            Debug.Print($"Telnet: {command}");
+            TcpClient client = null;
+            String response = null;
             if (stream == null)
             {
                 return;
             }
-            /*
-            while(!stream.CanRead)
-            {
-                
-            }
-            if (stream.CanRead)
-            {
-                response = ReadMessage(stream);
-#if DEBUG
-                Debug.Print($"Received: {response}");
-#endif
-            }
-            if (stream.CanRead)
-            {
-                response = ReadMessage(stream);
-#if DEBUG
-                Debug.Print($"Received: {response}");
-#endif
-            }*/
-            Debug.Print("Finished reading");
             StreamWriter writer = new StreamWriter(stream);
             // Send command
             Byte[] data = System.Text.ASCIIEncoding.ASCII.GetBytes(command+"\n");
@@ -356,14 +489,15 @@ namespace Spa_Interaction_Screen
                 Debug.Print($"Received: {response}");
 #endif
             }
-            client.Close();
         }
+        */
+
         public static string ReadMessage(NetworkStream stream)
         {
             // Receive response
             Byte[] responseData = new byte[256];
             Int32 numberOfBytesRead = stream.Read(responseData, 0, responseData.Length);
-            string response = Encoding.UTF8.GetString(responseData, 0, numberOfBytesRead);
+            string response = Encoding.Default.GetString(responseData, 0, numberOfBytesRead);
 
             if (response == "SEND_COMMAND_AGAIN")
             {
@@ -372,6 +506,135 @@ namespace Spa_Interaction_Screen
 #endif
             }
             return response;
+        }
+
+        public bool SendTCPMessage(RequestJson json, TcpClient? cl)
+        {
+            if(tcpClients == null || tcpClients.Count <= 0)
+            {
+                return false;
+            }
+            if(cl == null)
+            {
+                cl = getbestclient();
+            }
+            NetworkStream stream = cl.GetStream();
+            string text = assembleJsonString(json);
+            byte[] send_buffer = Encoding.Default.GetBytes(text);
+            try
+            {
+                stream.Write(send_buffer, 0, send_buffer.Length);
+            }catch(Exception ex)
+            {
+                switch (ex)
+                {
+                    case ArgumentNullException:
+                    case ArgumentOutOfRangeException:
+                    case InvalidOperationException:
+                    case IOException:
+                        Debug.Print(ex.Message);
+                        break;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        private TcpClient getbestclient()
+        {
+            TcpClient? cl = tcpClients[0];
+            if (tcpClients.Count > 1)
+            {
+                byte[] ip = new byte[4];
+                try
+                {
+                    for (int i = 0; i < config.IPZentrale.Length; i++)
+                    {
+                        ip[i] = Byte.Parse(config.IPZentrale[i]);
+                    }
+                }
+                catch (FormatException ex)
+                {
+                    Debug.Print(ex.Message);
+                }
+
+                List<TcpClient> possibilities = new List<TcpClient>();
+                IPAddress specifiedIP = new IPAddress(ip);
+                foreach (TcpClient client in tcpClients)
+                {
+                    if (client != null)
+                    {
+                        IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+                        if (endpoint.Address.Equals(specifiedIP))
+                        {
+                            possibilities.Add(client);
+                        }
+                    }
+                }
+                if (possibilities.Count > 0)
+                {
+                    for (int i = 0; i < possibilities.Count; i++)
+                    {
+                        if (!possibilities[i].Connected)
+                        {
+                            possibilities[i].Close();
+                            possibilities.RemoveAt(i);
+                            tcpClients.Remove(possibilities[i]);
+                            i--;
+                        }
+                    }
+                }
+                cl = possibilities[0];
+            }
+
+            return cl;
+        }
+
+        private void StartTCPServer()
+        {
+            TcpListener server = new TcpListener(IPAddress.Any, config.LocalPort);
+            server.Start();
+            connectClients = Task.Run(() => acceptClientsLoop(this, server));
+        }
+
+        private void acceptClientsLoop(Network net, TcpListener server)
+        {
+            while (true)   //we wait for a connection
+            {
+                TcpClient client = server.AcceptTcpClient();  //if a connection exists, the server will accept it
+                net.tcpClients.Add(client);
+                net.ListeningClients.Add(Task.Run(() => listenTCPConnection(client, net, false)));
+                IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+                Debug.Print($"Client with IP:{endpoint.Address} connected");
+            }
+        }
+
+        private void listenTCPConnection(TcpClient cl, Network net, bool isTelnet)
+        {
+            NetworkStream ns = cl.GetStream();
+            Debug.Print("ListeningTCP");
+            while (cl.Connected)  //while the client is connected, we look for incoming messages
+            {
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                try
+                {
+                    ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Debug.Print(ex.Message);
+                            break;
+                    }
+                }
+                net.receivedMessage(msg, cl, isTelnet, net);
+            }
+            net.tcpClients.Remove(cl);
         }
     }
 }

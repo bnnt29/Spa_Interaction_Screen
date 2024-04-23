@@ -30,22 +30,26 @@ namespace Spa_Interaction_Screen
         public static int Logoposydist = 50;
         public static int Logoxsize = 50;
         public static int Logoysize = 50;
+        public static int buttonupdatemillis = 35;
 
 
         //UI
         public static int windowwidth = 1420;
         public static int windowheight = 800;
-        public static int tabheight = (int)((double)windowheight * 0.87);
-        public static int Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.87);
+        public static int controlheight = windowheight - 50;
+        public static int tabheight = (int)((double)controlheight * 0.94);
+        public static int Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.85);
         public static int Element_x_padding = (int)((double)windowwidth / (XButtonCount + 1)) - Element_width;
-        public static int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
+        public static int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.85);
         public static int Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
-        public static Color selected_color = Color.Green;
-        public static Color Background = Color.Blue;
-        public static Color Text = Color.Black;
-        public static Color Button = Color.Yellow;
-        public static Color ButtonText = Color.Black;
-        public static Color NumfieldErrorButtonColor = Color.Red;
+        public static Color Background_color = ColorTranslator.FromHtml("#1C3F5E");
+        public static Color alternative_color = ColorTranslator.FromHtml("#617C94"); 
+        public static Color selected_color = Color.Turquoise;
+        public static Color Text_color = Color.White;
+        public static Color Button_color = ColorTranslator.FromHtml("#CDAA39");
+        public static Color ButtonText_color = Text_color;
+        public static Color NumfieldErrorButton_color = Color.Red;
+        public static Font Standart_font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
 
 
         //USB
@@ -105,10 +109,12 @@ namespace Spa_Interaction_Screen
         {
             windowwidth = Hight;
             windowheight = Width;
-            tabheight = (int)((double)windowheight * 0.87);
-            Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.87);
+
+            controlheight = windowheight - 100;
+            tabheight = (int)((double)controlheight * 0.98);
+            Element_width = (int)(((double)windowwidth / (XButtonCount + 1)) * 0.88);
             Element_x_padding = (int)((double)windowwidth / (XButtonCount + 1)) - Element_width;
-            Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.87);
+            Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.88);
             Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
         }
 
@@ -150,9 +156,8 @@ namespace Spa_Interaction_Screen
             b.Tag = Tag;
             b.Text = Text;
             b.BorderRadius = (Constants.Element_width>Constants.Element_height)? Constants.Element_width: Constants.Element_height;
-            b.BorderWidth = 5;
-            b.BorderDownColor = Constants.Text;
-            b.BackColor = Constants.Button;
+            b.BorderWidth = 0;
+            b.BackColor = Constants.Button_color;
             b.AutoEllipsis = true;
             b.UseVisualStyleBackColor = true;
             b.Location = p;

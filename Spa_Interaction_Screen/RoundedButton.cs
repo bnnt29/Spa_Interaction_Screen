@@ -271,35 +271,6 @@ namespace BrbVideoManager.Controls
             DrawText(e.Graphics,Rect);
         }// End Paint Method
 
-        protected override void OnMouseEnter(EventArgs e)
-        {
-            IsMouseOver = true;
-            Invalidate();
-            base.OnMouseEnter(e);
-        }
-
-        protected override void OnMouseLeave(EventArgs e)
-        {
-            IsMouseOver = false;
-            IsMouseDown = false;
-            Invalidate();
-            base.OnMouseHover(e);
-        }
-
-        protected override void OnMouseDown(MouseEventArgs mevent)
-        {
-            IsMouseDown = true;
-            Invalidate();
-            base.OnMouseDown(mevent);
-        }
-
-        protected override void OnMouseUp(MouseEventArgs mevent)
-        {
-            IsMouseDown = false;
-            Invalidate();
-            base.OnMouseDown(mevent);
-        }
-
         
     }
 }

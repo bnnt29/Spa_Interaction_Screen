@@ -12,10 +12,10 @@ YButtonCount%5
 InlineuntilXButtons%5
 noCom%true
 noNet%false
-Logoposxdist%50
-Logoposydist%50
-Logoxsize%100
-Logoysize%100
+Logoposxdist%60
+Logoposydist%60
+Logoxsize%200
+Logoysize%200
 
 
 

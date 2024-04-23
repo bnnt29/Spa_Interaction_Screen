@@ -8,7 +8,7 @@ Status ids:
   3: Keine Session (, aber sonst alles gut)
 
 ----- Data from Actionpad -----
-Paket Recived:
+Paket Received:
 {
   "type":"Received",
   "label": [type of Received Paket],
