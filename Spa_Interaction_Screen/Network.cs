@@ -395,11 +395,12 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print($"[Communication] : [EstablishConnection] : Failed while connecting to : {ip_address}, port: {port_number}");
                 Debug.Print(e.Message);
+                routerclient = null;
             }
             if(routerclient == null)
             {
                 Debug.Print("Error when tried to connect to Entec Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.");
-            }
+            }else
             {
                 ListenRouter = Task.Run(() => listenTCPConnection(routerclient, this, true));
             }

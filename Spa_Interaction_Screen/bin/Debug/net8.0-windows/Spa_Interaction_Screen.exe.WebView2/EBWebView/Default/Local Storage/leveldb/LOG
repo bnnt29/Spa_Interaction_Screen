@@ -1,5 +1,3 @@
-2024/04/24-01:57:57.615 5438 Reusing MANIFEST C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
-2024/04/24-01:57:57.620 5438 Recovering log #182
-2024/04/24-01:57:57.621 5438 Level-0 table #185: started
-2024/04/24-01:57:57.625 5438 Level-0 table #185: 6828 bytes OK
-2024/04/24-01:57:57.629 5438 Delete type=0 #182
+2024/04/24-10:33:01.793 6df0 Reusing MANIFEST C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\Local Storage\leveldb/MANIFEST-000001
+2024/04/24-10:33:01.799 6df0 Recovering log #186
+2024/04/24-10:33:01.803 6df0 Reusing old log C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\Local Storage\leveldb/000186.log 

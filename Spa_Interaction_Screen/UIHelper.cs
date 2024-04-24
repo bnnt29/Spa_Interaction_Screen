@@ -882,10 +882,10 @@ namespace Spa_Interaction_Screen
 
             form.loadscreen.Debugtext($"Sending Password \"{config.password}\" to the router", true);
             */
-            
-            if (form != null && form.net != null)
+            Task router = null;
+            if (form != null && form.net != null && !Constants.noNet)
             {
-                form.net.setuprouter(form);
+                router = Task.Run(()=> form.net.setuprouter(form));
             }
 
             form.loadscreen.Debugtext($"Setting up Wifi Router", false);
