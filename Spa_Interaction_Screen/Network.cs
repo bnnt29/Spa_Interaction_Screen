@@ -333,7 +333,10 @@ namespace Spa_Interaction_Screen
 
         public void setuprouter(MainForm f)
         {
-            connectrouter(f);
+            if (!connectrouter(f))
+            {
+                return;
+            }
             while(!routeranswered)
             {
 
@@ -374,11 +377,11 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void connectrouter(MainForm f)
+        private bool connectrouter(MainForm f)
         {
             if(routerclient != null && routerclient.Connected)
             {
-                return;
+                return false;
             }
             String ip_address = f.ArraytoString(config.IPRouter, 4);
             int port_number = config.PortRouter;
@@ -397,13 +400,14 @@ namespace Spa_Interaction_Screen
                 Debug.Print(e.Message);
                 routerclient = null;
             }
-            if(routerclient == null)
+            if(routerclient == null || !routerclient.Connected)
             {
                 Debug.Print("Error when tried to connect to Entec Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.");
-            }else
-            {
-                ListenRouter = Task.Run(() => listenTCPConnection(routerclient, this, true));
+                return false;
             }
+                ListenRouter = Task.Run(() => listenTCPConnection(routerclient, this, true));
+            return true;
+
         }
         public bool SendTelnet(String command)
         {
@@ -515,9 +519,14 @@ namespace Spa_Interaction_Screen
             {
                 return false;
             }
-            if(cl == null)
+            if (cl == null)
             {
                 cl = getbestclient();
+            }
+            if (cl == null)
+            {
+                Debug.Print("No connected Clients");
+                return false;
             }
             NetworkStream stream = cl.GetStream();
             string text = assembleJsonString(json);
@@ -585,9 +594,21 @@ namespace Spa_Interaction_Screen
                         }
                     }
                 }
+                else
+                {
+                    int i = 0;
+                    while (i<tcpClients.Count && !tcpClients[i].Connected)
+                    {
+                        i++;
+                    }
+                    if (i >= tcpClients.Count)
+                    {
+                        return null;
+                    }
+                    return tcpClients[i];
+                }
                 cl = possibilities[0];
             }
-
             return cl;
         }
 

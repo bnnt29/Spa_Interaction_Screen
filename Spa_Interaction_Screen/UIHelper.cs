@@ -842,6 +842,7 @@ namespace Spa_Interaction_Screen
                     Logoview.BringToFront();
                 }
             }
+            Application.DoEvents();
         }
 
         private async void GenNewPassword()
