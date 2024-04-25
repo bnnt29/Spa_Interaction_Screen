@@ -11,6 +11,7 @@ using static QRCoder.PayloadGenerator.SwissQrCode;
 
 /*TODO:
  * register monitor change and adjust setup (VLC)
+ * reset color wheel button
  * red marked in excel
  * Implement all Jsons
  * Test TCPButtons
