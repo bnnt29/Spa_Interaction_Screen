@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using static QRCoder.PayloadGenerator.SwissQrCode;
 
 /*TODO:
+ * register monitor change and adjust setup (VLC)
  * red marked in excel
  * Implement all Jsons
  * Test TCPButtons
