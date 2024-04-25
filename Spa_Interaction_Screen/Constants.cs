@@ -6,7 +6,7 @@ namespace Spa_Interaction_Screen
     public static class Constants
     {
         //Constants
-        public const String CurrentVersion = "1.1";
+        public const String CurrentVersion = "1.2";
         public static String PreConfigPath = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\AdminConfig";
         public const String PreConfigGastroURL = @"https://www.lieferando.de/";
         public const Char PreConfigDelimiter = '%';
@@ -15,12 +15,11 @@ namespace Spa_Interaction_Screen
 
         //PreConfig
         public static String ContentPath = null;
-        public static int PasswordLength = 12;
         public static int UDPReceivePort = 50100;
         private static Char[] delimiter = new Char[] { ';', '#' };
-        private static Char[] sonderzeichen = new Char[] { '!', '?', '_' };
         public static int maxscenes = 12;
         public static int maxhelps = 12;
+        public static int maxwartungs = 5;
         public static int XButtonCount = 5;
         public static int YButtonCount = 5;
         public static int InlineUntilXButtons = 5;
@@ -59,7 +58,10 @@ namespace Spa_Interaction_Screen
 
         public class SystemSetting
         {
+            public String? ShowText = null;
             public String JsonText = null;
+            public int? id = null;
+            public String? value = null;
         }
 
         public class SessionSetting
@@ -69,6 +71,7 @@ namespace Spa_Interaction_Screen
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
+            public bool should_reset = false;
             public int JsonValue = -1;
             public String? ShowText = null;
         }
@@ -93,17 +96,29 @@ namespace Spa_Interaction_Screen
             public Button ButtonElement = null;
         }
 
+        public class RGBW
+        {
+            public RGBW(Color c, byte R, byte G, byte B, byte W) 
+            { 
+                this.color = c;
+                this.R = R;
+                this.G = G;
+                this.B = B;
+                this.W = W;
+            }
+            public Color color;
+            public byte R;
+            public byte G;
+            public byte B;
+            public byte W;
+        }
+
         public static Char[] Delimiter
         {
             get { return delimiter; }
             set { delimiter = value; }
         }
 
-        public static Char[] Sonderzeichen
-        {
-            get { return sonderzeichen; }
-            set { sonderzeichen = value;}
-        }
 
         public static void recalcsizes(int Hight, int Width)
         {

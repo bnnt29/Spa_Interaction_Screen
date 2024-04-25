@@ -44,12 +44,12 @@ namespace Spa_Interaction_Screen
                 this.Controls.Add(DebugText);
                 DebugText.Show();
             }
-            Debug.Print($"DebugText: {Text}");
             DebugText.Text = Text;
             DebugText.Location = new Point((this.Size.Width / 2) - (DebugText.Size.Width / 2), progressBar.Location.Y + progressBar.Size.Height + 10);
             if (show)
             {
                 DebugText.Show();
+                Debug.Print($"DebugText: {Text}");
             }
             else
             {

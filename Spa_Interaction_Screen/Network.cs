@@ -97,7 +97,7 @@ namespace Spa_Interaction_Screen
             public int? Raum = null;
             public String? label = null;
             public int? id = null;
-            public int[]? values = null;
+            public String[]? values = null;
         }
         /*
         public Task UDPReceiver()
@@ -297,6 +297,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             String m = parse(bytes);
+            m= m.Trim().ToLower();
             if (isTelnet)
             {
                 if (m.Contains("WMedia"))

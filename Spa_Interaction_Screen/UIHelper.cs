@@ -70,7 +70,6 @@ namespace Spa_Interaction_Screen
             removeRestrictedPageElements();
 
             createWartungPageElements();
-            setConfig(config);
         }
 
 
@@ -125,8 +124,9 @@ namespace Spa_Interaction_Screen
                 tabs.Add(form.AmbientePage);
                 tabs.Add(form.ColorPage);
                 tabs.Add(form.GastronomiePage);
-                tabs.Add(form.MediaPage);
                 tabs.Add(form.ServicePage);
+                tabs.Add(form.MediaPage);
+                tabs.Add(form.TimePage);
                 tabs.Add(form.WartungPage);
                 FormColorSlides = new List<ColorSlider.ColorSlider>();
                 Logos = new List<PictureBox>();
@@ -182,7 +182,7 @@ namespace Spa_Interaction_Screen
             int Pos_x, Pos_y;
 
             GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 2, false);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Design Beleuchtung", 0, form.AmbientePage, form, form.Ambiente_Design_Handler);
+            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, config.Objectname, 0, form.AmbientePage, form, form.Ambiente_Design_Handler);
 
             ColorSlider.ColorSlider newslider = null;
             GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
@@ -252,13 +252,24 @@ namespace Spa_Interaction_Screen
             label.Text = "Ambientebeleuchtungsfarbe";
             form.ColorPage.Controls.Add(label);
             label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy-15);
+            ColorSlider.ColorSlider newslider = null;
+            newslider = createColorSlide(100);
 
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
             form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3)); 
             form.ColorPage.Controls.Add(form.colorWheelElement);
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
+            form.colorWheelElement.Tag = (ColorSlider.ColorSlider)newslider;
             form.ColorPage.BackColor = Constants.Background_color;
+
+
+            newslider.Size = new Size(Constants.Element_width * 2, (int)(form.colorWheelElement.Size.Height*0.75));
+            newslider.Location = new Point(form.colorWheelElement.Size.Width + form.colorWheelElement.Location.X, (Constants.tabheight/2)-(newslider.Size.Height/2));
+            newslider.Orientation = Orientation.Vertical;
+            newslider.Value = 100;
+            form.ColorPage.Controls.Add(newslider);
+            newslider.ValueChanged += form.ColorChanged_Handler;
         }
 
         public void createMediaPageElements()
@@ -423,21 +434,29 @@ namespace Spa_Interaction_Screen
             form.RestrictedAreaTitle.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y);
             form.RestrictedAreaTitle.Show();
 
-            GetDynamicPosition(4, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            int wartungs = Math.Min(config.TCPSettings.Count, Constants.maxwartungs);
+            for (int i = 0; i < wartungs; i++)
+            {
+                Debug.Print("WartungsButtons");
+                GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+                Constants.createButton(Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, (Constants.SystemSetting)config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle);
+            }
+
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
             /*
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, null);
             */
-            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
-            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
-            GetDynamicPosition(4, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
 
-            GetDynamicPosition(4, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
             setConfigRestricted(config);
         }
@@ -462,62 +481,6 @@ namespace Spa_Interaction_Screen
             {
                 Constants.createButton(0, 0, null, Constants.ExitFullscreenText, "DebugExitButton", control, form, form.Programm_Exit_Handler);
             }
-        }
-
-
-        private string Passwordparts(string Password, Random rnd, int it)
-        {
-            for (int i = Password.Length; i < it; i++)
-            {
-                int index = rnd.Next(Constants.Sonderzeichen.Length + 10);
-                if (index < Constants.Sonderzeichen.Length)
-                {
-                    Password += Constants.Sonderzeichen[index];
-                }
-                else
-                {
-                    Password += index - Constants.Sonderzeichen.Length;
-                }
-            }
-
-            return Password;
-        }
-
-        private List<string> GetPasswortWords()
-        {
-            StreamReader stream = null;
-            try
-            {
-                if (File.Exists(config.PasswordFilePath))
-                {
-                    stream = File.OpenText(config.PasswordFilePath);
-                }
-                else
-                {
-                    Debug.Print("No Password File found");
-                }
-            }
-            catch (IOException ex)
-            {
-                Debug.Print(ex.ToString());
-                Debug.Print("Could not open Passwort Words File");
-            }
-            if (stream == null)
-            {
-                return null;
-            }
-            List<string> words = new List<string>();
-            string line = stream.ReadLine();
-            while (line != null && line.Length > 0)
-            {
-                words.Add(line);
-                if (stream.EndOfStream)
-                {
-                    break;
-                }
-                line = stream.ReadLine();
-            }
-            return words;
         }
 
         public void GetDynamicPosition(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow)
@@ -742,42 +705,48 @@ namespace Spa_Interaction_Screen
                     scene.ButtonElement = bu;
                 }
             }
-            if (config.AmbienteBackgroundFilePath != null && config.AmbienteBackgroundFilePath.Length > 2 && File.Exists(config.AmbienteBackgroundFilePath))
+            GenNewPassword();
+            if (config.AmbienteBackgroundImage != null && config.AmbienteBackgroundImage.Length > 2 && File.Exists(config.AmbienteBackgroundImage))
             {
                 form.AmbientePage.BackgroundImageLayout = ImageLayout.Zoom;
-                form.AmbientePage.BackgroundImage = Image.FromFile(config.AmbienteBackgroundFilePath);
+                form.AmbientePage.BackgroundImage = Image.FromFile(config.AmbienteBackgroundImage);
             }
-            GenNewPassword();
-
-            if (config.MediaBackgroundFilePath != null && config.MediaBackgroundFilePath.Length > 2 && File.Exists(config.MediaBackgroundFilePath))
+            if (config.ColorBackgroundImage != null && config.ColorBackgroundImage.Length > 2 && File.Exists(config.ColorBackgroundImage))
+            {
+                form.ColorPage.BackgroundImageLayout = ImageLayout.Zoom;
+                form.ColorPage.BackgroundImage = Image.FromFile(config.ColorBackgroundImage);
+            }
+            if (config.MediaBackgroundImage != null && config.MediaBackgroundImage.Length > 2 && File.Exists(config.MediaBackgroundImage))
             {
                 form.MediaPage.BackgroundImageLayout = ImageLayout.Zoom;
-                form.MediaPage.BackgroundImage = Image.FromFile(config.MediaBackgroundFilePath);
+                form.MediaPage.BackgroundImage = Image.FromFile(config.MediaBackgroundImage);
             }
-            if (config.TimeBackgroundFilePath != null && config.TimeBackgroundFilePath.Length > 2 && File.Exists(config.TimeBackgroundFilePath))
+            if (config.TimeBackgroundImage != null && config.TimeBackgroundImage.Length > 2 && File.Exists(config.TimeBackgroundImage))
             {
                 form.TimePage.BackgroundImageLayout = ImageLayout.Zoom;
-                form.TimePage.BackgroundImage = Image.FromFile(config.TimeBackgroundFilePath);
+                form.TimePage.BackgroundImage = Image.FromFile(config.TimeBackgroundImage);
+            }
+            if (config.ServiceBackgroundImage != null && config.ServiceBackgroundImage.Length > 2 && File.Exists(config.ServiceBackgroundImage))
+            {
+                form.ServicePage.BackgroundImageLayout = ImageLayout.Zoom;
+                form.ServicePage.BackgroundImage = Image.FromFile(config.ServiceBackgroundImage);
+            }
+            if (config.WartungBackgroundImage != null && config.WartungBackgroundImage.Length > 2 && File.Exists(config.WartungBackgroundImage))
+            {
+                form.WartungPage.BackgroundImageLayout = ImageLayout.Zoom;
+                form.WartungPage.BackgroundImage = Image.FromFile(config.WartungBackgroundImage);
             }
 
             form.HowCanIHelpYouDescribtion.Text = config.ServicesSettings[0].ShowText;
             form.HowCanIHelpYouDescribtion.Location = new Point((Constants.windowwidth/2)-(form.HowCanIHelpYouDescribtion.Size.Width/2), form.HowCanIHelpYouDescribtion.Location.Y);
 
             int Numhelps = Math.Min(config.ServicesSettings.Count - 1, Constants.maxhelps);
-            for (int i = 1; i < config.ServicesSettings.Count && i <= Constants.maxhelps; i++)
+            for (int i = 1; i < Numhelps; i++)
             {
-                String[] help = { config.ServicesSettings[i].ShowText, config.ServicesSettings[i].JsonText };
-                if (help != null)
-                {
-                    GetDynamicPosition(Numhelps, i - 1, out Pos_x, out Pos_y, 0, 3, false);
-                    Constants.createButton(Pos_x, Pos_y, ServicePageButtons, help[0], help[1], form.ServicePage, form, form.Service_Request_Handle);
-                }
+                GetDynamicPosition(Numhelps, i - 1, out Pos_x, out Pos_y, 0, 3, false);
+                Constants.createButton(Pos_x, Pos_y, ServicePageButtons, config.ServicesSettings[i].ShowText, (Constants.ServicesSetting)config.ServicesSettings[i], form.ServicePage, form, form.Service_Request_Handle);
             }
-            if (config.ServiceBackgroundFilePath != null && config.ServiceBackgroundFilePath.Length > 2 && File.Exists(config.ServiceBackgroundFilePath))
-            {
-                form.ServicePage.BackgroundImageLayout = ImageLayout.Zoom;
-                form.ServicePage.BackgroundImage = Image.FromFile(config.ServiceBackgroundFilePath);
-            }
+            
             UpdateActiveDMXScene(-1);
 
             foreach (ColorSlider.ColorSlider s in FormColorSlides)
@@ -929,7 +898,7 @@ namespace Spa_Interaction_Screen
             }
             int Pos_x, Pos_y;
 
-            GetDynamicPosition(4, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Button b = null;
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[1].ShowText, config.DMXScenes[1], form.WartungPage, form, form.Ambiente_Change_Handler, out b);
             config.DMXScenes[1].ButtonElement = b;

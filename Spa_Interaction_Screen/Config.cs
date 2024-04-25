@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using static Spa_Interaction_Screen.Constants;
 
 namespace Spa_Interaction_Screen
@@ -8,7 +9,7 @@ namespace Spa_Interaction_Screen
     public class Config
     {
         public bool allread = false;
-        public byte[] prevscene = null;
+        public byte[] currentvalues = null;
         public DateTime lastchangetime;
 
         //current generated wifi password
@@ -25,7 +26,6 @@ namespace Spa_Interaction_Screen
         public String EnttecComPort = null;
         public int FadeTime = -1;
         public String[] Wartungspin = null;
-        public int Sitzungsdauer = -1;
         public String GastroUrl = null;
         public String WiFiSSID = null;
         public String[] IPRouter = null;
@@ -34,13 +34,14 @@ namespace Spa_Interaction_Screen
         public bool showcolor = false;
         public int Logoposition = -1;
         public bool[] showLogo = null;
-        public String PasswordFilePath = null;
         public String LogoFilePath = null;
         public String QRLogoFilePath = null;
-        public String AmbienteBackgroundFilePath = null;
-        public String MediaBackgroundFilePath = null;
-        public String TimeBackgroundFilePath = null;
-        public String ServiceBackgroundFilePath = null;
+        public String AmbienteBackgroundImage = null;
+        public String ColorBackgroundImage = null;
+        public String MediaBackgroundImage = null;
+        public String TimeBackgroundImage = null;
+        public String ServiceBackgroundImage = null;
+        public String WartungBackgroundImage = null;
         public int[] Dimmerchannel = null;
         public String[] slidernames = null;
         public byte[] HDMISwitchInterval = null;
@@ -49,13 +50,15 @@ namespace Spa_Interaction_Screen
         public int ObjectLightchannel = -1;
         public String Objectname = null;
         public int[][] colorwheelvalues;
-        public List<Constants.SystemSetting> SystemSettings = null;
+        public String[] Typenames = null;
         public int SessionSetting = -1;
         public int DMXSceneSetting = -1;
         public String DMXSceneSettingJson = null;
         public String VolumeSliderName = null;
         public int Volume = -1;
         public String VolumeJson = null;
+        public List<Constants.SystemSetting> SystemSettings = null;
+        public List<Constants.SystemSetting> TCPSettings = null;
         public List<Constants.SessionSetting> SessionSettings = null;
         public List<Constants.ServicesSetting> ServicesSettings = null;
         public List<Constants.DMXScene> DMXScenes = null;
@@ -103,7 +106,7 @@ namespace Spa_Interaction_Screen
                 return false;
             }
             String[] data = res.Split(Constants.PreConfigDelimiter);
-            Debug.Print($"CSV Version: {data[1]}");
+            Debug.Print($"Loading Preconfig Version: {data[1]}");
             if (!data[1].Equals(Constants.CurrentVersion))
             {
                 Debug.Print("Config doesnt have the Correct Version");
@@ -113,7 +116,6 @@ namespace Spa_Interaction_Screen
             Constants.ContentPath = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower()+"\\";
             try 
             {
-                Constants.PasswordLength = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.UDPReceivePort = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
             }
             catch (FormatException e)
@@ -125,11 +127,11 @@ namespace Spa_Interaction_Screen
             seps[0] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             seps[1] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             Constants.Delimiter = seps;
-            Constants.Sonderzeichen = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray();
-            try
+           try
             {
                 Constants.maxscenes = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.maxhelps = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.maxwartungs = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.XButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.YButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.InlineUntilXButtons = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
@@ -218,7 +220,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             String[] fields = stripComments(res.Split(Constants.Delimiter[0]), Constants.Delimiter[1]);
-            Debug.Print($"CSV Version: {fields[0]}");
+            Debug.Print($"Loading CSV Config Version: {fields[0]}");
             if (!fields[0].Equals(Constants.CurrentVersion))
             {
                 Debug.Print("Config doesnt have the Correct Version");
@@ -236,7 +238,6 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref FadeTime, 0, false, read_all);
             read_all = getcsvFields(stream, ref Wartungspin, -1, false, read_all);
-            read_all = getcsvFields(stream, ref Sitzungsdauer, 0, false, read_all);
             read_all = getcsvFields(stream, ref GastroUrl, 0, false, read_all);
             read_all = getcsvFields(stream, ref WiFiSSID, 0, false, read_all);
             WiFiSSID = WiFiSSID.Replace("[Room]", $"{Room}");
@@ -254,7 +255,7 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print(e.Message);
             }
-            showLogo = new bool[7];
+            showLogo = new bool[(sl.Length-1>7)?7: sl.Length-1];
             try
             {
                 for(int i = 0;i< showLogo.Length; i++)
@@ -266,26 +267,28 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print(e.Message);
             }
-            read_all = getcsvFields(stream, ref PasswordFilePath, 0, false, read_all);
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref QRLogoFilePath, 0, true, read_all);
-            read_all = getcsvFields(stream, ref AmbienteBackgroundFilePath, 0, true, read_all);
-            read_all = getcsvFields(stream, ref MediaBackgroundFilePath, 0, true, read_all);
-            read_all = getcsvFields(stream, ref TimeBackgroundFilePath, 0, true, read_all);
-            read_all = getcsvFields(stream, ref ServiceBackgroundFilePath, 0, true, read_all);
+            read_all = getcsvFields(stream, ref AmbienteBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(stream, ref ColorBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(stream, ref MediaBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(stream, ref TimeBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(stream, ref ServiceBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(stream, ref WartungBackgroundImage, 0, true, read_all);
             if (!read_all)
             {
                 Debug.Print("Something went wrong in reading the single Variables (x01)");
                 stream.Close();
                 return;
             }
-            finalizePaths(out PasswordFilePath, PasswordFilePath);
             finalizePaths(out LogoFilePath, LogoFilePath);
             finalizePaths(out QRLogoFilePath, QRLogoFilePath);
-            finalizePaths(out AmbienteBackgroundFilePath, AmbienteBackgroundFilePath);
-            finalizePaths(out MediaBackgroundFilePath, MediaBackgroundFilePath);
-            finalizePaths(out TimeBackgroundFilePath, TimeBackgroundFilePath);
-            finalizePaths(out ServiceBackgroundFilePath, ServiceBackgroundFilePath);
+            finalizePaths(out AmbienteBackgroundImage, AmbienteBackgroundImage);
+            finalizePaths(out ColorBackgroundImage, ColorBackgroundImage);
+            finalizePaths(out MediaBackgroundImage, MediaBackgroundImage);
+            finalizePaths(out TimeBackgroundImage, TimeBackgroundImage);
+            finalizePaths(out ServiceBackgroundImage, ServiceBackgroundImage);
+            finalizePaths(out WartungBackgroundImage, WartungBackgroundImage);
             stream.ReadLine();
             String[] Dimmerchannelval1 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval1, -1, false, read_all);
@@ -298,7 +301,7 @@ namespace Spa_Interaction_Screen
             catch (FormatException e)
             {
                 Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
+                Debug.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.");
             }
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
@@ -311,7 +314,7 @@ namespace Spa_Interaction_Screen
             catch (FormatException e)
             {
                 Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
+                Debug.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.");
             }
             field = null;
             read_all = getcsvFields(stream, ref field, -1, false, read_all);
@@ -324,13 +327,13 @@ namespace Spa_Interaction_Screen
             catch (FormatException e)
             {
                 Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für die Sauna ist fehlerhaft.");
+                Debug.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.");
             }
             String[] ReadFields = null;
             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-            colorwheelvalues = new Int32[3][];
+            colorwheelvalues = new Int32[4][];
             bool atleastonechannel = false;
-            for (int i = 0; i < ReadFields.Length; i++)
+            for (int i = 0; i < Math.Min(ReadFields.Length, colorwheelvalues.Length) ; i++)
             {
                 int y = 0;
                 colorwheelvalues[i] = new Int32[ReadFields[i].Length];
@@ -353,28 +356,11 @@ namespace Spa_Interaction_Screen
             {
                 showcolor = false;
             }
-            while (ReadFields == null || !ReadFields[0].Equals("System"))
+            while (!read_all || ReadFields == null || ReadFields.Length <= 0 || !ReadFields[0].Contains("Json Type:"))
             {
                 read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             }
-            SystemSettings = new List<SystemSetting>();
-            for (int i = 0; i < 4; i++)
-            {
-                read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                SystemSetting s = new SystemSetting();
-                s.JsonText = ReadFields[0];
-                SystemSettings.Add(s);
-            }
-
-            stream.ReadLine();
-            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-            DMXSceneSettingJson = ReadFields[0];
-            DMXSceneSetting = Int32.Parse(ReadFields[1]);
-
-            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-            slidernames[2] = ReadFields[0];
-            VolumeJson = ReadFields[1];
-            Volume = Int32.Parse(ReadFields[2]);
+            
 
             if (!read_all)
             {
@@ -382,7 +368,7 @@ namespace Spa_Interaction_Screen
                 stream.Close();
                 return;
             }
-            while (!read_all || ReadFields == null || ReadFields.Length <= 0 || (!ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes")))
+            while (!read_all || ReadFields == null || ReadFields.Length <= 0 || (!ReadFields[0].Contains("Json Type:")))
             {
                 read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             }
@@ -392,43 +378,127 @@ namespace Spa_Interaction_Screen
                 stream.Close();
                 return;
             }
+            Typenames = new String[4];
+            SystemSettings = new List<SystemSetting>();
+            TCPSettings = new List<SystemSetting>();
             SessionSettings = new List<SessionSetting>();
             ServicesSettings = new List<ServicesSetting>();
             DMXScenes = new List<DMXScene>();
-            int x = 3 * 21;
+            int x = (6+5+12+15+5)*2;
             while (x >= 0)
             {
-                x--;
                 if (stream == null || stream.EndOfStream)
                 {
                     read_all = true;
                     break;
                 }
-                if (ReadFields == null)
+                if (ReadFields == null || !ReadFields[0].Contains(':'))
                 {
-                    ReadFields = new string[1];
+                    read_all = getcsvFields(stream, ref ReadFields, -1, true, read_all);
+                    continue;
                 }
-                switch (ReadFields[0])
+                int Jtype = 0;
+                try
                 {
-                    case "Session":
+                    Jtype = Int32.Parse(ReadFields[0].Split(':')[1]);
+                }catch (FormatException e)
+                {
+                    Debug.Print(e.Message);
+                    continue;
+                }
+                switch (Jtype)
+                {
+                    case 1:
+                        Typenames[Jtype-1] = ReadFields[1].Trim().ToLower();
+                        for (int i = 0; i < 4; i++)
+                        {
+                            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                            SystemSetting s = new SystemSetting();
+                            s.JsonText = ReadFields[0];
+                            s.id = i;
+                            SystemSettings.Add(s);
+                        }
+                        stream.ReadLine();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Services") && !ReadFields[0].Equals("DMXScenes"))
+                        DMXSceneSettingJson = ReadFields[0];
+                        DMXSceneSetting = Int32.Parse(ReadFields[1]);
+
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        slidernames[2] = ReadFields[0];
+                        VolumeJson = ReadFields[1];
+                        Volume = Int32.Parse(ReadFields[2]);
+                        stream.ReadLine();
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+
+                        while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
+                        {
+                            SystemSetting s = new SystemSetting();
+                            s.ShowText = ReadFields[0];
+                            s.JsonText = ReadFields[1];
+                            int ident = -1;
+                            try
+                            {
+                                ident = Int32.Parse((string)ReadFields[2]);
+                            }
+                            catch(FormatException ex)
+                            {
+                                Debug.Print(ex.Message);
+                            }
+                            if (ident >= 0)
+                            {
+                                s.id = ident;
+                            }
+                            if (ReadFields.Length>3 && ReadFields[3]!=null && ReadFields[3].Length > 0)
+                            {
+                                s.value = ReadFields[3];
+                            }
+                            TCPSettings.Add(s);
+                            read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                             }
+                        read_all = true;
+                        break;
+                    case 2:
+                        Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             SessionSetting si = new SessionSetting();
                             si.id = SessionSettings.Count;
-                            si.JsonValue = Int32.Parse(ReadFields[0]);
-                            if (ReadFields.Length > 3)
+                            int ident = -1;
+                            if (!ReadFields[0].Contains("[all_left]"))
                             {
-                                si.ShowText = ReadFields[1];
+                                try
+                                {
+                                    ident = Int32.Parse((string)ReadFields[0]);
+                                }
+                                catch (FormatException ex)
+                                {
+                                    Debug.Print(ex.Message);
+                                }
+                            }                            si.JsonValue = ident;
+                            bool parsed = false;
+                            try
+                            {
+                                parsed = Boolean.Parse((string)ReadFields[1]);
+                            }
+                            catch (FormatException ex)
+                            {
+                                Debug.Print(ex.Message);
+                            }
+                            si.should_reset = parsed;
+                            if (ReadFields.Length >= 3)
+                            {
+                                si.ShowText = ReadFields[2];
                             }
                             SessionSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
                         read_all = true;
                         break;
-                    case "Services":
+                    case 3:
+                        Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Session") && !ReadFields[0].Equals("DMXScenes"))
+                        while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             ServicesSetting si = new ServicesSetting();
                             si.id = ServicesSettings.Count;
@@ -439,9 +509,10 @@ namespace Spa_Interaction_Screen
                         }
                         read_all = true;
                         break;
-                    case "DMXScenes":
+                    case 4:
+                        Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                        while (read_all && ReadFields != null && ReadFields.Length > 0 && !ReadFields[0].Equals("Session") && !ReadFields[0].Equals("Services"))
+                        while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             DMXScene scene = new DMXScene();
                             int i = 0;
@@ -477,6 +548,7 @@ namespace Spa_Interaction_Screen
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         break;
                 }
+                x--;
             }
             stream.Close();
             if (!read_all)
@@ -503,7 +575,7 @@ namespace Spa_Interaction_Screen
                 }
                 DMXScenes.Add(scene);
             }
-            prevscene = new byte[DMXScenes[0].Channelvalues.Length];
+            currentvalues = new byte[DMXScenes[0].Channelvalues.Length];
             allread = true;
         }
 
@@ -572,6 +644,10 @@ namespace Spa_Interaction_Screen
                 {
                     return false;
                 }
+            }
+            if (EqualityComparer<T>.Default.Equals(variable, default(T)))
+            {
+                return false;
             }
             return true;
         }

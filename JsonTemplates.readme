@@ -1,109 +1,141 @@
-Every Setting is reset on session start, permanent changes should be edited in the ConfigFile
-Type: Status, Service, Wartung, Session, System, WiFi, DMXScene, Volume, Update
+Every Setting is reset on Config Reload / Session start, permanent changes should be edited in the ConfigFile
+Types can be set in ConfigFile.csv.
+Examples (Under "Data To Interaction_Screen" and "Data from Interaction_Screen") are made with Data from ConfigFile version 1.1 and do not display all possibilities.
 
-Status ids:
-  0: Alles gut
-  1: Etwas Falsch
-  2: Zeitabgelaufen
-  3: Keine Session (, aber sonst alles gut)
+----- General Message Structure ----- 
+Data types:	
+	(mandatory)(String)	"room":		Specifies the room (could be unnecesarry, because it is identifiable through the IP, but just for veryfication it is checked)
+	(mandatory)(String)	"type": 	Specifies the type of message 
+	
+	One the following two is mandatory (either "label" or "id")
+	(Optional)(String)	"label": 	Specifies the subtype or intention of the message (if label is "?" then all information from that type are sent back (the individual Messages are in a list then))
+	(Optional)(int)		"id":		like label for enumerated Elements (See ids in ConfigFile.csv)
+	
+	(Optional)(int[])	"values":	Specifies 1 or more values for the given subtype
 
------ Data from Actionpad -----
-Paket Received:
-{
-  "type":"Received",
-  "label": [type of Received Paket],
-  "room": X
-}
+State ids:
+  0: Something wrong
+  1: All right
+  2: No TCP connection
+  3: Error when communicating with router
+  4: Error when communicating with ambient Light
 
-Satus:
-{
-  "type": "Status",
-  "id": 0
-  "room": X
-}
-
-Service:
-{
-  "type": "Service",
-  "label": [ Json String ],
-  "room": X
-}
-
-Service:
-{
-  "type": "Service",
-  "id": 0,
-  "room": X
-}
-
-Wartung:
-{
-  "type": "Wartung",
-  "label": "Sauna",
-  "id": [ 1 - 3 ],
-  "room": X
-}
-
------ Data to Actionpad -----
-
-//On Session start every Setting not in ConfigFile is reset if session not already started
-Session:
-{
-  "type": "Session",
-  "id": 0, //(0 stop, 1 start, 2 request remaining Time)
-}
-
-//On Session start every Setting not in ConfigFile is reset if session not already started
-Session:
-{
-  "type": "Session",
-  "id": 0 //(1 start, 2 set remaining Time)
-  "values": [ 60 ] //Remaining Timer value
-}
+----- Data To Interaction_Screen -----
 
 System:
-{
-  "type": "System",
-  "id": 0 //(0 off, 1 on)
+{  
+  "room":1,
+  "type":"System",
+  "label":"Whirlpool",
+  "id":1
 }
 
-//Edit scene
-DMXScene:
+Session:
 {
-  "type": "DMXScene",
-  "label": [ Json String ]
-  "values": [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
-}
-
-//Edit scene
-DMXScene:
-{
-  "type": "DMXScene",
-  "id": 0
-  "values": [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+  "room":1,
+  "type":"Session",
+  "id":5
 }
 
 //Change scene
 DMXScene:
 {
-  "type": "DMXScene",
-  "label": [ Json String ]
+  "room":1,
+  "type":"DMXScene",
+  "label":[ Json String ]
 }
 
 //Change scene
 DMXScene:
 {
-  "type": "DMXScene",
-  "id": 0
+  "room":1,
+  "type":"DMXScene",
+  "id":0
+}
+
+//Edit scene
+DMXScene:
+{
+  "room":1,
+  "type":"DMXScene",
+  "label":[ Json String ],
+  "values":[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+}
+
+//Edit scene
+DMXScene:
+{
+  "room":1,
+  "type":"DMXScene",
+  "id": 0,
+  "values":[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
 }
 
 Volume:
 {
-  "type": "Volume"
-  "values": [ 0 ]
+  "room":1,
+  "type":"Volume",
+  "values":[ 0 ]
 }
 
-//reload Config now (Same behavior like Session start (every Setting not in ConfigFile is reset (except the currect remaining timer)))
-Update: {
-  "type": "Update"
+Update: 
+{
+  "room":1,  
+  "type":"System",
+  "label":"config"
+}
+
+//This isn't configurable in Config and can be overwritten by the user when changing the scene. The Media file also must be in the "Content" Folder of the Programm.
+ChangeMedia:
+{
+  "room":1,
+  "type":"System",
+  "label":"video",
+  "values":["WerbeVideo.mp4"]
+}
+
+?:
+{
+  "room":1,
+  "type":"Services",
+  "label":"?"
+}
+
+----- Data from Interaction_Screen -----
+
+//Is sent every x Seconds by default
+Satus:
+{
+  "room":1,
+  "type":"System",
+  "label":"State",
+  "id":1
+}
+
+Services:
+{
+  "room":1,
+  "type":"Services",
+  "label":"Ruf"
+}
+
+System:
+{  
+  "room":1,
+  "type":"System",
+  "label":"Whirlpool",
+  "id":1
+}
+
+?:
+{
+  "room":1,
+  "type":Services",
+  "label":"?",
+  "values":[
+		["id":0,"label":"ServiceText","value":["Was kann ich heute für Sie tun?"]],
+		["id":1,"label":"Ruf","value":["anderer Wunsch"]],
+		["id":2,"label":"Notfall","value":["Arzt"]],
+		["id":3,"label":"Handtuch","value":["frische Handtücher"]]
+	  ]
 }

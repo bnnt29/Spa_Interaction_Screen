@@ -9,6 +9,15 @@ using System.Reflection;
 using System.Windows.Forms;
 using static QRCoder.PayloadGenerator.SwissQrCode;
 
+/*TODO:
+ * red marked in excel
+ * Implement all Jsons
+ * Test TCPButtons
+ * Refactor for performance
+ * Spid out DMX
+ * Remove left over artefacts
+ * 
+ */
 
 namespace Spa_Interaction_Screen
 {
@@ -18,8 +27,6 @@ namespace Spa_Interaction_Screen
         public Loading loadscreen;
 
         System.Windows.Forms.Timer t = null;
-        public DateTime Sessionstart;
-        public DateTime Sessionend;
         private byte[] changeddimmerchannels;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
@@ -69,8 +76,8 @@ namespace Spa_Interaction_Screen
             while ((config == null || !config.allread) && !exitProgramm)
             {
                 config = new Config(null);
-                loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", true);
-                loadscreen.exitp(true);
+                loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !config.allread);
+                loadscreen.exitp(!config.allread);
             }
             if (exitProgramm)
             {
@@ -101,8 +108,11 @@ namespace Spa_Interaction_Screen
             }
             loadscreen.updateProgress(40);
             helper = new UIHelper(this, config);
+            loadscreen.updateProgress(45);
             helper.init();
             loadscreen.updateProgress(50);
+            helper.setConfig(config);
+            loadscreen.updateProgress(55);
             SendCurrentSceneOverCom();
         }
 
@@ -125,7 +135,7 @@ namespace Spa_Interaction_Screen
             }
 
             setupThreads();
-            loadscreen.updateProgress(100);
+            loadscreen.updateProgress(95);
             this.TopMost = false;
             loadscreen.TopMost = true;
             for(int i = 0; i < UIControl.TabCount; i++)
@@ -140,6 +150,7 @@ namespace Spa_Interaction_Screen
             ButtonColorTimer.Enabled = true;
 
 
+            loadscreen.updateProgress(100);
             UIControl.SelectTab(0);
             this.Show();
             EnterFullscreen(this, main);
@@ -185,24 +196,27 @@ namespace Spa_Interaction_Screen
             });
 
             //TODO: Test the State updater
-            state = Task.Run(() =>
+            if(config.StateSendInterval>0)
             {
-                while (true && !Constants.noNet)
+                state = Task.Run(() =>
                 {
-                    Network.RequestJson request = new Network.RequestJson();
-
-                    request.destination = ArraytoString(config.IPZentrale, 4);
-                    request.port = config.PortZentrale;
-                    request.type = "Status";
-                    request.id = currentState;
-                    request.Raum = config.Room;
-                    if (net.SendTCPMessage(request, null))
+                    while (true && !Constants.noNet)
                     {
-                        Debug.Print($"Message sent sucessfully");
+                        Network.RequestJson request = new Network.RequestJson();
+
+                        request.destination = ArraytoString(config.IPZentrale, 4);
+                        request.port = config.PortZentrale;
+                        request.type = "Status";
+                        request.id = currentState;
+                        request.Raum = config.Room;
+                        if (net.SendTCPMessage(request, null))
+                        {
+                            Debug.Print($"Message sent sucessfully");
+                        }
+                        Thread.Sleep(config.StateSendInterval * 1000);
                     }
-                    Thread.Sleep(config.StateSendInterval * 1000);
-                }
-            });
+                });
+            }
         }
 
         private void start()
@@ -266,10 +280,6 @@ namespace Spa_Interaction_Screen
             AmbientVolume(config.Volume, 3, null);
             Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, false);
             //SendCurrentSceneOverCom();
-
-            Sessionstart = DateTime.Now;
-            Sessionend = DateTime.Now;
-            Sessionend = Sessionend.AddMinutes(config.Sitzungsdauer);
 
             loadscreen.updateProgress(80);
             if (config.showtime)
@@ -559,8 +569,10 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            bool noserial = false;
+            bool noserial = true;
             Task con = null;
+            serialPort1 = new SerialPort();
+            /*
             if (!enttec.isopen())
             {
                 con = Task.Run(() =>
@@ -570,6 +582,7 @@ namespace Spa_Interaction_Screen
                         try
                         {
                             serialPort1.Open();
+                            noserial = false;
                         }
                         catch (Exception ex)
                         {
@@ -578,16 +591,18 @@ namespace Spa_Interaction_Screen
                             currentState = 1;
                             noserial = true;
                         }
-                    }*/
+                    }
                     if (!enttec.connect())
                     {
                         Debug.Print("Error when trying to Communicate with Enttec Port");
                         currentState = 1;
+                    }else{
+                        noserial = false;
                     }
                 });
                 
             }
-
+            */
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
             if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
             {
@@ -611,25 +626,30 @@ namespace Spa_Interaction_Screen
             }
             tempchannelvalues[0] = 255;
             byte[] fade = new byte[tempchannelvalues.Length];
-            int millis = DateTime.Now.Millisecond - config.lastchangetime.Millisecond;
-            if(millis <= config.FadeTime && config.prevscene != null)
+            //Debug.Print($"Time:{DateTime.Now}-{config.lastchangetime}={(DateTime.Now - config.lastchangetime).TotalMilliseconds}");
+            double millis = (DateTime.Now - config.lastchangetime).TotalMilliseconds;
+            if(millis <= config.FadeTime && config.currentvalues != null)
             {
-                double fadesteps = (config.FadeTime - millis) / Constants.sendtimeout;
+                double fadesteps = (config.FadeTime - millis) / (double)Constants.sendtimeout;
                 for (int i = 0; i < tempchannelvalues.Length; i++)
                 {
                     if(fadesteps == 0)
                     {
                         break;
                     }
-                    fade[i] += (byte)((double)(config.prevscene[i] - tempchannelvalues[i])/fadesteps);  
+                    fade[i] = (byte)(config.currentvalues[i] + Math.Round((double)(tempchannelvalues[i]-config.currentvalues[i])/fadesteps));  
                 }
             }
-            config.prevscene = fade;
-            if(con != null)
+            else
+            {
+                fade = tempchannelvalues;
+            }
+            config.currentvalues = fade;
+            if (con != null)
             {
                 con.Wait();
             }
-            if (serialPort1.IsOpen)
+            if (!noserial && serialPort1.IsOpen)
             {
                 //serialPort1.Write(tempchannelvalues, 0, tempchannelvalues.Length);
             }
@@ -638,14 +658,14 @@ namespace Spa_Interaction_Screen
                 currentState = 1;
                 //Debug.Print("unable to open Serial Port");
             }
-            if (enttec.isopen())
+            if (!noserial &&  enttec.isopen())
             {
                 enttec.sendDMX(fade);
             }
             else
             {
                 currentState = 1;
-                Debug.Print("unable to open Serial Port");
+                //Debug.Print("unable to open Serial Port");
             }
             Thread.Sleep((int)(Constants.sendtimeout));
         }
@@ -743,6 +763,29 @@ namespace Spa_Interaction_Screen
             }
         }
 
+        public void Wartung_Request_Handle(object sender, EventArgs e)
+        {
+            if (Constants.noNet)
+            {
+                return;
+            }
+            Network.RequestJson request = new Network.RequestJson();
+
+            request.destination = ArraytoString(config.IPZentrale, 4);
+            request.port = config.PortZentrale;
+            request.type = "System";
+            request.Raum = config.Room;
+            request.label = ((Constants.SystemSetting)((Button)(sender)).Tag).JsonText;
+            request.values = new String[] { ((Constants.SystemSetting)((Button)(sender)).Tag).value };
+            if (net.SendTCPMessage(request, null))
+            {
+                Debug.Print($"Message sent sucessfully");
+            }
+            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).Click -= Wartung_Request_Handle;
+            addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Wartung_Request_Handle);
+        }
+
         public void Service_Request_Handle(object sender, EventArgs e)
         {
             if (Constants.noNet)
@@ -755,7 +798,7 @@ namespace Spa_Interaction_Screen
             request.port = config.PortZentrale;
             request.type = "Service";
             request.Raum = config.Room;
-            request.label = ((String?)((Button)(sender)).Tag);
+            request.label = ((Constants.ServicesSetting)((Button)(sender)).Tag).JsonText;
             if (net.SendTCPMessage(request, null))
             {
                 Debug.Print($"Message sent sucessfully");
@@ -873,41 +916,36 @@ namespace Spa_Interaction_Screen
 
         public void ColorChanged_Handler(object sender, EventArgs e)
         {
-            ColorWheel colorWheel = (ColorWheel)sender;
-            if (colorWheel != null)
+            Constants.RGBW c = RGBtoRGBW(colorWheelElement.Color);
+            foreach (int value in config.colorwheelvalues[0])
             {
-                if (colorWheelElement.Color.R != 0)
+                if (config.DMXScenes[2].Channelvalues.Length > value && value>=0)
                 {
-                    foreach (int value in config.colorwheelvalues[0])
-                    {
-                        if (config.DMXScenes[2].Channelvalues.Length > value)
-                        {
-                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.R;
-                        }
-                    }
+                    config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.R * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
                 }
-                if (colorWheelElement.Color.G != 0)
-                {
-                    foreach (int value in config.colorwheelvalues[1])
-                    {
-                        if (config.DMXScenes[2].Channelvalues.Length > value)
-                        {
-                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.G;
-                        }
-                    }
-                }
-                if (colorWheelElement.Color.B != 0)
-                {
-                    foreach (int value in config.colorwheelvalues[2])
-                    {
-                        if (config.DMXScenes[2].Channelvalues.Length > value)
-                        {
-                            config.DMXScenes[2].Channelvalues[value] = colorWheelElement.Color.B;
-                        }
-                    }
-                }
-                Ambiente_Change(config.DMXScenes[2], true, true);
             }
+            foreach (int value in config.colorwheelvalues[1])
+            {
+                if (config.DMXScenes[2].Channelvalues.Length > value && value >= 0)
+                {
+                    config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.G * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
+                }
+            }
+            foreach (int value in config.colorwheelvalues[2])
+            {
+                if (config.DMXScenes[2].Channelvalues.Length > value && value >= 0)
+                {
+                    config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.B * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
+                }
+            }
+            foreach (int value in config.colorwheelvalues[3])
+            {
+                if (config.DMXScenes[2].Channelvalues.Length > value && value >= 0)
+                {
+                    config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.W * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
+                }
+            }
+            Ambiente_Change(config.DMXScenes[2], true, true);
         }
 
         public void reset_Handler(object sender, EventArgs e)
@@ -1066,7 +1104,6 @@ namespace Spa_Interaction_Screen
         {
             DateTime until = DateTime.Now.AddMilliseconds(millis);
             Buttonfader bf = new Buttonfader(b, until, to, eh);
-            Debug.Print($"TargetColor: {to.R} {to.G} {to.B}");
             timecoloredbuttons.Add(bf);
         }
 
@@ -1113,6 +1150,43 @@ namespace Spa_Interaction_Screen
                     bf.b.BackColor = fade;
                 }
             }
+        }
+
+        public Constants.RGBW RGBtoRGBW(Color c)
+        {
+            //Get the maximum between R, G, and B
+            float tM = Math.Max(c.R, Math.Max(c.G, c.B));
+
+            //If the maximum value is 0, immediately return pure black.
+            if (tM == 0)
+            { 
+                return new Constants.RGBW(c, 0, 0, 0, 0); 
+            }
+
+            //This section serves to figure out what the color with 100% hue is
+
+            float[] values = new float[4];
+            values[0] = 255.0f / tM;
+            values[1] = c.R * values[0];
+            values[2] = c.G * values[0];
+            values[3] = c.B * values[0];
+
+            //This calculates the Whiteness (not strictly speaking Luminance) of the color
+            float Luminance = ((Math.Max(values[1], Math.Max(values[2], values[3])) + Math.Min(values[1], Math.Min(values[2], values[3]))) / 2.0f - 127.5f) * (255.0f / 127.5f) / values[0];
+
+            //Calculate the output values
+            values[0] = Convert.ToInt32(Luminance);
+            values[1] = Convert.ToInt32(c.R - Luminance);
+            values[2] = Convert.ToInt32(c.G - Luminance);
+            values[3] = Convert.ToInt32(c.B - Luminance);
+
+            //Trim them so that they are all between 0 and 255
+            for (int i=0;i<values.Length;i++) 
+            {
+                values[i] = Math.Max(values[i], 0);
+                values[i] = Math.Min(values[i], 255);
+            }
+            return new Constants.RGBW(c, (byte)values[1], (byte)values[2], (byte)values[3], (byte)values[0]);
         }
     }
 }
