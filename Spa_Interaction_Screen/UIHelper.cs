@@ -182,7 +182,7 @@ namespace Spa_Interaction_Screen
             int Pos_x, Pos_y;
 
             GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 2, false);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, config.Objectname, 0, form.AmbientePage, form, form.Ambiente_Design_Handler);
+            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, config.Objectname, (int)0, form.AmbientePage, form, form.Ambiente_Design_Handler);
 
             ColorSlider.ColorSlider newslider = null;
             GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);

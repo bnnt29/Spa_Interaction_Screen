@@ -574,12 +574,12 @@ namespace Spa_Interaction_Screen
             bool noserial = true;
             Task con = null;
             serialPort1 = new SerialPort();
-            /*
             if (!enttec.isopen())
             {
                 con = Task.Run(() =>
                 {
-                    /*if (!serialPort1.IsOpen)
+                    /*
+                    if (!serialPort1.IsOpen)
                     {
                         try
                         {
@@ -594,17 +594,23 @@ namespace Spa_Interaction_Screen
                             noserial = true;
                         }
                     }
+                    */
                     if (!enttec.connect())
                     {
                         Debug.Print("Error when trying to Communicate with Enttec Port");
                         currentState = 1;
-                    }else{
+                    }
+                    else
+                    {
                         noserial = false;
                     }
                 });
-                
             }
-            */
+            else
+            {
+                noserial = false;
+            }
+
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
             if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
             {
@@ -624,10 +630,11 @@ namespace Spa_Interaction_Screen
             }
             for (int i = 0; i < tempchannelvalues.Length; i++)
             {
-                tempchannelvalues[i] = (tempchannelvalues[i] >= 255) ? (byte)254 : tempchannelvalues[i];
+                tempchannelvalues[i] = (byte)Math.Min(tempchannelvalues[i], (byte)254);
+                tempchannelvalues[i] = (byte)Math.Max(tempchannelvalues[i], (byte)0);
             }
             tempchannelvalues[0] = 255;
-            byte[] fade = new byte[tempchannelvalues.Length];
+           byte[] fade = new byte[tempchannelvalues.Length];
             //Debug.Print($"Time:{DateTime.Now}-{config.lastchangetime}={(DateTime.Now - config.lastchangetime).TotalMilliseconds}");
             double millis = (DateTime.Now - config.lastchangetime).TotalMilliseconds;
             if(millis <= config.FadeTime && config.currentvalues != null)
@@ -646,7 +653,8 @@ namespace Spa_Interaction_Screen
             {
                 fade = tempchannelvalues;
             }
-            config.currentvalues = fade;
+           config.currentvalues = fade;
+            Debug.Print($"Trying to send the following DMX Data:0,{fade[0]},{fade[1]},{fade[2]},{fade[3]},{fade[4]},{fade[5]},{fade[6]},{fade[7]},{fade[8]},{fade[9]},{fade[10]},{fade[11]},{fade[12]},{fade[13]},{fade[14]}");
             if (con != null)
             {
                 con.Wait();
@@ -658,7 +666,7 @@ namespace Spa_Interaction_Screen
             else
             {
                 currentState = 1;
-                //Debug.Print("unable to open Serial Port");
+                //Debug.Print("unable to op<en Serial Port");
             }
             if (!noserial &&  enttec.isopen())
             {
@@ -667,13 +675,19 @@ namespace Spa_Interaction_Screen
             else
             {
                 currentState = 1;
-                //Debug.Print("unable to open Serial Port");
+                Debug.Print("unable to open Enttec Port");
             }
             Thread.Sleep((int)(Constants.sendtimeout));
         }
 
         public void Ambiente_Design_Handler(object sender, EventArgs e)
         {
+            Debug.Print("Desing pressed");
+            if ((int?)((Button)(sender)).Tag == null)
+            {
+                currentState = 1;
+                return;
+            }
             if (((int?)(((Button)(sender)).Tag)) == 0)
             {
                 ((Button)(sender)).Tag = 1;
@@ -684,12 +698,7 @@ namespace Spa_Interaction_Screen
                 ((Button)(sender)).Tag = 0;
                 helper.selectButton((Button)sender, false, Constants.selected_color);
             }
-            if ((int?)((Button)(sender)).Tag == null)
-            {
-                currentState = 1;
-                return;
-            }
-            changeddimmerchannels[2] = config.ObjectLightInterval[Byte.Parse($"{((Button)(sender)).Tag}")];
+            changeddimmerchannels[2] = config.ObjectLightInterval[(int)((Button)(sender)).Tag];
 
             //SendCurrentSceneOverCom();
         }

@@ -55,10 +55,11 @@ namespace Spa_Interaction_Screen
         {
             if(channels==null || channels.Length<=0 || port==null || !port.IsOpen)
             {
+                Debug.Print("Error when tried to Send Enttec Data");
                 return;
             }
             Debug.Print($"Sending {channels.Length} + startbyte to enttec DMX sender");
-            byte[] temp = new byte[20];
+            byte[] temp = new byte[channels.Length+2];
             Buffer.BlockCopy(channels, 0, temp,1, channels.Length);
             temp = DmxUsbProUtils.CreatePacketForDevice(DmxUsbProConstants.SEND_DMX_PACKET_REQUEST_LABEL, temp);
             port.Write(temp, 0, temp.Length);
@@ -73,7 +74,13 @@ namespace Spa_Interaction_Screen
         {
             if (port == null)
             {
-                port = new SerialPort(config.EnttecComPort, 9600, Parity.None, 8, StopBits.One);
+                try
+                {
+                    port = new SerialPort(config.EnttecComPort, 9600, Parity.None, 8, StopBits.One);
+                }catch(IOException ex)
+                {
+                    Debug.Print(ex.Message);
+                }
             }
             if(!port.IsOpen)
             {
@@ -81,12 +88,10 @@ namespace Spa_Interaction_Screen
                 {
                     port.Open();
                 }
-                catch (Exception ex)
+                catch (IOException ex)
                 {
-#if !DEBUG
                     Debug.Print(ex.Message);
                     Debug.Print("Error when trying to Open Enttec Port");
-#endif
                     form.currentState = 1;
                     return false;
                 }
