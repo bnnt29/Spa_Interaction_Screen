@@ -7,6 +7,7 @@
 #Integer;#Status Nachricht Intervall (s) (-1 to disable);60;;;;;;;;;;;;;;;;;;
 #String;#Arduino Com Port Name;COM4;;;;;;;;;;;;;;;;;;
 #String;#Enttec Port Name;COM3;;;;;;;;;;;;;;;;;;
+#String;#Restricted Page Desciption;Zugriff nur für Mitarbeiter;;;;;;;;;;;;;;;;;;
 #Integer;#Ambiente Fade Time (ms);666;;;;;;;;;;;;;;;;;;
 #Array of Integer;#Wartungs Pin;1;2;3;4;5;6;;;;;;;;;;;;;
 #String;#Gastronomie Adresse;https://www.soundcraft.com/ui-demo/mixer.html;#(Connecting to Port 80/443);;;;;;;;;;;;;;;;;
@@ -37,7 +38,7 @@ Json Type:1;System;#Json Label;;;;;;;;;;;;;;;;;;
 #Integer;#Aus;off;;;;;;;;;;;;;;;;;;
 #;#;#Json Label;#default;;;;;;;;;;;;;;;;;
 #Integer;#DMXScene;scene;0;;;;;;;;;;;;;;;;;
-#Integer;Laustärke;volume;15;;;;;;;;;;;;;;;;;
+#Integer;Laustärke;volume;20;;;;;;;;;;;;;;;;;
 #;#TCP Wartungs Settings;#Json Label;#id;#value (no Array);;;;;;;;;;;;;;;;
 #Integer;Whirlpool spülen;Whirlpool;1;;;;;;;;;;;;;;;;;
 #Integer;Whirlpool ablassen;Whirlpool;2;;;;;;;;;;;;;;;;;
@@ -49,7 +50,7 @@ Json Type:2;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle 
 #;#[More Session Informations can be added];;;;;;;;;;;;;;;;;;;
 Json Type:3;Services;#Json Label;#Anzeige Text;#Info;;;;;;;;;;;;;;;;
 #String;#0;ServiceText;Was kann ich heute für Sie tun?;#(Text auf der Service Seite);;;;;;;;;;;;;;;;
-#String;#1;Ruf;anderer Wunsch;;;;;;;;;;;;;;;;;
+#String;#1;Ruf;anderer Wunsch;#(Standart Button, falls Gastro ausfällt);;;;;;;;;;;;;;;;
 #String;#2;Notfall;Arzt;;;;;;;;;;;;;;;;;
 #String;#3;Handtuch;frische Handtücher;;;;;;;;;;;;;;;;;
 #;#[More Serives can be added (max 12)];;;;;;;;;;;;;;;;;;;

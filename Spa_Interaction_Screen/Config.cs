@@ -24,6 +24,7 @@ namespace Spa_Interaction_Screen
         public int StateSendInterval = -1;
         public String ComPort = null;
         public String EnttecComPort = null;
+        public String RestrictedDescription = null;
         public int FadeTime = -1;
         public String[] Wartungspin = null;
         public String GastroUrl = null;
@@ -235,7 +236,8 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref LocalPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref StateSendInterval, 0, false, read_all);
             read_all = getcsvFields(stream, ref ComPort, 0, false, read_all);
-            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
+            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all); 
+            read_all = getcsvFields(stream, ref RestrictedDescription, 0, false, read_all);
             read_all = getcsvFields(stream, ref FadeTime, 0, false, read_all);
             read_all = getcsvFields(stream, ref Wartungspin, -1, false, read_all);
             read_all = getcsvFields(stream, ref GastroUrl, 0, false, read_all);

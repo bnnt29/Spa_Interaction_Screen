@@ -257,7 +257,7 @@ namespace Spa_Interaction_Screen
                 if (index >= 0 && index < c.DMXScenes.Count)
                 {
                     //TODO: Implement Update Method to update UI correctly and send data
-                    f.Ambiente_Change(c.DMXScenes[index], true, true);
+                    f.Ambiente_Change(c.DMXScenes[index], true, true, false);
                 }
                 else
                 {

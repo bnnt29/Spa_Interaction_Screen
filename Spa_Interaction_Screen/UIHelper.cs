@@ -2,6 +2,7 @@
 using QRCoder;
 using System.Diagnostics;
 using System.Windows.Forms;
+using static System.Windows.Forms.AxHost;
 
 namespace Spa_Interaction_Screen
 {
@@ -65,6 +66,8 @@ namespace Spa_Interaction_Screen
             createMediaPageElements();
 
             createServicePageElements();
+
+            createGastroPageElements();
 
             createRestrictedPageElements();
             removeRestrictedPageElements();
@@ -270,6 +273,24 @@ namespace Spa_Interaction_Screen
             newslider.Value = 100;
             form.ColorPage.Controls.Add(newslider);
             newslider.ValueChanged += form.ColorChanged_Handler;
+
+            GetDynamicPosition(5, 0, out Posx, out Posy, 0, 0, false);
+            Constants.createButton(Constants.Element_width, Constants.Element_height, Posx, (Constants.tabheight/2)-(Constants.Element_height/2), null, "Zurrücksetzen", null, form.ColorPage, form, form.resetcolorwheel);
+        }
+
+        public void createGastroPageElements()
+        {
+
+            Constants.createButton((int)(Constants.windowwidth / 2) - (Constants.Element_width / 2), (Constants.tabheight / 2) - (Constants.Element_height / 2), null, config.ServicesSettings[1].ShowText, (Constants.ServicesSetting)config.ServicesSettings[1], form.GastronomiePage, form, form.Service_Request_Handle, out form.GastroEx);
+            form.GastroEx.Hide();
+
+            form.GastroExDescription = new Label();
+            form.GastroExDescription.AutoSize = true;
+            form.GastroExDescription.ForeColor = Constants.Text_color;
+            form.GastroExDescription.Text = "Leider ist die Bestellseite zur Zeit nicht verfügbar.\nBitte melden Sie sich bei dem Service Personal,\nfalls Sie etwas bestellen möchten.";
+            form.GastronomiePage.Controls.Add(form.GastroExDescription);
+            form.GastroExDescription.Location = new Point((Constants.windowwidth / 2) - (form.GastroExDescription.Size.Width / 2), (int)(Constants.tabheight / 4) - (form.GastroExDescription.Height / 2));
+            form.GastroExDescription.Hide();
         }
 
         public void createMediaPageElements()
@@ -391,7 +412,7 @@ namespace Spa_Interaction_Screen
             form.WartungCodeField.Location = new Point(Constants.windowwidth / 2 - form.WartungCodeField.Size.Width / 2, Pos_y-15);
             form.WartungCodeField.Show();
             */
-            form.RestrictedAreaDescribtion.Text = "Zugriff nur für Mitarbeiter";
+            form.RestrictedAreaDescribtion.Text = config.RestrictedDescription;
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, -0.1, false);
             form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y); 
             form.RestrictedAreaDescribtion.Show();

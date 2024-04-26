@@ -6,12 +6,20 @@ using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Win32;
 using static QRCoder.PayloadGenerator.SwissQrCode;
+using System.Runtime.InteropServices;
+using System.Xml;
+using System.Diagnostics.Metrics;
+using static Spa_Interaction_Screen.EmbedVLC;
+using Microsoft.VisualBasic.ApplicationServices;
+using static System.Windows.Forms.LinkLabel;
+using System.Net.NetworkInformation;
+using System.Net;
 
 /*TODO:
- * register monitor change and adjust setup (VLC)
- * reset color wheel button
  * red marked in excel
  * Implement all Jsons
  * Test TCPButtons
@@ -53,6 +61,7 @@ namespace Spa_Interaction_Screen
         private Task dmx = null;
         private Task state = null;
         private Task windows = null;
+        private Task pinggastro = null;
 
         private bool exitProgramm = false;
         public bool HandleCreate = false;
@@ -61,7 +70,7 @@ namespace Spa_Interaction_Screen
         {
             this.Hide();
             main = Screen.PrimaryScreen;
-            if(main == null) 
+            if (main == null)
             {
                 Debug.Print("Could not detect main screen");
                 return;
@@ -125,26 +134,29 @@ namespace Spa_Interaction_Screen
                 Application.Exit();
                 return;
             }
+
             this.Hide();
 
-            start();
-            loadscreen.updateProgress(90);
+            loadscreen.updateProgress(58);
+
+            loadscreen.updateProgress(88);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
-
-            if (vlc != null)
-            {
-                vlc.showthis();
-            }
-
-            setupThreads();
-            loadscreen.updateProgress(95);
-            this.TopMost = false;
-            loadscreen.TopMost = true;
-            for(int i = 0; i < UIControl.TabCount; i++)
+            for (int i = 0; i < UIControl.TabCount; i++)
             {
                 UIControl.SelectTab(i);
                 Application.DoEvents();
             }
+            start();
+
+            loadscreen.updateProgress(93);
+            if (vlc != null)
+            {
+                vlc.showthis();
+            }
+            loadscreen.updateProgress(95);
+            this.TopMost = false;
+            loadscreen.TopMost = true;
+
 
 
             ButtonColorTimer.Interval = Constants.buttonupdatemillis;
@@ -155,7 +167,7 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(100);
             UIControl.SelectTab(0);
             this.Show();
-            EnterFullscreen(this, main);
+            EnterFullscreen(this, main, HandleCreate);
             loadscreen.Hide();
             loadscreen.Close();
             loadscreen = null;
@@ -167,40 +179,94 @@ namespace Spa_Interaction_Screen
 
         private void setupThreads()
         {
-            dmx = Task.Run(() =>
+            dmx = Task.Run(async () =>
             {
                 while (true)
                 {
                     SendCurrentSceneOverCom();
-                    Application.DoEvents();
+                    await Task.Delay(Constants.sendtimeout);
                 }
             });
-            windows = Task.Run(() =>
+            windows = Task.Run(() => ScreenManagerTaskMethod(this));
+
+            pinggastro = Task.Run(async () =>
             {
+                HttpWebResponse response = null;
+                bool connectionok = false;
                 while (true)
                 {
-                    while (Screen.AllScreens.Length < 2)
+                    HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(config.GastroUrl);
+                    request.AllowAutoRedirect = true; // find out if this site is up and don't follow a redirector
+                    request.Method = "HEAD";
+                    try
                     {
-                        if (Screen.AllScreens.Length == 0)
+                        response = (HttpWebResponse)request.GetResponse();
+                        // do something with response.Headers to find out information about the request
+                    }
+                    catch (WebException wex)
+                    {
+                        Debug.Print(wex.Message);
+                        connectionok = false;
+                        //set flag if there was a timeout or some other issues
+                    }catch (Exception ex)
+                    {
+                        Debug.Print(ex.Message);
+                    }
+                    if ((int)response.StatusCode > 100 && (int)response.StatusCode < 400)
+                    {
+                        connectionok = true;
+                    }
+                    else if ((int)response.StatusCode > 400 && (int)response.StatusCode < 500) 
+                    {
+                        Debug.Print("Client Error received, but ignoring it for now");
+                        connectionok = true;
+                    }
+                    else if ((int)response.StatusCode > 500 && (int)response.StatusCode < 600)
+                    {
+                        Debug.Print("Server Error received");
+                        connectionok = false;
+                    }
+                    else
+                    {
+                        Debug.Print("unknown Error received");
+                        connectionok = false;
+                    }
+                    object[] delegateArray = new object[1];
+                    delegateArray[0] = connectionok;
+                    if (HandleCreate)
+                    {
+                        try
                         {
-                            Debug.Print("No Screen detected");
-                            this.Hide();
+                            this.Invoke(new Myswitchgastro(delegateswitchgastronotreachable), delegateArray);
                         }
-                        Thread.Sleep(500);
+                        catch (InvalidOperationException ex)
+                        {
+                            Debug.Print(ex.Message);
+                            delegateswitchgastronotreachable(connectionok);
+                        }
                     }
-                    Thread.Sleep(500);
-                    while (Screen.AllScreens.Length >= 2)
+                    else
                     {
-                        Thread.Sleep(500);
+                        try
+                        {
+                            delegateswitchgastronotreachable(connectionok);
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            Debug.Print(ex.Message);
+                            this.Invoke(new Myswitchgastro(delegateswitchgastronotreachable), delegateArray);
+                        }
                     }
-                    Thread.Sleep(500);
+
+                    Debug.Print("4");
+                    await Task.Delay(10000);
                 }
             });
 
             //TODO: Test the State updater
-            if(config.StateSendInterval>0)
+            if (config.StateSendInterval > 0)
             {
-                state = Task.Run(() =>
+                state = Task.Run(async () =>
                 {
                     while (true && !Constants.noNet)
                     {
@@ -215,15 +281,222 @@ namespace Spa_Interaction_Screen
                         {
                             Debug.Print($"Message sent sucessfully");
                         }
-                        Thread.Sleep(config.StateSendInterval * 1000);
+                        await Task.Delay(config.StateSendInterval * 1000);
                     }
                 });
             }
         }
 
+        public delegate void Myswitchgastro(bool reachable);
+        public void delegateswitchgastronotreachable(bool reachable)
+        {
+            if (reachable)
+            {
+                GastronomieWebview.Show();
+                GastroEx.Hide();
+                GastroExDescription.Hide();
+            }
+            else
+            {
+                GastronomieWebview.Hide();
+                GastroEx.Show();
+                GastroExDescription.Show();
+            }
+        }
+
+        public void showthis()
+        {
+            if (HandleCreate)
+            {
+                try
+                {
+                    this.Invoke(new MyNoArgument(delegateshowthis));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegateshowthis();
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegateshowthis();
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    this.Invoke(new MyNoArgument(delegateshowthis));
+                }
+            }
+        }
+
+        private void delegateshowthis()
+        {
+            this.Show();
+        }
+
+        public void hidethis()
+        {
+            if (HandleCreate)
+            {
+                try
+                {
+                    this.Invoke(new MyNoArgument(delegatehidethis));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegatehidethis();
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegatehidethis();
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    this.Invoke(new MyNoArgument(delegatehidethis));
+                }
+            }
+        }
+
+        private void delegatehidethis()
+        {
+            this.Hide();
+        }
+
+
+        private async void ScreenManagerTaskMethod(MainForm form)
+        {
+            while (true)
+            {
+                switch (SystemInformation.MonitorCount)
+                {
+                    case 0:
+                        Debug.Print("No Screen detected");
+                        form.hidethis(); 
+                        if (vlc != null)
+                        {
+                            vlc.hidethis();
+                        }
+                        break;
+                    case 1:
+                        form.showthis();
+                        EnterFullscreen(form, Screen.PrimaryScreen, HandleCreate); 
+                        if (vlc != null)
+                        {
+                            vlc.hidethis();
+                        }
+                        break;
+                    default:
+                        SetupEmbedvlcScreen(form);
+                        form.showthis();
+                        break;
+                }
+                await Task.Delay(3000);
+            }
+        }
+
+
+        public delegate void MySetupEmbedvlcScreen(MainForm form);
+        private void SetupEmbedvlcScreen(MainForm form)
+        {
+            object[] delegateArray = new object[1];
+            delegateArray[0] = form;
+            if (HandleCreate)
+            {
+                try
+                {
+                    this.Invoke(new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), delegateArray);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegateSetupEmbedvlcScreen(form);
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegateSetupEmbedvlcScreen(form);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    this.Invoke(new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), delegateArray);
+                }
+            }
+        }
+
+        private void delegateSetupEmbedvlcScreen(MainForm form)
+        {
+            if (SystemInformation.MonitorCount > 1)
+            { 
+                Screen TV = null;
+                Size bounds = new Size(0, 0);
+                if (Screen.AllScreens.Length > 1)
+                {
+                    for (int i = 0; i < Screen.AllScreens.Length; i++)
+                    {
+                        //Not Safe if Monitor is connected / disconnected during Loop is running
+                        if (!Screen.AllScreens[i].Equals(main))
+                        {
+                            if (TV != null)
+                            {
+                                if (Screen.AllScreens[i].Bounds.Size.Width > Screen.AllScreens[i].Bounds.Size.Height && Screen.AllScreens[i].Bounds.Size.Width * Screen.AllScreens[i].Bounds.Size.Height > bounds.Width * bounds.Height)
+                                {
+                                    TV = Screen.AllScreens[i];
+                                    bounds = Screen.AllScreens[i].Bounds.Size;
+                                }
+                            }
+                            else
+                            {
+                                TV = Screen.AllScreens[i];
+                                bounds = Screen.AllScreens[i].Bounds.Size;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.Print("Different Variables for the same thing Stated different Results.\n Therefore second Monitor couldn't be initialized.");
+                }
+                if (TV == null)
+                {
+                    //Could be Timing Issue, when TV not yet Registered as  monitor
+                    Debug.Print("Second Monitor not found");
+                    currentState = 1;
+                    if (vlc != null)
+                    {
+                        vlc.hidethis();
+                        vlc.Dispose();
+                        vlc = null;
+                    }
+                }
+                else
+                {
+                    if(vlc == null)
+                    {
+                        vlc = new EmbedVLC(form, TV);
+                        AmbientVolume(config.Volume, 3, null);
+                        Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, false, false);
+                    }
+                    vlc.showthis();
+
+                }
+            }
+        }
+
         private void start()
         {
-            EnterFullscreen(this, main);
+            EnterFullscreen(this, main, HandleCreate);
+
             loadscreen.updateProgress(60);
             if (!config.showtime)
             {
@@ -247,40 +520,10 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(70);
             defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
 
-            Screen TV = null;
-            if (Screen.AllScreens.Length > 1)
-            {
-                for (int i = 0; i < Screen.AllScreens.Length; i++)
-                {
-                    //Not Safe if Monitor is connected / disconnected during Loop is running
-                    if (!Screen.AllScreens[i].Equals(main))
-                    {
-                        TV = Screen.AllScreens[i];
-                        break;
-                    }
-                }
-            }
-            if (TV == null)
-            {
-                //Could be Timing Issue, when TV not yet Registered as  monitor
-                Debug.Print("Second Monitor not found");
-                currentState = 1;
-                if (vlc != null)
-                {
-                    vlc.hidethis();
-                    vlc.Dispose();
-                    vlc = null;
-                }
-            }
-            else
-            {
-                vlc = new EmbedVLC(this, TV);
-            }
+            setupThreads();
 
             GastronomieWebview.CoreWebView2InitializationCompleted += webcontentLoaded;
 
-            AmbientVolume(config.Volume, 3, null);
-            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, false);
             //SendCurrentSceneOverCom();
 
             loadscreen.updateProgress(80);
@@ -291,6 +534,8 @@ namespace Spa_Interaction_Screen
                 t.Tick += timer_tick;
                 t.Enabled = true;
             }
+
+            
 #if !DEBUG
             minutes_received = config.SessionSettings.Count - 1;
 #endif 
@@ -505,14 +750,50 @@ namespace Spa_Interaction_Screen
 
         public void Programm_Enter_Handler(object sender, EventArgs e)
         {
-            EnterFullscreen(this, main);
+            EnterFullscreen(this, main, HandleCreate);
             ((Button)sender).Click -= Programm_Enter_Handler;
             ((Button)sender).Click += Programm_Exit_Handler;
             ((Button)sender).Text = Constants.ExitFullscreenText;
         }
 
-        public void EnterFullscreen(Form f, Screen screen)
+
+        public delegate void MyFullscreen(Form f, Screen screen);
+
+        public void EnterFullscreen(Form f, Screen screen, bool handle)
         {
+            object[] delegateArray = new object[2];
+            delegateArray[0] = f;
+            delegateArray[1] = screen;
+            //The check for the Handle Create can fail when the questioning Form is EmbedVLC.
+            if (handle)
+            {
+                try
+                {
+                    f.Invoke(new MyFullscreen(delegateEnterFullscreen), delegateArray);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegateEnterFullscreen(f, screen);
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegateEnterFullscreen(f,screen);
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    f.Invoke(new MyFullscreen(delegateEnterFullscreen), delegateArray);
+                }
+            }
+        }
+
+        public void delegateEnterFullscreen(Form f, Screen screen)
+        {
+            Debug.Print("Fullscreened");
 #if !DEBUG
             f.TopMost = true;
             f.ControlBox = false;
@@ -530,10 +811,10 @@ namespace Spa_Interaction_Screen
 
         public void Ambiente_Change_Handler(object sender, EventArgs e)
         {
-            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false, true);
+            Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false, true, false);
             //SendCurrentSceneOverCom();
         }
-        public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user)
+        public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user, bool keepMedia)
         {
             if (scene == null)
             {
@@ -549,7 +830,8 @@ namespace Spa_Interaction_Screen
             {
                 helper.setActiveDMXScene(index);
             }
-            if (vlc != null)
+            //Debug.Print($"{vlc != null},{scene.ContentPath != null},{scene.ContentPath.Length > 2},{!streaming},{!vlcclosed}");
+            if (vlc != null && !keepMedia)
             {
                 if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
@@ -558,14 +840,14 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    vlc.quitMedia();
+                    vlc.quitMedia(user);
                 }
 
             }
             //SendCurrentSceneOverCom();
         }
 
-        private void SendCurrentSceneOverCom()
+        private async void SendCurrentSceneOverCom()
         {
             if (Constants.noCOM)
             {
@@ -677,7 +959,6 @@ namespace Spa_Interaction_Screen
                 currentState = 1;
                 Debug.Print("unable to open Enttec Port");
             }
-            Thread.Sleep((int)(Constants.sendtimeout));
         }
 
         public void Ambiente_Design_Handler(object sender, EventArgs e)
@@ -754,7 +1035,7 @@ namespace Spa_Interaction_Screen
                 streaming = true;
                 if (vlc != null)
                 {
-                    vlc.quitMedia();
+                    vlc.quitMedia(false);
                 }
             }
             else
@@ -769,7 +1050,7 @@ namespace Spa_Interaction_Screen
                 AmbientelautstärkeColorSliderDescribtion.Show();
                 TVSettingsVolumeColorSliderDescribtion.Show();
                 streaming = false;
-                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, true);
+                Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, true, false);
                 //SendCurrentSceneOverCom();
             }
         }
@@ -831,7 +1112,7 @@ namespace Spa_Interaction_Screen
         {
             if (vlc != null)
             {
-                vlc.quitMedia();
+                vlc.quitMedia(false);
                 vlc.hidethis();
             }
             vlcclosed = true;
@@ -862,7 +1143,7 @@ namespace Spa_Interaction_Screen
             {
                 vlc.showthis();
             }
-            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, false);
+            Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], false, false, false);
             //SendCurrentSceneOverCom();
             vlcclosed = false;
             foreach (Button b in helper.RestrictedPageButtons)
@@ -927,6 +1208,14 @@ namespace Spa_Interaction_Screen
 
         public void ColorChanged_Handler(object sender, EventArgs e)
         {
+            if(sender.Equals(colorWheelElement))
+            {
+                Debug.Print("Equal");
+                if (((ColorSlider.ColorSlider)colorWheelElement.Tag).Value < 15)
+                {
+                    ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value = 20;
+                }
+            }
             Constants.RGBW c = RGBtoRGBW(colorWheelElement.Color);
             foreach (int value in config.colorwheelvalues[0])
             {
@@ -956,8 +1245,9 @@ namespace Spa_Interaction_Screen
                     config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.W * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
                 }
             }
-            Ambiente_Change(config.DMXScenes[2], true, true);
+            Ambiente_Change(config.DMXScenes[2], true, true, true);
         }
+
 
         public void reset_Handler(object sender, EventArgs e)
         {
@@ -1198,6 +1488,16 @@ namespace Spa_Interaction_Screen
                 values[i] = Math.Min(values[i], 255);
             }
             return new Constants.RGBW(c, (byte)values[1], (byte)values[2], (byte)values[3], (byte)values[0]);
+        }
+
+        public void resetcolorwheel(object sender, EventArgs e)
+        {
+            colorWheelElement.ColorChanged -= ColorChanged_Handler;
+            colorWheelElement.Color = Color.White;
+            colorWheelElement.ColorChanged += ColorChanged_Handler;
+            ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged -= ColorChanged_Handler;
+            ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).Value = 100;
+            ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged += ColorChanged_Handler;
         }
     }
 }

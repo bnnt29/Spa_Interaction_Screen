@@ -16,9 +16,10 @@ Data types:
 State ids:
   0: Something wrong
   1: All right
-  2: No TCP connection
-  3: Error when communicating with router
-  4: Error when communicating with ambient Light
+  2: No TCP connection  
+  3: No Second Monitor
+  4: Error when communicating with router
+  5: Error when communicating with ambient Light
 
 ----- Data To Interaction_Screen -----
 

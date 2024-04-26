@@ -6,6 +6,7 @@ using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using static Spa_Interaction_Screen.MainForm;
+using static System.Windows.Forms.LinkLabel;
 
 namespace Spa_Interaction_Screen
 {
@@ -32,11 +33,13 @@ namespace Spa_Interaction_Screen
 
             this.main = f;
             scrn = screen;
-            main.EnterFullscreen(this, scrn);
-            createElements();
 
             Core.Initialize();
             libvlc = new LibVLC();
+
+            main.EnterFullscreen(this, scrn, HandleCreate);
+            createElements();
+
             TVvideoView.MediaPlayer = new MediaPlayer(libvlc);
             TVvideoView.Dock = DockStyle.Fill;
 
@@ -76,41 +79,52 @@ namespace Spa_Interaction_Screen
         }
 
         public delegate void MyNoArgument();
+        public delegate void MyquitMedia(bool user);
         public delegate void MychangeMedia(String link, bool user);
-        public void quitMedia()
+        public void quitMedia(bool user)
         {
+            object[] delegateArray = new object[1];
+            delegateArray[0] = user;
             if (HandleCreate)
             {
                 try
                 {
-                    this.Invoke(new MyNoArgument(delegatequitMedia));
+                    this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
                 }
-                catch(InvalidOperationException ex)
+                catch (InvalidOperationException ex)
                 {
                     Debug.Print(ex.Message);
-                    delegatequitMedia();
+                    delegatequitMedia(user);
                 }
             }
             else
             {
                 try
                 {
-                    delegatequitMedia();
-                }catch (Exception ex)
+                    delegatequitMedia(user);
+                }
+                catch (Exception ex)
                 {
                     Debug.Print(ex.Message);
-                    this.Invoke(new MyNoArgument(delegatequitMedia));
+                    this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
                 }
             }
         }
 
-        private void delegatequitMedia()
+        private void delegatequitMedia(bool user)
         {
             runvideo = false;
             this.BackgroundImage = null;
-            TVvideoView.Hide();
-            TVvideoView.MediaPlayer.Media = null;
+            if(TVvideoView != null)
+            {
+                TVvideoView.Hide();
+                TVvideoView.MediaPlayer.Media = null;
+            }
             currentlyshowing = null;
+            if (user)
+            {
+                welcomeqr.Hide();
+            }
         }
 
         public void showthis()
@@ -256,17 +270,14 @@ namespace Spa_Interaction_Screen
         {
             if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
             {
-#if DEBUG
-                Debug.Print($"Already showing: {link}");
-#endif
+                if (user)
+                {
+                    welcomeqr.Hide();
+                }
                 return;
             }
+            quitMedia(user);
             Debug.Print($"Showing {link}");
-            quitMedia();
-            if (user)
-            {
-                welcomeqr.Hide();
-            }
             int index = link.LastIndexOf('.');
             switch (link.Substring(index))
             {

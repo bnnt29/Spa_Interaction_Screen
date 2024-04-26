@@ -15,7 +15,7 @@ namespace Spa_Interaction_Screen
         {
             InitializeComponent();
             form = f;
-            form.EnterFullscreen(this, screen);
+            form.EnterFullscreen(this, screen, false);
             this.BackColor = Constants.Background_color;
             addcomponents();
             exit_b = Constants.createButton(Constants.Element_width, Constants.Element_height, 0, 0, null, "ExitProgramm", null, this, null, form.ExitProgramm);

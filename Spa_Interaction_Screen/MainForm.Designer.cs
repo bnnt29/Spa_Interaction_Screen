@@ -383,6 +383,8 @@ namespace Spa_Interaction_Screen
 
         //GastronomiePage
         public Microsoft.Web.WebView2.WinForms.WebView2 GastronomieWebview;
+        public Button GastroEx;
+        public Label GastroExDescription;
 
         //MediaPage
         public Label WiFiSSIDTitle;
