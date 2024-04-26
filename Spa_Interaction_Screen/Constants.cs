@@ -56,44 +56,56 @@ namespace Spa_Interaction_Screen
         public const int waittonextcheck = 100;
         public const int sendtimeout = 32;
 
-        public class SystemSetting
+        public class SystemSetting : configclasses
         {
-            public String? ShowText = null;
-            public String JsonText = null;
-            public int? id = null;
             public String? value = null;
         }
 
-        public class SessionSetting
+        public class SessionSetting : configclasses
         {
-            public int id = -1;
             /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
             public bool should_reset = false;
-            public int JsonValue = -1;
-            public String? ShowText = null;
         }
 
-        public class ServicesSetting
+        public class ServicesSetting : configclasses
         {
-            public int id = -1;
             /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
-            public String JsonText = null;
-            public String ShowText = null;
         }
-        public class DMXScene
+
+        public class rawfunctiontext : configclasses
         {
-            public int id = -1;
+            public String functionText;
+        }
+
+        public class ServicesSettingfunction<T> : ServicesSetting where T : configclasses
+        {
+            /*
+            public int startvalue = -1;//inclusive
+            public int endvalue = -1;//inclusive
+            */
+            public bool? enable;
+            public bool? block;
+            public T? function;
+        }
+
+        public class DMXScene : configclasses
+        {
             public byte[] Channelvalues = null;
-            public String ShowText = null;
-            public String JsonText = null;
             public String? ContentPath = null;
             public Button ButtonElement = null;
+        }
+
+        public abstract class configclasses
+        {
+            public int id=-1;
+            public String? ShowText = null;
+            public String JsonText = null;
         }
 
         public class RGBW

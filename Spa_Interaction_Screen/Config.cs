@@ -431,7 +431,11 @@ namespace Spa_Interaction_Screen
                         Volume = Int32.Parse(ReadFields[2]);
                         stream.ReadLine();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-
+                        read_all = true;
+                        break;
+                    case 2:
+                        Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             SystemSetting s = new SystemSetting();
@@ -442,7 +446,7 @@ namespace Spa_Interaction_Screen
                             {
                                 ident = Int32.Parse((string)ReadFields[2]);
                             }
-                            catch(FormatException ex)
+                            catch (FormatException ex)
                             {
                                 Debug.Print(ex.Message);
                             }
@@ -450,34 +454,24 @@ namespace Spa_Interaction_Screen
                             {
                                 s.id = ident;
                             }
-                            if (ReadFields.Length>3 && ReadFields[3]!=null && ReadFields[3].Length > 0)
+                            if (ReadFields.Length > 3 && ReadFields[3] != null && ReadFields[3].Length > 0)
                             {
                                 s.value = ReadFields[3];
                             }
                             TCPSettings.Add(s);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                             }
+                        }
                         read_all = true;
                         break;
-                    case 2:
+                    case 3:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             SessionSetting si = new SessionSetting();
                             si.id = SessionSettings.Count;
-                            int ident = -1;
-                            if (!ReadFields[0].Contains("[all_left]"))
-                            {
-                                try
-                                {
-                                    ident = Int32.Parse((string)ReadFields[0]);
-                                }
-                                catch (FormatException ex)
-                                {
-                                    Debug.Print(ex.Message);
-                                }
-                            }                            si.JsonValue = ident;
+                            int ident = -1;     
+                            si.JsonText = ReadFields[0];
                             bool parsed = false;
                             try
                             {
@@ -497,21 +491,31 @@ namespace Spa_Interaction_Screen
                         }
                         read_all = true;
                         break;
-                    case 3:
+                    case 4:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
-                            ServicesSetting si = new ServicesSetting();
+                            ServicesSettingfunction<Constants.rawfunctiontext> si = new ServicesSettingfunction<Constants.rawfunctiontext>();
                             si.id = ServicesSettings.Count;
                             si.JsonText = ReadFields[0];
                             si.ShowText = ReadFields[1];
+                            if(ReadFields.Length > 2 && ReadFields[2]!=null && ReadFields[2].Length>0)
+                            {
+                                Constants.rawfunctiontext f = new Constants.rawfunctiontext();
+                                f.functionText = ReadFields[2];
+                                si.function = f;
+                            }
+                            else
+                            {
+                                si.function = null;
+                            }
                             ServicesSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
                         read_all = true;
                         break;
-                    case 4:
+                    case 5:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
@@ -577,8 +581,65 @@ namespace Spa_Interaction_Screen
                 }
                 DMXScenes.Add(scene);
             }
+            List<Constants.ServicesSetting> neu = new List<ServicesSetting>();
+            foreach(Constants.ServicesSettingfunction<Constants.rawfunctiontext> sss in ServicesSettings)
+            {
+                if (sss.function == null || sss.function.functionText == null || sss.function.functionText.Length<=0)
+                {
+                    ServicesSetting ss = new ServicesSetting();
+                    ss.id = sss.id;
+                    ss.ShowText = sss.ShowText;
+                    ss.JsonText = sss.JsonText;
+                    neu.Add(ss);
+                    continue;
+                }
+                bool typefound = false;
+                ServicesSetting service = null;
+                for (int i = 0; i<Typenames.Length;i++)
+                {
+                    String s = Typenames[i];
+                    if (s.Equals(sss.function.functionText.Split('[')[1].Split(',')[0]))
+                    {
+                        service = getServiceFunctionFromString(i, sss);
+                    }
+                }
+                if (!typefound)
+                {
+                    int z = -1;
+                    try
+                    {
+                        z = Int32.Parse(sss.function.functionText.Split('[')[1].Split(',')[0]);
+                    }
+                    catch (FormatException ex)
+                    {
+                        Debug.Print(ex.Message);
+                        continue;
+                    }
+                    if(z>=0)
+                    {
+                        service = getServiceFunctionFromString(z, sss);
+                    }
+                }
+                if(service == null)
+                {
+                    continue;
+                }
+                neu.Add(service);
+            }
             currentvalues = new byte[DMXScenes[0].Channelvalues.Length];
             allread = true;
+        }
+
+        private ServicesSetting getServiceFunctionFromString(int type, Constants.ServicesSettingfunction<Constants.rawfunctiontext> s)
+        {
+            switch (type)
+            {
+                case 0:
+                    ServicesSettingfunction<SystemSetting> res = new ServicesSettingfunction<SystemSetting>();
+                    return res;
+                    break;
+            }
+            return null;
         }
 
         private void finalizePaths(out String? sp, String s)
