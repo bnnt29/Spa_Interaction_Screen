@@ -100,7 +100,7 @@ namespace Spa_Interaction_Screen
             UIControl.Size = new Size(Constants.windowwidth, Constants.windowheight);
             UIControl.SizeMode = TabSizeMode.Fixed;
             UIControl.TabIndex = 4;
-            UIControl.SelectedIndexChanged += logoutTab_Handler;
+            UIControl.Deselecting += logoutTab_Handler;
             // 
             // AmbientePage
             // 
@@ -411,6 +411,7 @@ namespace Spa_Interaction_Screen
 
         //RestrictedPage
         public Label RestrictedAreaTitle;
+        public Button resetscenelockbutton;
 
     }
 }

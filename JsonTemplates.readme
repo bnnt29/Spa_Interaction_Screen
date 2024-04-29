@@ -27,8 +27,8 @@ System:
 {  
   "room":1,
   "type":"System",
-  "label":"Whirlpool",
-  "id":1
+  "label":"Volume",
+  "id":30
 }
 
 Session:
@@ -37,6 +37,14 @@ Session:
   "type":"Session",
   "id":5
 }
+
+TCPWartung:
+{
+  "room":1,
+  "type":"TCPWartung",
+  "values":["Say Hello", "Hello", "2", "10"]
+}
+
 
 //Change scene
 DMXScene:
@@ -70,20 +78,6 @@ DMXScene:
   "type":"DMXScene",
   "id": 0,
   "values":[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
-}
-
-Volume:
-{
-  "room":1,
-  "type":"Volume",
-  "values":[ 0 ]
-}
-
-Update: 
-{
-  "room":1,  
-  "type":"System",
-  "label":"config"
 }
 
 //This isn't configurable in Config and can be overwritten by the user when changing the scene. The Media file also must be in the "Content" Folder of the Programm.

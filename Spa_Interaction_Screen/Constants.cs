@@ -12,6 +12,7 @@ namespace Spa_Interaction_Screen
         public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
+        public const int SessionOvertimeBuffer = 0;
 
         //PreConfig
         public static String ContentPath = null;
@@ -19,14 +20,14 @@ namespace Spa_Interaction_Screen
         private static Char[] delimiter = new Char[] { ';', '#' };
         public static int maxscenes = 12;
         public static int maxhelps = 12;
-        public static int maxwartungs = 5;
+        public static int maxtcpws = 5;
         public static int XButtonCount = 5;
         public static int YButtonCount = 5;
         public static int InlineUntilXButtons = 5;
         public static bool noCOM = false;
         public static bool noNet = false;
-        public static int Logoposxdist = 50;
-        public static int Logoposydist = 50;
+        public static int EdgeItemposxdist = 50;
+        public static int EdgeItemposydist = 50;
         public static int Logoxsize = 50;
         public static int Logoysize = 50;
         public static int buttonupdatemillis = 35;
@@ -61,12 +62,17 @@ namespace Spa_Interaction_Screen
             public String? value = null;
         }
 
+        public class TCPSetting : SystemSetting
+        {
+        }
+
         public class SessionSetting : configclasses
         {
             /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
+            public int mins = -1;
             public bool should_reset = false;
         }
 
@@ -76,6 +82,7 @@ namespace Spa_Interaction_Screen
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
+            public bool hassecondary = false;
         }
 
         public class rawfunctiontext : configclasses
@@ -83,22 +90,23 @@ namespace Spa_Interaction_Screen
             public String functionText;
         }
 
-        public class ServicesSettingfunction<T> : ServicesSetting where T : configclasses
+        public class ServicesSettingfunction : ServicesSetting
         {
             /*
             public int startvalue = -1;//inclusive
             public int endvalue = -1;//inclusive
             */
-            public bool? enable;
-            public bool? block;
-            public T? function;
+            public Type functionclass;
+            public String? value = null;
+            public bool enable;
+            public bool block;
+            public configclasses? function;
         }
 
         public class DMXScene : configclasses
         {
             public byte[] Channelvalues = null;
             public String? ContentPath = null;
-            public Button ButtonElement = null;
         }
 
         public abstract class configclasses
@@ -106,6 +114,7 @@ namespace Spa_Interaction_Screen
             public int id=-1;
             public String? ShowText = null;
             public String JsonText = null;
+            public Button? ButtonElement = null;
         }
 
         public class RGBW
@@ -172,7 +181,7 @@ namespace Spa_Interaction_Screen
             b.BringToFront();
         }
 
-        public static Button createButton(int TabIndex, String Text, object? Tag, Point p)
+        public static Button createButton(int TabIndex, String Text, Object? Tag, Point p)
         {
             RoundedButton b = new BrbVideoManager.Controls.RoundedButton();
             b.Size = new Size(Constants.Element_width, Constants.Element_height);

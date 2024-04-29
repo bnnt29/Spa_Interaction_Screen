@@ -21,8 +21,14 @@ using System.Net;
 
 /*TODO:
  * red marked in excel
- * Implement all Jsons
+ * read marked in word
+ * Implement all Jsons (sending)
+ * unblock scene via tcp
+ * repair monitor setup (start with 1, then connect 1)
+ * do not show elements wit no / empty ShowText
+ * Implement UPD Send/Receive
  * Test TCPButtons
+ * Code //TODO's
  * Refactor for performance
  * Spid out DMX
  * Remove left over artefacts
@@ -36,7 +42,7 @@ namespace Spa_Interaction_Screen
         public EmbedVLC vlc;
         public Loading loadscreen;
 
-        System.Windows.Forms.Timer t = null;
+        System.Windows.Forms.Timer SessionTimer = null;
         private byte[] changeddimmerchannels;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
@@ -44,10 +50,15 @@ namespace Spa_Interaction_Screen
         private Label pinfield = null;
         private bool passwordwaswrong = false;
         public int currentState = 3;
-        public Screen? main;
+        public Screen? mainscreen;
         private bool streaming = false;
         private bool vlcclosed = false;
         private int minutes_received = 0;
+        public bool scenelocked = false;
+        public DateTime? TimeSessionEnd = null;
+        private bool blocknonstreamingmedia = false;
+        public bool SessionEndbool = false;
+        private EmbedVLC sessionEndVLC = null;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
         private List<Buttonfader> timecoloredbuttons = new List<Buttonfader>();
@@ -69,15 +80,15 @@ namespace Spa_Interaction_Screen
         public MainForm()
         {
             this.Hide();
-            main = Screen.PrimaryScreen;
-            if (main == null)
+            mainscreen = Screen.PrimaryScreen;
+            if (mainscreen == null)
             {
                 Debug.Print("Could not detect main screen");
                 return;
             }
-            Constants.recalcsizes(main.Bounds.Size.Width, main.Bounds.Size.Height);
+            Constants.recalcsizes(mainscreen.Bounds.Size.Width, mainscreen.Bounds.Size.Height);
             changeddimmerchannels = new byte[3];
-            loadscreen = new Loading(this, main);
+            loadscreen = new Loading(this, mainscreen);
             loadscreen.Show();
             loadscreen.Activate();
             loadscreen.updateProgress(10);
@@ -158,7 +169,6 @@ namespace Spa_Interaction_Screen
             loadscreen.TopMost = true;
 
 
-
             ButtonColorTimer.Interval = Constants.buttonupdatemillis;
             ButtonColorTimer.Tick += UpdateButtoncolor;
             ButtonColorTimer.Enabled = true;
@@ -167,7 +177,7 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(100);
             UIControl.SelectTab(0);
             this.Show();
-            EnterFullscreen(this, main, HandleCreate);
+            EnterFullscreen(this, mainscreen, HandleCreate);
             loadscreen.Hide();
             loadscreen.Close();
             loadscreen = null;
@@ -334,7 +344,10 @@ namespace Spa_Interaction_Screen
 
         private void delegateshowthis()
         {
-            this.Show();
+            if(this != null && !this.IsDisposed)
+            {
+                this.Show();
+            }
         }
 
         public void hidethis()
@@ -386,7 +399,10 @@ namespace Spa_Interaction_Screen
                         }
                         break;
                     case 1:
-                        form.showthis();
+                        if (!form.SessionEndbool)
+                        {
+                            form.showthis();
+                        }
                         EnterFullscreen(form, Screen.PrimaryScreen, HandleCreate); 
                         if (vlc != null)
                         {
@@ -395,7 +411,10 @@ namespace Spa_Interaction_Screen
                         break;
                     default:
                         SetupEmbedvlcScreen(form);
-                        form.showthis();
+                        if (!form.SessionEndbool)
+                        {
+                            form.showthis();
+                        }
                         break;
                 }
                 await Task.Delay(3000);
@@ -445,7 +464,7 @@ namespace Spa_Interaction_Screen
                     for (int i = 0; i < Screen.AllScreens.Length; i++)
                     {
                         //Not Safe if Monitor is connected / disconnected during Loop is running
-                        if (!Screen.AllScreens[i].Equals(main))
+                        if (!Screen.AllScreens[i].Equals(mainscreen))
                         {
                             if (TV != null)
                             {
@@ -483,7 +502,7 @@ namespace Spa_Interaction_Screen
                 {
                     if(vlc == null)
                     {
-                        vlc = new EmbedVLC(form, TV);
+                        vlc = new EmbedVLC(form, TV, false);
                         AmbientVolume(config.Volume, 3, null);
                         Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, false, false);
                     }
@@ -495,7 +514,7 @@ namespace Spa_Interaction_Screen
 
         private void start()
         {
-            EnterFullscreen(this, main, HandleCreate);
+            EnterFullscreen(this, mainscreen, HandleCreate);
 
             loadscreen.updateProgress(60);
             if (!config.showtime)
@@ -529,10 +548,10 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(80);
             if (config.showtime)
             {
-                t = new System.Windows.Forms.Timer();
-                t.Interval = 1000;
-                t.Tick += timer_tick;
-                t.Enabled = true;
+                SessionTimer = new System.Windows.Forms.Timer();
+                SessionTimer.Interval = 1000;
+                SessionTimer.Tick += timer_tick;
+                SessionTimer.Enabled = true;
             }
 
             
@@ -572,6 +591,74 @@ namespace Spa_Interaction_Screen
             {
                 timer.Text = config.SessionSettings[minutes_received].ShowText;
                 timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
+            }
+            if (TimeSessionEnd != null)
+            {
+                TimeSpan timeleft = (TimeSpan)(TimeSessionEnd - DateTime.Now);
+                if(timeleft.Minutes <= config.SessionEndShowTimeLeft)
+                {
+                    if (!streaming)
+                    {
+                        if (vlc != null && !SessionEndbool)
+                        {
+                            vlc.changeMedia(config.SessionEndImage, false);
+                        }
+                        blocknonstreamingmedia = true;
+                    }
+                }
+                if (timeleft.TotalMinutes <= 0)
+                {
+                    foreach (Label l in helper.globaltimelabels)
+                    {
+                        l.Hide();
+                    }
+                    if(timeleft.TotalMinutes <= Constants.SessionOvertimeBuffer * -1 && !SessionEndbool)
+                    {
+                        EndSession();
+                    }
+                    return;
+                }
+                Constants.SessionSetting Settingstoapply = null;
+                bool wasbigger = false;
+                for (int i = 0; i < config.SessionSettings.Count; i++)
+                {
+                    if (config.SessionSettings[i].mins >= timeleft.TotalMinutes)
+                    {
+                        if(i < config.SessionSettings.Count-1)
+                        {
+                            Settingstoapply = config.SessionSettings[i + 1];
+                            wasbigger = false;
+                        }
+                        else
+                        {
+                            Settingstoapply = null;
+                            wasbigger = true;
+                        }
+                    }
+                    else
+                    {
+                        wasbigger = true;
+                    }
+                }
+                if (wasbigger)
+                {
+                    Settingstoapply = config.defaulttimeleftoption;
+                }
+                if(Settingstoapply!=null)
+                {
+                    String s = Settingstoapply.ShowText;
+                    if(s!=null && s.Length > 0)
+                    {
+                        String min_left = Math.Round(timeleft.TotalMinutes).ToString();
+                        s=s.Replace("[id]", min_left);
+                        foreach (Label l in helper.globaltimelabels)
+                        {
+                            l.Text = s;
+                            l.Show();
+                            helper.SetEdgePosition(l, config.edgetimePosition);
+                        }
+                    }
+                }
             }
             /*
             timer.Text = $"{((DateTime.Now.Subtract(Sessionstart).Minutes - config.Sitzungsdauer) * (-1)).ToString()}";
@@ -710,11 +797,14 @@ namespace Spa_Interaction_Screen
 
         public void logoutbutton_Handler(object sender, EventArgs e)
         {
-            UIControl.SelectTab(0);
+            if (!SessionEndbool)
+            {
+                UIControl.SelectTab(0);
+            }
             logout();
         }
 
-        public void logoutTab_Handler(object sender, EventArgs e)
+        public void logoutTab_Handler(object sender, TabControlCancelEventArgs e)
         {
 #if !DEBUG
             logout();
@@ -728,9 +818,16 @@ namespace Spa_Interaction_Screen
                 RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                 passwordwaswrong = !passwordwaswrong;
             }
+            if (sessionEndVLC != null && SessionEndbool && e.TabPageIndex == UIControl.TabCount-1)
+            {
+                e.Cancel = true;
+                sessionEndVLC.Show();
+                sessionEndVLC.BringToFront();
+                SessionEnded(sessionEndVLC, true);
+            }
         }
 
-        private void logout()
+        public void logout()
         {
             helper.removeRestrictedPageElements();
             helper.createWartungPageElements();
@@ -750,7 +847,7 @@ namespace Spa_Interaction_Screen
 
         public void Programm_Enter_Handler(object sender, EventArgs e)
         {
-            EnterFullscreen(this, main, HandleCreate);
+            EnterFullscreen(this, mainscreen, HandleCreate);
             ((Button)sender).Click -= Programm_Enter_Handler;
             ((Button)sender).Click += Programm_Exit_Handler;
             ((Button)sender).Text = Constants.ExitFullscreenText;
@@ -816,6 +913,10 @@ namespace Spa_Interaction_Screen
         }
         public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user, bool keepMedia)
         {
+            if (scenelocked)
+            {
+                return;
+            }
             if (scene == null)
             {
                 return;
@@ -835,7 +936,10 @@ namespace Spa_Interaction_Screen
             {
                 if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
                 {
-                    vlc.changeMedia(scene.ContentPath, user);
+                    if (!blocknonstreamingmedia && !SessionEndbool)
+                    {
+                        vlc.changeMedia(scene.ContentPath, user);
+                    }
                     vlc.showthis();
                 }
                 else
@@ -1078,8 +1182,38 @@ namespace Spa_Interaction_Screen
             addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Wartung_Request_Handle);
         }
 
+        public void EndSession_Handler(object sender, EventArgs e)
+        {
+            EndSession();
+        }
+
+        public void EndSession()
+        {
+#if !DEBUG
+            EmbedVLC evlc =new EmbedVLC(this, mainscreen, true);
+            if(evlc != null)
+            {
+                evlc.changeMedia(config.SessionEndImage, true);
+            }
+            if (vlc != null)
+            {
+                vlc.changeMedia(null, true);
+            }
+            blocknonstreamingmedia = true;
+#endif
+        }
+
         public void Service_Request_Handle(object sender, EventArgs e)
         {
+            Constants.ServicesSetting s = (Constants.ServicesSetting)((Button)(sender)).Tag;
+            if (s != null && s.hassecondary)
+            {
+                Constants.ServicesSettingfunction sf = (Constants.ServicesSettingfunction)((Button)(sender)).Tag;
+                if (sf.functionclass != null && sf.function != null && sf.functionclass.IsSubclassOf(typeof(Constants.configclasses)))
+                {
+                    performsecondary(sf);
+                }
+            }
             if (Constants.noNet)
             {
                 return;
@@ -1090,7 +1224,7 @@ namespace Spa_Interaction_Screen
             request.port = config.PortZentrale;
             request.type = "Service";
             request.Raum = config.Room;
-            request.label = ((Constants.ServicesSetting)((Button)(sender)).Tag).JsonText;
+            request.label = s.JsonText;
             if (net.SendTCPMessage(request, null))
             {
                 Debug.Print($"Message sent sucessfully");
@@ -1098,6 +1232,55 @@ namespace Spa_Interaction_Screen
             ((Button)sender).BackColor = Constants.alternative_color;
             ((Button)sender).Click -= Service_Request_Handle;
             addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Service_Request_Handle);
+        }
+
+        private void performsecondary(Constants.ServicesSettingfunction ssf)
+        {
+            if(ssf == null || ssf.functionclass == null || ssf.function == null || !ssf.functionclass.Equals(ssf.function.GetType()))
+            {
+                return;
+            }
+            if (ssf.functionclass.Equals(new Constants.SystemSetting().GetType()))
+            {
+                //TODO
+            }
+            else if (ssf.functionclass.Equals(new Constants.TCPSetting().GetType()))
+            {
+                //TODO
+            }
+            else if (ssf.functionclass.Equals(new Constants.SessionSetting().GetType()))
+            {
+                //TODO
+            }
+            else if (ssf.functionclass.Equals(new Constants.ServicesSetting().GetType()))
+            {
+                //TODO
+            }
+            else if (ssf.functionclass.Equals(new Constants.DMXScene().GetType()))
+            {
+                if (ssf.enable)
+                {
+                    Ambiente_Change(((Constants.DMXScene)(ssf.function)), true, true, false);
+                    if (ssf.block)
+                    {
+                        setscenelocked(true, "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.", Color.Red);
+                    }
+                }
+                else
+                {
+                    if (ssf.block)
+                    {
+
+                        setscenelocked(false, "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.", Color.Red);
+                    }
+                    Ambiente_Change(config.DMXScenes[0], true, true, false);
+                }
+               
+            }
+            else
+            {
+                //TODO
+            }
         }
 
         public void closePlayer_Handler(object sender, EventArgs e)
@@ -1257,7 +1440,7 @@ namespace Spa_Interaction_Screen
         public void reset()
         {
             this.Hide();
-            loadscreen = new Loading(this, main);
+            loadscreen = new Loading(this, mainscreen);
             loadscreen.Show();
             loadscreen.updateProgress(20);
             logout();
@@ -1268,6 +1451,11 @@ namespace Spa_Interaction_Screen
             {
                 net.changeconfig(c);
             }
+            scenelocked = false;
+            TimeSessionEnd = DateTime.Now.AddMinutes(1);
+            blocknonstreamingmedia = false;
+            SessionEndbool = false;
+            sessionEndVLC = null;
             helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
             loadscreen.updateProgress(50);
@@ -1498,6 +1686,63 @@ namespace Spa_Interaction_Screen
             ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged -= ColorChanged_Handler;
             ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).Value = 100;
             ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged += ColorChanged_Handler;
+        }
+
+        public void setscenelocked(bool x, String txt, Color c)
+        {
+            scenelocked = x;
+            foreach (Label l in helper.globalinformationlabels)
+            {
+                l.Text = txt;
+                l.ForeColor = c;
+                if (x)
+                {
+                    l.Show();
+                    helper.SetEdgePosition(l, 3);
+                    l.Location = new Point((Constants.windowwidth/2)-(l.Size.Width/2), l.Location.Y);
+                    l.BringToFront();
+                    resetscenelockbutton.Show();
+                }
+                else
+                {
+                    l.Hide();
+                    helper.SetEdgePosition(l, 3);
+                    l.Location = new Point((Constants.windowwidth / 2) - (l.Size.Width / 2), l.Location.Y);
+                }
+            }
+        }
+
+        public void resetscenelock_Handler(object sender, EventArgs e)
+        {
+            resetscenelock();
+        }
+
+        public void resetscenelock()
+        {
+            resetscenelockbutton.Hide();
+            setscenelocked(false, "", Constants.Text_color);
+        }
+
+        public void SessionEnded(EmbedVLC evlc, bool fromevent)
+        {
+            sessionEndVLC = evlc;
+            SessionEndbool = true;
+            if (fromevent)
+            {
+                UIControl.SelectTab(UIControl.TabCount - 1);
+            }
+            scenelocked = false;
+            Ambiente_Change(config.DMXScenes[0], true, true, false);
+            this.hidethis();
+        }
+
+        public void showlogin()
+        {
+            if (SessionEndbool)
+            {
+                this.showthis();
+                UIControl.SelectTab(UIControl.TabCount - 1);
+            }
         }
     }
 }

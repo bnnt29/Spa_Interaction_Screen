@@ -11,8 +11,8 @@ YButtonCount%5
 InlineuntilXButtons%5
 noCom%true
 noNet%false
-Logoposxdist%60
-Logoposydist%60
+EdgeItemposxdist%60
+EdgeItemposydist%60
 Logoxsize%200
 Logoysize%200
 

@@ -1,5 +1,6 @@
 ﻿
 using QRCoder;
+using Spa_Interaction_Screen;
 using System.Diagnostics;
 using System.Windows.Forms;
 using static System.Windows.Forms.AxHost;
@@ -14,10 +15,13 @@ namespace Spa_Interaction_Screen
         public List<TabPage> tabs = new List<TabPage>();
 
         public List<ColorSlider.ColorSlider> FormColorSlides = new List<ColorSlider.ColorSlider>();
-        public List<PictureBox> Logos = new List<PictureBox>();
+        public List<PictureBox> globalLogos = new List<PictureBox>();
+        public List<Label> globaltimelabels = new List<Label>();
+        public List<Label> globalinformationlabels = new List<Label>();
         public List<Control> AllElements = new List<Control>();
 
         public List<Button> AmbientePageButtons = new List<Button>();
+        public List<Button> AmbientePagedynamicButtons = new List<Button>();
         public List<Label> AmbientePageLabel = new List<Label>();
         public List<ColorSlider.ColorSlider> AmbientePageColorSlide = new List<ColorSlider.ColorSlider>();
 
@@ -132,13 +136,16 @@ namespace Spa_Interaction_Screen
                 tabs.Add(form.TimePage);
                 tabs.Add(form.WartungPage);
                 FormColorSlides = new List<ColorSlider.ColorSlider>();
-                Logos = new List<PictureBox>();
+                globaltimelabels = new List<Label>();
+                globalLogos = new List<PictureBox>();
+                globalinformationlabels = new List<Label>();
                 AllElements = new List<Control>();
             }
 
             //Ambiente Lists
             {
                 AmbientePageButtons = new List<Button>();
+                AmbientePagedynamicButtons = new List<Button>();
 
                 AmbientePageLabel = new List<Label>();
                 AmbientePageLabel.Add((Label)form.Dimmer1ColorSliderDescribtion);
@@ -455,20 +462,33 @@ namespace Spa_Interaction_Screen
             form.RestrictedAreaTitle.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y);
             form.RestrictedAreaTitle.Show();
 
-            int wartungs = Math.Min(config.TCPSettings.Count, Constants.maxwartungs);
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Szenen Auswahl freischlten", null, form.WartungPage, form, form.resetscenelock_Handler, out form.resetscenelockbutton);
+            if (form.scenelocked)
+            {
+                form.resetscenelockbutton.Show();
+            }
+            else
+            {
+                form.resetscenelockbutton.Hide();
+            }
+
+            int wartungs = Math.Min(config.TCPSettings.Count, Constants.maxtcpws);
             for (int i = 0; i < wartungs; i++)
             {
                 Debug.Print("WartungsButtons");
                 GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-                Constants.createButton(Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, (Constants.SystemSetting)config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle);
+                Button bu = null;
+                Constants.createButton(Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle, out bu);
+                config.TCPSettings[i].ButtonElement = bu;
             }
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
-            /*
+            
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, null);
-            */
+            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
+            
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
@@ -698,34 +718,7 @@ namespace Spa_Interaction_Screen
             }
 
             int Pos_x, Pos_y;
-
-            int notshowenscenes = 2;
-            int Numscenes = config.DMXScenes.Count - notshowenscenes;
-            Numscenes = Math.Min(Numscenes, Constants.maxscenes);
-            for (int i = notshowenscenes; i < config.DMXScenes.Count && i <= Constants.maxscenes; i++)
-            {
-                Constants.DMXScene scene = config.DMXScenes[i];
-                if (scene != null)
-                {
-                    if (i == notshowenscenes)
-                    {
-                        int x = 0;
-                        foreach (int j in scene.Channelvalues)
-                        {
-                            x += j;
-                        }
-                        if (x <= 0)
-                        {
-                            Numscenes++;
-                            continue;
-                        }
-                    }
-                    GetDynamicPosition(Numscenes, i - notshowenscenes, out Pos_x, out Pos_y, 0, 0, true);
-                    Button bu = null;
-                    Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, scene.ShowText, scene, form.AmbientePage, form, form.Ambiente_Change_Handler, out bu);
-                    scene.ButtonElement = bu;
-                }
-            }
+            GendynamicAmbientButtons();
             GenNewPassword();
             if (config.AmbienteBackgroundImage != null && config.AmbienteBackgroundImage.Length > 2 && File.Exists(config.AmbienteBackgroundImage))
             {
@@ -758,16 +751,8 @@ namespace Spa_Interaction_Screen
                 form.WartungPage.BackgroundImage = Image.FromFile(config.WartungBackgroundImage);
             }
 
-            form.HowCanIHelpYouDescribtion.Text = config.ServicesSettings[0].ShowText;
-            form.HowCanIHelpYouDescribtion.Location = new Point((Constants.windowwidth/2)-(form.HowCanIHelpYouDescribtion.Size.Width/2), form.HowCanIHelpYouDescribtion.Location.Y);
+            GendynamicServiceButtons();
 
-            int Numhelps = Math.Min(config.ServicesSettings.Count - 1, Constants.maxhelps);
-            for (int i = 1; i < Numhelps; i++)
-            {
-                GetDynamicPosition(Numhelps, i - 1, out Pos_x, out Pos_y, 0, 3, false);
-                Constants.createButton(Pos_x, Pos_y, ServicePageButtons, config.ServicesSettings[i].ShowText, (Constants.ServicesSetting)config.ServicesSettings[i], form.ServicePage, form, form.Service_Request_Handle);
-            }
-            
             UpdateActiveDMXScene(-1);
 
             foreach (ColorSlider.ColorSlider s in FormColorSlides)
@@ -786,32 +771,88 @@ namespace Spa_Interaction_Screen
                 }
                 SetupLabelofTrackbar(s, l, config.slidernames[((int)s.Tag) - 1]);
             }
-            while (Logos.Count > 0)
+            Showonallsites();
+            Application.DoEvents();
+        }
+
+        public void GendynamicServiceButtons()
+        {
+            int Pos_x, Pos_y;
+            while (ServicePageButtons.Count > 0)
             {
-                PictureBox Log = Logos[0];
+                Button but = ServicePageButtons[0];
+                but.Parent.Controls.Remove(but);
+                but.Hide();
+                ServicePageButtons.Remove(but);
+                but.Dispose();
+            }
+            form.HowCanIHelpYouDescribtion.Text = config.ServicesSettings[0].ShowText;
+            form.HowCanIHelpYouDescribtion.Location = new Point((Constants.windowwidth / 2) - (form.HowCanIHelpYouDescribtion.Size.Width / 2), form.HowCanIHelpYouDescribtion.Location.Y);
+
+            int Numhelps = Math.Min(config.ServicesSettings.Count, Constants.maxhelps);
+            for (int i = 1; i < Numhelps; i++)
+            {
+                GetDynamicPosition(Numhelps - 1, i - 1, out Pos_x, out Pos_y, 0, 3, false);
+                Button bu = null;
+                Constants.createButton(Pos_x, Pos_y, ServicePageButtons, config.ServicesSettings[i].ShowText, config.ServicesSettings[i], form.ServicePage, form, form.Service_Request_Handle, out bu);
+                config.ServicesSettings[i].ButtonElement = bu;
+            }
+        }
+
+        public void GendynamicAmbientButtons()
+        {
+            int Pos_x, Pos_y;
+            while (AmbientePagedynamicButtons.Count > 0)
+            {
+                Button but = AmbientePagedynamicButtons[0];
+                but.Parent.Controls.Remove(but);
+                but.Hide();
+                AmbientePagedynamicButtons.Remove(but);
+                AmbientePageButtons.Remove(but);
+                but.Dispose();
+            }
+            int notshowenscenes = 2;
+            int Numscenes = config.DMXScenes.Count - notshowenscenes;
+            Numscenes = Math.Min(Numscenes, Constants.maxscenes);
+            for (int i = notshowenscenes; i < config.DMXScenes.Count && i <= Constants.maxscenes; i++)
+            {
+                Constants.DMXScene scene = config.DMXScenes[i];
+                if (scene != null)
+                {
+                    if (i == notshowenscenes)
+                    {
+                        int x = 0;
+                        foreach (int j in scene.Channelvalues)
+                        {
+                            x += j;
+                        }
+                        if (x <= 0)
+                        {
+                            Numscenes++;
+                            continue;
+                        }
+                    }
+                    GetDynamicPosition(Numscenes, i - notshowenscenes, out Pos_x, out Pos_y, 0, 0, true);
+                    Button bu = null;
+                    Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, scene.ShowText, scene, form.AmbientePage, form, form.Ambiente_Change_Handler, out bu);
+                    scene.ButtonElement = bu;
+                    AmbientePagedynamicButtons.Add(bu);
+                }
+            }
+        }
+
+        private void Showonallsites()
+        {
+            while (globalLogos.Count > 0)
+            {
+                PictureBox Log = globalLogos[0];
                 Log.Parent.Controls.Remove(Log);
                 Log.Hide();
-                Logos.Remove(Log);
+                globalLogos.Remove(Log);
                 Log.Dispose();
             }
-            int posx, posy = 0;
-            if (config.Logoposition % 2 == 0)
-            {
-                posx = (Constants.windowwidth - Constants.Logoposxdist) - Constants.Logoxsize;
-            }
-            else
-            {
-                posx = Constants.Logoposxdist;
-            }
-            if (config.Logoposition > 2)
-            {
-                posy = (Constants.tabheight - Constants.Logoposydist) - Constants.Logoysize;
-            }
-            else
-            {
-                posy = Constants.Logoposydist;
-            }
-            for (int i = 0;i < config.showLogo.Length;i++)
+            globalLogos = new List<PictureBox>();
+            for (int i = 0; i < config.showLogo.Length && i < tabs.Count; i++)
             {
                 if (config.showLogo[i])
                 {
@@ -820,19 +861,97 @@ namespace Spa_Interaction_Screen
                     try
                     {
                         Logoview.Image = Image.FromFile(config.LogoFilePath);
-                    }catch(IOException e) 
-                    { 
+                    }
+                    catch (IOException e)
+                    {
                         Debug.Print(e.Message);
                     }
                     Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
-                    Logoview.Location = new Point(posx, posy);
+                    SetEdgePosition(Logoview, config.Logoposition);
                     Logoview.TabStop = false;
-                    Logos.Add(Logoview);
+                    globalLogos.Add(Logoview);
                     tabs[i].Controls.Add(Logoview);
+                    Logoview.Show();
                     Logoview.BringToFront();
                 }
             }
-            Application.DoEvents();
+            while (globaltimelabels.Count > 0)
+            {
+                Label Lab = globaltimelabels[0];
+                Lab.Parent.Controls.Remove(Lab);
+                Lab.Hide();
+                globaltimelabels.Remove(Lab);
+                Lab.Dispose();
+            }
+            globaltimelabels = new List<Label>();
+            if (config.showedgetime)
+            {
+                for (int i = 0; i < tabs.Count; i++)
+                {
+                    Label Labeltimeview = new Label();
+                    SetEdgePosition(Labeltimeview, config.edgetimePosition);
+                    Labeltimeview.AutoSize = true;
+                    Labeltimeview.TabStop = false;
+                    Labeltimeview.Font = Constants.Standart_font;
+                    globaltimelabels.Add(Labeltimeview);
+                    tabs[i].Controls.Add(Labeltimeview);
+                    Labeltimeview.Show();
+                    Labeltimeview.BringToFront();
+                }
+            }
+            int posx, posy = 0;
+            while (globalinformationlabels.Count > 0)
+            {
+                Label Lab = globalinformationlabels[0];
+                Lab.Parent.Controls.Remove(Lab);
+                Lab.Hide();
+                globalinformationlabels.Remove(Lab);
+                Lab.Dispose();
+            }
+            globalinformationlabels = new List<Label>();
+            posx = Constants.windowwidth / 2;
+
+
+            globalinformationlabels.Add(createLabelforpage(posx, 0));
+            globalinformationlabels.Add(createLabelforpage(posx, 1));
+            globalinformationlabels.Add(createLabelforpage(posx, 4));
+            globalinformationlabels.Add(createLabelforpage(posx, tabs.Count - 1));
+        }
+
+        private Label createLabelforpage(int posx, int page)
+        {
+            Label Labelview = new Label();
+            SetEdgePosition(Labelview, 3);
+            Labelview.Location = new Point(posx, Labelview.Location.Y);
+            Labelview.Font = Constants.Standart_font;
+            Labelview.TabStop = false;
+            Labelview.AutoSize = true;
+            tabs[page].Controls.Add(Labelview);
+            Labelview.Hide();
+            Labelview.BringToFront();
+            return Labelview;
+        }
+
+        public void SetEdgePosition(Control c, int pos)
+        {
+            int posx, posy = 0;
+            if (pos % 2 == 0)
+            {
+                posx = (Constants.windowwidth - Constants.EdgeItemposxdist)-c.Size.Width;
+            }
+            else
+            {
+                posx = Constants.EdgeItemposxdist;
+            }
+            if (pos > 2)
+            {
+                posy = (Constants.tabheight - Constants.EdgeItemposydist*2)-c.Size.Height;
+            }
+            else
+            {
+                posy = Constants.EdgeItemposydist;
+            }
+            c.Location = new Point(posx, posy);
         }
 
         private async void GenNewPassword()

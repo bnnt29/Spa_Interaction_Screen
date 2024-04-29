@@ -1,7 +1,7 @@
 ﻿#Begin[Spa Raum Controller];#ConfigFile;#Version:;1.2;#('#' is used as a comment indicator);;# needed in leeding empty fields;;;;;;;;;;;;;;
 #Integer;#Raum Nummer;1;;;;;;;;;;;;;;;;;;
 #Integer;#Max Rooms;9;;;;;;;;;;;;;;;;;;
-#Array of Integer;#IP Zentrale;192;168;4;128;;;;;;;;;;;;;;;
+#Array of Integer;#IP Zentrale;192;168;178;67;;;;;;;;;;;;;;;
 #String;#UDP Port Zentrale;8000;;;;;;;;;;;;;;;;;;
 #String;#TCP Local Server Port;5004;;;;;;;;;;;;;;;;;;
 #Integer;#Status Nachricht Intervall (s) (-1 to disable);60;;;;;;;;;;;;;;;;;;
@@ -15,8 +15,9 @@
 #Array of Integer;#IP Router;192;168;4;133;;;;;;;;;;;;;;;
 #String;#Port Router;23;;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;true;;;;;;;;;;;;;;;;;;
+#Bool;#Zeige Eck Zeit;true;3;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Color Wheel Seite;true;#Ambiente;#Color;#Gastronomie;#Service;#Media;#Time;#Wartung;;;;;;;;;;;
-#Bool;#Zeige Logo (Position|Ambiente|Farbe|Gastro|Media|Service|Wartung|restricted);4;true;true;false;true;true;true;true;;;;;;;;;;;
+#Integer;#Zeige Logo (Position|Ambiente|Farbe|Gastro|Media|Service|Wartung|restricted);4;true;true;false;true;true;true;true;;;;;;;;;;;
 #String;#Logo Absolut Filepath;Logo.png;;;;;;;;;;;;;;;;;;
 #String;#QRCode Logo;QRLogo.png;;;;;;;;;;;;;;;;;;
 #String;#Ambiente Hintergrund Bild;;;;;;;;;;;;;;;;;;;
@@ -25,6 +26,8 @@
 #String;#Timer Bild;background.jpg;;;;;;;;;;;;;;;;;;
 #String;#Service Bild;butler.png;;;;;;;;;;;;;;;;;;
 #String;#Wartung Bild;;;;;;;;;;;;;;;;;;;
+#String;#EndBild;butler.png;15;;;;;;;;;;;;;;;;;
+#String;#LogFile;"Log:[Date];[Time].txt";;;;;;;;;;;;;;;;;;
 #;#Special DMX Channels;#DMX Channel to change;#Anzeige Text ;#Off Value;#On Value;;;;;;;;;;;;;;;
 #Integer;#Dimmer1 Channel;5;Dusche;#;#;;;;;;;;;;;;;;;
 #Integer;#Dimmer2 Channel;6;Raum;#;#;;;;;;;;;;;;;;;
@@ -38,23 +41,24 @@ Json Type:1;System;#Json Label;;;;;;;;;;;;;;;;;;
 #Integer;#Aus;off;;;;;;;;;;;;;;;;;;
 #;#;#Json Label;#default;;;;;;;;;;;;;;;;;
 #Integer;#DMXScene;scene;0;;;;;;;;;;;;;;;;;
-#Integer;Laustärke;volume;20;;;;;;;;;;;;;;;;;
-#;#TCP Wartungs Settings;#Json Label;#id;#value (no Array);;;;;;;;;;;;;;;;
+#Integer;Laustärke;volume;15;;;;;;;;;;;;;;;;;
+Json Type:2;TCPWartung;#Json Label;#id;#value (no Array);;;;;;;;;;;;;;;;
 #Integer;Whirlpool spülen;Whirlpool;1;;;;;;;;;;;;;;;;;
 #Integer;Whirlpool ablassen;Whirlpool;2;;;;;;;;;;;;;;;;;
 #;#[More TCP Wartugs Setting Informations can be added (max 5)];;;;;;;;;;;;;;;;;;;
-Json Type:2;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle übrigen werte genutzt werden);#Should reset data;#Anzeige Text  (Mit [id] kann dynamisch die id ersetzt werden);;;;;;;;;;;;;;;;
+Json Type:3;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle übrigen werte genutzt werden);#Should reset data;#Anzeige Text  (Mit [id] kann dynamisch die id ersetzt werden);#info;;;;;;;;;;;;;;;
 #String;#Sitzung ist zuende;0;false;Sitzung ist zuende;;;;;;;;;;;;;;;;
+#String;#Sitzung ist fast zuende;5;false;Sitzung ist fast zuende: [id];;;;;;;;;;;;;;;;
 #String;#[id] Minuten verbleibend;[all_left];false;[id] Minuten verbleibend;;;;;;;;;;;;;;;;
-#String;#Start;250;true;;;;;;;;;;;;;;;;;
+#String;#Start;-1;true;;#negative values are not showen;;;;;;;;;;;;;;;
 #;#[More Session Informations can be added];;;;;;;;;;;;;;;;;;;
-Json Type:3;Services;#Json Label;#Anzeige Text;#Info;;;;;;;;;;;;;;;;
-#String;#0;ServiceText;Was kann ich heute für Sie tun?;#(Text auf der Service Seite);;;;;;;;;;;;;;;;
-#String;#1;Ruf;anderer Wunsch;#(Standart Button, falls Gastro ausfällt);;;;;;;;;;;;;;;;
-#String;#2;Notfall;Arzt;;;;;;;;;;;;;;;;;
+Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Subtype;enable,block,(optional)value)";#Info;;;;;;;;;;;;;;;
+#String;#0;ServiceText;Was kann ich heute für Sie tun?;;#(Text auf der Service Seite);;;;;;;;;;;;;;;
+#String;#1;Ruf;anderer Wunsch;;#(Standart Button, falls Gastro ausfällt);;;;;;;;;;;;;;;
+#String;#2;Notfall;Arzt;DMXScenes,Putzlicht,true,true;;;;;;;;;;;;;;;;
 #String;#3;Handtuch;frische Handtücher;;;;;;;;;;;;;;;;;
 #;#[More Serives can be added (max 12)];;;;;;;;;;;;;;;;;;;
-Json Type:4;DMXScenes;#Json Label;#Anzeige Text;#CH0;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
+Json Type:5;DMXScenes;#Json Label;#Anzeige Text;#CH0;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
 #Order Importance;#0;default;Standart;0;255;56;0;0;128;128;255;0;0;0;0;0;0;0;WerbeVideo.mp4;
 #Order Importance;#1;Putzlicht;Putzlicht/Notfall;0;255;200;128;255;255;255;255;0;0;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
 #Order Importance;#2;Colorwheel;Farbwahl;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)

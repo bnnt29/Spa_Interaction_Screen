@@ -1,10 +1,12 @@
 ﻿using LibVLCSharp.Shared;
 using LibVLCSharp.WinForms;
+using Microsoft.VisualBasic.ApplicationServices;
 using PlanwerkLichtSpa.Properties;
 using System.Diagnostics;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using static Spa_Interaction_Screen.MainForm;
 using static System.Windows.Forms.LinkLabel;
 
@@ -22,9 +24,11 @@ namespace Spa_Interaction_Screen
         private String currentlyshowing;
         private Screen scrn;
         private bool HandleCreate = false;
+        private bool SessionEnd = false;
 
-        public EmbedVLC(MainForm f, Screen screen)
+        public EmbedVLC(MainForm f, Screen screen, bool Sessionend)
         {
+            SessionEnd = Sessionend;
             InitializeComponent();
             this.HandleCreated += new EventHandler((sender, args) =>
             {
@@ -42,7 +46,12 @@ namespace Spa_Interaction_Screen
 
             TVvideoView.MediaPlayer = new MediaPlayer(libvlc);
             TVvideoView.Dock = DockStyle.Fill;
-
+            this.Show();
+            this.BringToFront();
+            if (SessionEnd)
+            {
+                f.SessionEnded(this, false);
+            }
         }
 
         private void createElements()
@@ -67,15 +76,31 @@ namespace Spa_Interaction_Screen
             // 
             // welcomeqr
             // 
-            welcomeqr = new PictureBox();
-            ((System.ComponentModel.ISupportInitialize)welcomeqr).BeginInit();
-            welcomeqr.BackColor = Color.Black;
-            welcomeqr.Name = "qrbox";
-            welcomeqr.TabIndex = 1;
-            welcomeqr.TabStop = false;
-            welcomeqr.SizeMode = PictureBoxSizeMode.Zoom;
-            Controls.Add(welcomeqr);
-            newsession();
+            if (SessionEnd)
+            {
+                Constants.createButton((Constants.windowwidth/2)-(Constants.Element_width/2), (Constants.tabheight-Constants.Element_height)-Constants.Element_y_padding, null, "Mitarbeiter Einstellungen", null, this, null, this.exittorestricted);
+            }
+            else
+            {
+                welcomeqr = new PictureBox();
+                ((System.ComponentModel.ISupportInitialize)welcomeqr).BeginInit();
+                welcomeqr.BackColor = Color.Black;
+                welcomeqr.Name = "qrbox";
+                welcomeqr.TabIndex = 1;
+                welcomeqr.TabStop = false;
+                welcomeqr.SizeMode = PictureBoxSizeMode.Zoom;
+                Controls.Add(welcomeqr);
+                newsession();
+            }
+           
+        }
+
+        public void exittorestricted(object sender, EventArgs e)
+        {
+            main.UIControl.SelectTab(main.UIControl.TabCount - 1);
+            this.SendToBack();
+            this.Hide();
+            main.showlogin();
         }
 
         public delegate void MyNoArgument();
@@ -121,7 +146,7 @@ namespace Spa_Interaction_Screen
                 TVvideoView.MediaPlayer.Media = null;
             }
             currentlyshowing = null;
-            if (user)
+            if (user && welcomeqr != null)
             {
                 welcomeqr.Hide();
             }
@@ -157,7 +182,10 @@ namespace Spa_Interaction_Screen
 
         private void delegateshowthis()
         {
-            this.Show();
+            if(this != null && !this.IsDisposed)
+            {
+                this.Show();
+            }
         }
 
         public void hidethis()
@@ -270,13 +298,17 @@ namespace Spa_Interaction_Screen
         {
             if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
             {
-                if (user)
+                if (user && welcomeqr != null)
                 {
                     welcomeqr.Hide();
                 }
                 return;
             }
             quitMedia(user);
+            if(link == null || link.Length <= 0)
+            {
+                return;
+            }
             Debug.Print($"Showing {link}");
             int index = link.LastIndexOf('.');
             switch (link.Substring(index))
@@ -300,7 +332,7 @@ namespace Spa_Interaction_Screen
                 case ".DVB":
                 case ".HEIF":
                 case ".AVIF":
-                    video(link);
+                    video(link, user);
                     break;
                 case ".bitmap":
                 case ".gif":
@@ -313,7 +345,7 @@ namespace Spa_Interaction_Screen
                 case ".bmp":
                 case ".exif":
                 case ".tiff":
-                    picture(link);
+                    picture(link, user);
                     break;
                 default:
                     Debug.Print($"Couldn't use file format of file: {link}");
@@ -321,7 +353,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void video(String link)
+        private void video(String link, bool user)
         {
             if (!File.Exists(link))
             {
@@ -349,11 +381,14 @@ namespace Spa_Interaction_Screen
             });
             */
             //keepVideoalive.Start();
-            welcomeqr.BringToFront();
+            if (user && welcomeqr != null)
+            {
+                welcomeqr.BringToFront();
+            }
 
         }
 
-        private void picture(String link)
+        private void picture(String link, bool user)
         {
             if (!File.Exists(link))
             {
@@ -365,7 +400,10 @@ namespace Spa_Interaction_Screen
 
             this.BackgroundImage = image;
             currentlyshowing = link;
-            welcomeqr.BringToFront();
+            if(user && welcomeqr != null)
+            {
+                welcomeqr.BringToFront();
+            }
         }
     }
 }

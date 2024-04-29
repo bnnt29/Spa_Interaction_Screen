@@ -1,7 +1,11 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
+using System.Drawing.Design;
+using static QRCoder.PayloadGenerator;
 using static Spa_Interaction_Screen.Constants;
 
 namespace Spa_Interaction_Screen
@@ -32,6 +36,8 @@ namespace Spa_Interaction_Screen
         public String[] IPRouter = null;
         public int PortRouter = -1;
         public bool showtime = false;
+        public bool showedgetime = false;
+        public int edgetimePosition = -1;
         public bool showcolor = false;
         public int Logoposition = -1;
         public bool[] showLogo = null;
@@ -43,6 +49,9 @@ namespace Spa_Interaction_Screen
         public String TimeBackgroundImage = null;
         public String ServiceBackgroundImage = null;
         public String WartungBackgroundImage = null;
+        public String SessionEndImage = null;
+        public int SessionEndShowTimeLeft = -1;
+        public String LogPath = null;
         public int[] Dimmerchannel = null;
         public String[] slidernames = null;
         public byte[] HDMISwitchInterval = null;
@@ -58,8 +67,9 @@ namespace Spa_Interaction_Screen
         public String VolumeSliderName = null;
         public int Volume = -1;
         public String VolumeJson = null;
+        public Constants.SessionSetting defaulttimeleftoption = null;
         public List<Constants.SystemSetting> SystemSettings = null;
-        public List<Constants.SystemSetting> TCPSettings = null;
+        public List<Constants.TCPSetting> TCPSettings = null;
         public List<Constants.SessionSetting> SessionSettings = null;
         public List<Constants.ServicesSetting> ServicesSettings = null;
         public List<Constants.DMXScene> DMXScenes = null;
@@ -132,7 +142,7 @@ namespace Spa_Interaction_Screen
             {
                 Constants.maxscenes = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.maxhelps = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
-                Constants.maxwartungs = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.maxtcpws = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.XButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.YButtonCount = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.InlineUntilXButtons = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
@@ -154,8 +164,8 @@ namespace Spa_Interaction_Screen
             }
             try
             {
-                Constants.Logoposxdist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
-                Constants.Logoposydist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.EdgeItemposxdist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+                Constants.EdgeItemposydist = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.Logoxsize = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.Logoysize = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
             }
@@ -236,7 +246,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref LocalPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref StateSendInterval, 0, false, read_all);
             read_all = getcsvFields(stream, ref ComPort, 0, false, read_all);
-            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all); 
+            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref RestrictedDescription, 0, false, read_all);
             read_all = getcsvFields(stream, ref FadeTime, 0, false, read_all);
             read_all = getcsvFields(stream, ref Wartungspin, -1, false, read_all);
@@ -246,6 +256,24 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref IPRouter, -1, false, read_all);
             read_all = getcsvFields(stream, ref PortRouter, 0, false, read_all);
             read_all = getcsvFields(stream, ref showtime, 0, false, read_all);
+            String[] time = null;
+            read_all = getcsvFields(stream, ref time, -1, false, read_all);
+            try
+            {
+                showedgetime = Boolean.Parse(time[0]);
+            }
+            catch (FormatException ex)
+            {
+                Debug.Print(ex.Message);
+            }
+            try
+            {
+                edgetimePosition = Int32.Parse(time[1]);
+            }
+            catch (FormatException ex)
+            {
+                Debug.Print(ex.Message);
+            }
             read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
             String[] sl = null;
             read_all = getcsvFields(stream, ref sl, -1, false, read_all);
@@ -253,14 +281,14 @@ namespace Spa_Interaction_Screen
             {
                 Logoposition = Int32.Parse(sl[0]);
             }
-            catch(FormatException e)
+            catch (FormatException e)
             {
                 Debug.Print(e.Message);
             }
-            showLogo = new bool[(sl.Length-1>7)?7: sl.Length-1];
+            showLogo = new bool[(sl.Length - 1 > 7) ? 7 : sl.Length - 1];
             try
             {
-                for(int i = 0;i< showLogo.Length; i++)
+                for (int i = 0; i < showLogo.Length; i++)
                 {
                     showLogo[i] = Boolean.Parse(sl[i + 1]);
                 }
@@ -277,6 +305,18 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref TimeBackgroundImage, 0, true, read_all);
             read_all = getcsvFields(stream, ref ServiceBackgroundImage, 0, true, read_all);
             read_all = getcsvFields(stream, ref WartungBackgroundImage, 0, true, read_all);
+            String[] SessionEnd = null;
+            read_all = getcsvFields(stream, ref SessionEnd, -1, true, read_all);
+            SessionEndImage = SessionEnd[0];
+            try
+            {
+                SessionEndShowTimeLeft = Int32.Parse(SessionEnd[1]);
+            }
+            catch (FormatException ex)
+            {
+                Debug.Print(ex.Message);
+            }
+            read_all = getcsvFields(stream, ref LogPath, 0, true, read_all);
             if (!read_all)
             {
                 Debug.Print("Something went wrong in reading the single Variables (x01)");
@@ -291,6 +331,7 @@ namespace Spa_Interaction_Screen
             finalizePaths(out TimeBackgroundImage, TimeBackgroundImage);
             finalizePaths(out ServiceBackgroundImage, ServiceBackgroundImage);
             finalizePaths(out WartungBackgroundImage, WartungBackgroundImage);
+            finalizePaths(out SessionEndImage, SessionEndImage);
             stream.ReadLine();
             String[] Dimmerchannelval1 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval1, -1, false, read_all);
@@ -335,7 +376,7 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             colorwheelvalues = new Int32[4][];
             bool atleastonechannel = false;
-            for (int i = 0; i < Math.Min(ReadFields.Length, colorwheelvalues.Length) ; i++)
+            for (int i = 0; i < Math.Min(ReadFields.Length, colorwheelvalues.Length); i++)
             {
                 int y = 0;
                 colorwheelvalues[i] = new Int32[ReadFields[i].Length];
@@ -362,7 +403,6 @@ namespace Spa_Interaction_Screen
             {
                 read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
             }
-            
 
             if (!read_all)
             {
@@ -380,13 +420,13 @@ namespace Spa_Interaction_Screen
                 stream.Close();
                 return;
             }
-            Typenames = new String[4];
+            Typenames = new String[5];
             SystemSettings = new List<SystemSetting>();
-            TCPSettings = new List<SystemSetting>();
+            TCPSettings = new List<TCPSetting>();
             SessionSettings = new List<SessionSetting>();
             ServicesSettings = new List<ServicesSetting>();
             DMXScenes = new List<DMXScene>();
-            int x = (6+5+12+15+5)*2;
+            int x = (6 + 5 + 12 + 15 + 5) * 2;
             while (x >= 0)
             {
                 if (stream == null || stream.EndOfStream)
@@ -399,19 +439,30 @@ namespace Spa_Interaction_Screen
                     read_all = getcsvFields(stream, ref ReadFields, -1, true, read_all);
                     continue;
                 }
+
                 int Jtype = 0;
-                try
+                if (ReadFields != null && ReadFields.Length > 1 && ReadFields[0].Contains(":"))
                 {
-                    Jtype = Int32.Parse(ReadFields[0].Split(':')[1]);
-                }catch (FormatException e)
+                    try
+                    {
+                        Jtype = Int32.Parse(ReadFields[0].Split(':')[1].Trim());
+                    }
+                    catch (FormatException e)
+                    {
+                        Debug.Print(e.Message);
+                        continue;
+                    }
+                }
+                else
                 {
-                    Debug.Print(e.Message);
                     continue;
                 }
+
                 switch (Jtype)
                 {
                     case 1:
-                        Typenames[Jtype-1] = ReadFields[1].Trim().ToLower();
+                        Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        Debug.Print(Typenames[Jtype - 1]);
                         for (int i = 0; i < 4; i++)
                         {
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -429,16 +480,17 @@ namespace Spa_Interaction_Screen
                         slidernames[2] = ReadFields[0];
                         VolumeJson = ReadFields[1];
                         Volume = Int32.Parse(ReadFields[2]);
-                        stream.ReadLine();
-                        read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        //stream.ReadLine();
+                        //read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         read_all = true;
                         break;
                     case 2:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
-                            SystemSetting s = new SystemSetting();
+                            TCPSetting s = new TCPSetting();
                             s.ShowText = ReadFields[0];
                             s.JsonText = ReadFields[1];
                             int ident = -1;
@@ -465,20 +517,39 @@ namespace Spa_Interaction_Screen
                         break;
                     case 3:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
-                        while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
+                        while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             SessionSetting si = new SessionSetting();
                             si.id = SessionSettings.Count;
-                            int ident = -1;     
+                            int ident = -1;
                             si.JsonText = ReadFields[0];
                             bool parsed = false;
+                            if (si.JsonText.Equals("[all_left]"))
+                            {
+                                defaulttimeleftoption = si;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    si.mins = Int32.Parse(si.JsonText);
+                                }
+                                catch (FormatException ex)
+                                {
+                                    Debug.Print(ex.Message);
+                                    continue;
+                                }
+                                SessionSettings.Add(si);
+                            }
                             try
                             {
                                 parsed = Boolean.Parse((string)ReadFields[1]);
                             }
                             catch (FormatException ex)
                             {
+                                parsed = false;
                                 Debug.Print(ex.Message);
                             }
                             si.should_reset = parsed;
@@ -486,21 +557,21 @@ namespace Spa_Interaction_Screen
                             {
                                 si.ShowText = ReadFields[2];
                             }
-                            SessionSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
                         read_all = true;
                         break;
                     case 4:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
-                            ServicesSettingfunction<Constants.rawfunctiontext> si = new ServicesSettingfunction<Constants.rawfunctiontext>();
+                            ServicesSettingfunction si = new ServicesSettingfunction();
                             si.id = ServicesSettings.Count;
                             si.JsonText = ReadFields[0];
                             si.ShowText = ReadFields[1];
-                            if(ReadFields.Length > 2 && ReadFields[2]!=null && ReadFields[2].Length>0)
+                            if (ReadFields.Length > 2 && ReadFields[2] != null && ReadFields[2].Length > 0)
                             {
                                 Constants.rawfunctiontext f = new Constants.rawfunctiontext();
                                 f.functionText = ReadFields[2];
@@ -517,6 +588,7 @@ namespace Spa_Interaction_Screen
                         break;
                     case 5:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
+                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
@@ -534,16 +606,20 @@ namespace Spa_Interaction_Screen
                                 scene.Channelvalues = new byte[ReadFields.Length - 3];
                             }
                             int y = i;
-                            for (i = i; i < scene.Channelvalues.Length; i++)
+                            for (i = y; i < scene.Channelvalues.Length; i++)
                             {
-                                if (Int32.Parse(ReadFields[i]) > 255 || Int32.Parse(ReadFields[i]) < 0)
+                                int save = 0;
+                                try
                                 {
-                                    scene.Channelvalues[i - y] = 0;
+                                    save = Int32.Parse(ReadFields[i]);
                                 }
-                                else
+                                catch (FormatException ex)
                                 {
-                                    scene.Channelvalues[i - y] = Byte.Parse(ReadFields[i]);
+                                    Debug.Print(ex.Message);
                                 }
+                                save = Math.Min(255, save);
+                                save = Math.Max(0, save);
+                                scene.Channelvalues[i - y] = (byte)save;
                             }
                             DMXScenes.Add(scene);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -561,6 +637,7 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
+            SessionSettings = SessionSettings.OrderBy(x => x.mins).ToList<SessionSetting>();
             while (DMXScenes.Count < 2)
             {
                 DMXScene scene = new DMXScene();
@@ -582,67 +659,195 @@ namespace Spa_Interaction_Screen
                 DMXScenes.Add(scene);
             }
             List<Constants.ServicesSetting> neu = new List<ServicesSetting>();
-            foreach(Constants.ServicesSettingfunction<Constants.rawfunctiontext> sss in ServicesSettings)
+            foreach (Constants.ServicesSettingfunction sss in ServicesSettings)
             {
-                if (sss.function == null || sss.function.functionText == null || sss.function.functionText.Length<=0)
+                Constants.ServicesSetting temp = setupsecondaryfunctionsforServiceButtons(sss);
+                if (temp != null)
                 {
-                    ServicesSetting ss = new ServicesSetting();
-                    ss.id = sss.id;
-                    ss.ShowText = sss.ShowText;
-                    ss.JsonText = sss.JsonText;
-                    neu.Add(ss);
-                    continue;
+                    Debug.Print(temp.ShowText);
+                    neu.Add(temp);
                 }
-                bool typefound = false;
-                ServicesSetting service = null;
-                for (int i = 0; i<Typenames.Length;i++)
-                {
-                    String s = Typenames[i];
-                    if (s.Equals(sss.function.functionText.Split('[')[1].Split(',')[0]))
-                    {
-                        service = getServiceFunctionFromString(i, sss);
-                    }
-                }
-                if (!typefound)
-                {
-                    int z = -1;
-                    try
-                    {
-                        z = Int32.Parse(sss.function.functionText.Split('[')[1].Split(',')[0]);
-                    }
-                    catch (FormatException ex)
-                    {
-                        Debug.Print(ex.Message);
-                        continue;
-                    }
-                    if(z>=0)
-                    {
-                        service = getServiceFunctionFromString(z, sss);
-                    }
-                }
-                if(service == null)
-                {
-                    continue;
-                }
-                neu.Add(service);
             }
+            ServicesSettings = neu;
             currentvalues = new byte[DMXScenes[0].Channelvalues.Length];
             allread = true;
         }
 
-        private ServicesSetting getServiceFunctionFromString(int type, Constants.ServicesSettingfunction<Constants.rawfunctiontext> s)
+        public Constants.ServicesSetting setupsecondaryfunctionsforServiceButtons(Constants.ServicesSettingfunction sss)
+        {
+
+            if (sss.function == null || ((Constants.rawfunctiontext)(sss.function)).functionText == null || ((Constants.rawfunctiontext)(sss.function)).functionText.Length <= 0 || !((Constants.rawfunctiontext)(sss.function)).functionText.Contains(',') || ((Constants.rawfunctiontext)(sss.function)).functionText.Split(',').Length < 2)
+            {
+                ServicesSetting ss = new ServicesSetting();
+                ss.id = sss.id;
+                ss.ShowText = sss.ShowText;
+                ss.JsonText = sss.JsonText;
+                return ss;
+            }
+            bool typefound = false;
+            ServicesSettingfunction service = null;
+            for (int i = 0; i < Typenames.Length; i++)
+            {
+                String s = Typenames[i];
+                if (s == null || s.Length <= 0)
+                {
+                    continue;
+                }
+                String f = ((Constants.rawfunctiontext)(sss.function)).functionText.Split(',')[0].Trim().ToLower();
+                if (s.Equals(f))
+                {
+                    service = getServiceFunctionFromString(i, sss);
+                    typefound = true;
+                }
+            }
+            if (!typefound)
+            {
+                int z = -1;
+                try
+                {
+                    z = Int32.Parse(((Constants.rawfunctiontext)(sss.function)).functionText.Split(',')[0].Trim());
+                }
+                catch (FormatException ex)
+                {
+                    Debug.Print(ex.Message);
+                    return null;
+                }
+                if (z >= 0 && z < Typenames.Length)
+                {
+                    service = getServiceFunctionFromString(z, sss);
+                }
+            }
+            if (service == null)
+            {
+                Constants.ServicesSetting ser = new ServicesSetting();
+                ser.id = sss.id;
+                ser.ShowText = sss.ShowText;
+                ser.JsonText = sss.JsonText;
+                return ser;
+            }
+            service.id = sss.id;
+            service.ShowText = sss.ShowText;
+            service.JsonText = sss.JsonText;
+            service.hassecondary = true;
+            return service;
+        }
+
+        private ServicesSettingfunction getServiceFunctionFromString(int type, Constants.ServicesSettingfunction s)
+        {
+            String[] functionspecs = ((Constants.rawfunctiontext)(s.function)).functionText.Split(',');
+            configclasses functionclass = null;
+            if (functionspecs.Length < 2)
+            {
+                Debug.Print("Not enough Secondary Function arguments");
+                return null;
+            }
+            ServicesSettingfunction res = new ServicesSettingfunction();
+            res.function = null;
+            res.functionclass = Getconfigclasstype(type);
+            if (res.functionclass == null)
+            {
+                return null;
+            }
+            List<configclasses> typelist = getListfromint(type);
+            foreach (configclasses sys in typelist)
+            {
+                if (sys.JsonText.Equals(functionspecs[1]))
+                {
+                    res.function = sys;
+                    break;
+                }
+            }
+            if (res.function == null)
+            {
+                int rese = -1;
+                if (functionspecs.Length > 0 && int.TryParse(functionspecs[1], out rese))
+                {
+                    if (rese != 0 && rese >= 0 && rese < getListfromint(type).Count)
+                    {
+                        res.function = getListfromint(type)[rese];
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            try
+            {
+                if (functionspecs.Length > 2)
+                {
+                    res.enable = Boolean.Parse(functionspecs[2]);
+                }
+                else
+                {
+                    res.enable = false;
+                }
+                if (functionspecs.Length > 3)
+                {
+                    res.block = Boolean.Parse(functionspecs[3]);
+                }
+                else
+                {
+                    res.block = false;
+                }
+            }
+            catch (FormatException ex)
+            {
+                Debug.Print(ex.Message);
+            }
+            if (functionspecs.Length > 4 && functionspecs[4].Length > 0)
+            {
+                res.value = functionspecs[4];
+            }
+            else
+            {
+                res.value = null;
+            }
+            return res;
+        }
+
+        private static Type Getconfigclasstype(int type)
         {
             switch (type)
             {
                 case 0:
-                    ServicesSettingfunction<SystemSetting> res = new ServicesSettingfunction<SystemSetting>();
-                    return res;
-                    break;
+                    return new SystemSetting().GetType();
+                case 1:
+                    return new TCPSetting().GetType();
+                case 2:
+                    return new SessionSetting().GetType();
+                case 3:
+                    return new ServicesSetting().GetType();
+                case 4:
+                    return new DMXScene().GetType();
+                default:
+                    return null;
             }
-            return null;
         }
 
-        private void finalizePaths(out String? sp, String s)
+        private List<configclasses> getListfromint(int x)
+        {
+            switch (x)
+            {
+                case 0:
+                    return SystemSettings.Cast<configclasses>().ToList();
+                case 1:
+                    return TCPSettings.Cast<configclasses>().ToList();
+                case 2:
+                    return SessionSettings.Cast<configclasses>().ToList();
+                case 3:
+                    return ServicesSettings.Cast<configclasses>().ToList();
+                case 4:
+                    return DMXScenes.Cast<configclasses>().ToList();
+                default:
+                    return new List<configclasses>();
+            }
+        }
+        public void finalizePaths(out String? sp, String s)
         {
             if (s != null)
             {
