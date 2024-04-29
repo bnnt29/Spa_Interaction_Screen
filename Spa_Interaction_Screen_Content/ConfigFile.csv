@@ -6,13 +6,12 @@
 #String;#TCP Local Server Port;5004;;;;;;;;;;;;;;;;;;
 #Integer;#Status Nachricht Intervall (s) (-1 to disable);60;;;;;;;;;;;;;;;;;;
 #String;#Arduino Com Port Name;COM4;;;;;;;;;;;;;;;;;;
-#String;#Enttec Port Name;COM3;;;;;;;;;;;;;;;;;;
 #String;#Restricted Page Desciption;Zugriff nur für Mitarbeiter;;;;;;;;;;;;;;;;;;
 #Integer;#Ambiente Fade Time (ms);666;;;;;;;;;;;;;;;;;;
 #Array of Integer;#Wartungs Pin;1;2;3;4;5;6;;;;;;;;;;;;;
 #String;#Gastronomie Adresse;https://www.soundcraft.com/ui-demo/mixer.html;#(Connecting to Port 80/443);;;;;;;;;;;;;;;;;
 #String;#WiFi SSID (Mit [Room] kann dynamisch der Raum ersetzt werden);WifiName_ofRoom:[Room];;;;;;;;;;;;;;;;;;
-#Array of Integer;#IP Router;192;168;4;133;;;;;;;;;;;;;;;
+#Array of Integer;#IP Router;192;168;178;105;;;;;;;;;;;;;;;
 #String;#Port Router;23;;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;true;;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Eck Zeit;true;3;;;;;;;;;;;;;;;;;
@@ -50,7 +49,7 @@ Json Type:3;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle 
 #String;#Sitzung ist zuende;0;false;Sitzung ist zuende;;;;;;;;;;;;;;;;
 #String;#Sitzung ist fast zuende;5;false;Sitzung ist fast zuende: [id];;;;;;;;;;;;;;;;
 #String;#[id] Minuten verbleibend;[all_left];false;[id] Minuten verbleibend;;;;;;;;;;;;;;;;
-#String;#Start;-1;true;;#negative values are not showen;;;;;;;;;;;;;;;
+#String;#Start;-1;true;;#negative values are not showen and onl via networ reachable;;;;;;;;;;;;;;;
 #;#[More Session Informations can be added];;;;;;;;;;;;;;;;;;;
 Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Subtype;enable,block,(optional)value)";#Info;;;;;;;;;;;;;;;
 #String;#0;ServiceText;Was kann ich heute für Sie tun?;;#(Text auf der Service Seite);;;;;;;;;;;;;;;

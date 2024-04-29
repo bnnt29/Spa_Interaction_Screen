@@ -13,6 +13,8 @@ namespace Spa_Interaction_Screen
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
         public const int SessionOvertimeBuffer = 0;
+        public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
+        public const int TelnetComTimeout = 90;
 
         //PreConfig
         public static String ContentPath = null;
@@ -48,7 +50,7 @@ namespace Spa_Interaction_Screen
         public static Color Text_color = Color.White;
         public static Color Button_color = ColorTranslator.FromHtml("#CDAA39");
         public static Color ButtonText_color = Text_color;
-        public static Color NumfieldErrorButton_color = Color.Red;
+        public static Color Warning_color = Color.Red;
         public static Font Standart_font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
 
 
@@ -101,6 +103,24 @@ namespace Spa_Interaction_Screen
             public bool enable;
             public bool block;
             public configclasses? function;
+            public override string ToString()
+            {
+                String s = "[";
+                s += function.Typename;
+                s += ",";
+                s += function.JsonText;
+                s += ",";
+                s += block.ToString();
+                s += ",";
+                s += enable.ToString();
+                if(value  != null)
+                {
+                    s += ",";
+                    s += value.ToString();
+                }
+                s += "]";
+                return s;
+            }
         }
 
         public class DMXScene : configclasses
@@ -112,6 +132,7 @@ namespace Spa_Interaction_Screen
         public abstract class configclasses
         {
             public int id=-1;
+            public string Typename = null;
             public String? ShowText = null;
             public String JsonText = null;
             public Button? ButtonElement = null;

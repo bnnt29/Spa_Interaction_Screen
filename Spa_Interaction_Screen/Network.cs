@@ -26,7 +26,7 @@ namespace Spa_Interaction_Screen
         public List<Task> ListeningClients = new List<Task>();
         private TcpClient routerclient = null;
         private Task ListenRouter = null;
-        public bool routeranswered = false;
+        public bool routertelnetinit = false;
 
         public Network(MainForm f, Config c)
         {
@@ -43,10 +43,10 @@ namespace Spa_Interaction_Screen
         //Structures 
         public class RequestJson
         {
-            public String destination;
-            public int port;
+            public String? destination = null;
+            public int? port = null;
             public String type;
-            public int? Raum = null;
+            public int Raum;
             public String? label = null;
             public int? id = null;
             public String[]? values = null;
@@ -57,10 +57,7 @@ namespace Spa_Interaction_Screen
         {
             String s = "{";
             s += $"\"type\":{req.type}";
-            if (req.Raum != null)
-            {
-                s += $",\"room\":{req.Raum}";
-            }
+            s += $",\"room\":{req.Raum}";
             if (req.label != null)
             {
                 s += $",\"label\":{req.label}";
@@ -81,8 +78,33 @@ namespace Spa_Interaction_Screen
             s += "}";
             return s;
         }
+        private static String assembleQuestionJsonString(RequestJson req)
+        {
+            String s = "[";
+            s += $"\"type\":{req.type}";
+            s += $",\"room\":{req.Raum}";
+            if (req.label != null)
+            {
+                s += $",\"label\":{req.label}";
+            }
+            if (req.id != null)
+            {
+                s += $",\"id\":{req.id}";
+            }
+            if (req.values != null)
+            {
+                s += $"\",\"values\":[{req.values[0]}";
+                for (int i = 1; i < req.values.Length; i++)
+                {
+                    s += $",{req.values[i]}";
+                }
+                s += "]";
+            }
+            s += "]";
+            return s;
+        }
 
-        private TcpClient getbestclient()
+        private TcpClient getbestclient(string? dest, int? port)
         {
             TcpClient? cl = tcpClients[0];
             if (tcpClients.Count > 1)
@@ -90,10 +112,21 @@ namespace Spa_Interaction_Screen
                 byte[] ip = new byte[4];
                 try
                 {
-                    for (int i = 0; i < config.IPZentrale.Length; i++)
+                    if(dest == null || dest.Length <= 0)
                     {
-                        ip[i] = Byte.Parse(config.IPZentrale[i]);
+                        for (int i = 0; i < config.IPZentrale.Length; i++)
+                        {
+                            ip[i] = Byte.Parse(config.IPZentrale[i]);
+                        }
                     }
+                    else
+                    {
+                        for (int i = 0; i < dest.Split('.').Length; i++)
+                        {
+                            ip[i] = Byte.Parse(dest.Split('.')[i]);
+                        }
+                    }
+                    
                 }
                 catch (FormatException ex)
                 {
@@ -110,6 +143,10 @@ namespace Spa_Interaction_Screen
                         if (endpoint.Address.Equals(specifiedIP))
                         {
                             possibilities.Add(client);
+                            if (((port != null && port > 0 && endpoint.Port.Equals(port))||(config.PortZentrale != null && config.PortZentrale > 0 && endpoint.Port.Equals(config.PortZentrale))) && client.Connected)
+                            {
+                                return client;
+                            }
                         }
                     }
                 }
@@ -210,7 +247,7 @@ namespace Spa_Interaction_Screen
             }
             if (cl == null)
             {
-                cl = getbestclient();
+                cl = getbestclient(json.destination, json.port);
             }
             if (cl == null)
             {
@@ -253,22 +290,23 @@ namespace Spa_Interaction_Screen
             {
                 TcpClient client = server.AcceptTcpClient();  //if a connection exists, the server will accept it
                 net.tcpClients.Add(client);
-                net.ListeningClients.Add(Task.Run(() => listenTCPConnection(client, net, false)));
+                net.ListeningClients.Add(Task.Run(() => listenTCPConnection(client, net, false, ListeningClients.Count)));
                 IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
                 Debug.Print($"Client with IP:{endpoint.Address} connected");
             }
         }
 
-        private void listenTCPConnection(TcpClient cl, Network net, bool isTelnet)
+        private void listenTCPConnection(TcpClient cl, Network net, bool isTelnet, int index)
         {
             NetworkStream ns = cl.GetStream();
             Debug.Print("ListeningTCP");
             while (cl.Connected)  //while the client is connected, we look for incoming messages
             {
                 byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
                 try
                 {
-                    ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
                 }
                 catch (Exception ex)
                 {
@@ -282,26 +320,28 @@ namespace Spa_Interaction_Screen
                             break;
                     }
                 }
-                net.receivedMessage(msg, cl, isTelnet, net);
+                Array.Resize(ref msg, b_read);
+                net.receivedMessage(msg, cl, isTelnet, net, index);
             }
             net.tcpClients.Remove(cl);
+            cl.Dispose();
         }
 
         //Telnet
-        public bool SendTelnet(String command)
+        
+        public bool SendTelnetASKPass()
         {
-            if (command == null || routerclient == null || !routerclient.Connected)
+            if (routerclient == null || !routerclient.Connected)
             {
                 Debug.Print("Couldnt Send Telnet to router. Check if Router is reachable.");
                 return false;
             }
             NetworkStream ns = routerclient.GetStream();
 
-            Byte[] data = Encoding.Default.GetBytes(command + "\n");
+            Byte[] data = Encoding.Default.GetBytes("pass ?\n");
             try
             {
                 ns.Write(data, 0, data.Length);
-                routeranswered = false;
             }
             catch (Exception ex)
             {
@@ -316,62 +356,287 @@ namespace Spa_Interaction_Screen
                 }
                 return false;
             }
-
-            Debug.Print($"Sent: {command}");
+            //Debug.Print("pass ?");
             return true;
         }
 
-        public void setuprouter(MainForm f)
+        public bool SendTelnetSetSSID(String SSID)
+        {
+            if (routerclient == null || !routerclient.Connected)
+            {
+                Debug.Print("Couldnt Send Telnet to router. Check if Router is reachable.");
+                return false;
+            }
+            NetworkStream ns = routerclient.GetStream();
+
+            Byte[] data = Encoding.Default.GetBytes($"wifi ssid {SSID}\n");
+            try
+            {
+                ns.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                switch (ex)
+                {
+                    case ArgumentNullException:
+                    case ArgumentOutOfRangeException:
+                    case InvalidOperationException:
+                    case IOException:
+                        Debug.Print(ex.Message);
+                        break;
+                }
+                return false;
+            }
+            ns = routerclient.GetStream();
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
+            {
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
+
+                try
+                {
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Debug.Print(ex.Message);
+                            return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
+                    }
+                }
+
+                Array.Resize(ref msg, b_read);
+                String m = parse(msg);
+                String[] splt = m.Split("\n");
+                for (int i = 0; i < splt.Length; i++)
+                {
+                    if (splt[i].Contains("WMedia") || splt[i].Contains("wifi"))
+                    {
+                        return true;
+                    }
+                }
+            }
+            Debug.Print($"wifi ssid {SSID}");
+            return true;
+        }
+
+        public bool SendTelnetPasswordrefresh()
+        {
+            if (routerclient == null || !routerclient.Connected)
+            {
+                Debug.Print("Couldnt Send Telnet to router. Check if Router is reachable.");
+                return false;
+            }
+            NetworkStream ns = routerclient.GetStream();
+
+            Byte[] data = Encoding.Default.GetBytes($"pass refresh\n");
+            try
+            {
+                ns.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                switch (ex)
+                {
+                    case ArgumentNullException:
+                    case ArgumentOutOfRangeException:
+                    case InvalidOperationException:
+                    case IOException:
+                        Debug.Print(ex.Message);
+                        break;
+                }
+                return false;
+            }
+            ns = routerclient.GetStream();
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
+            {
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
+
+                try
+                {
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Debug.Print(ex.Message);
+                            break;
+                    }
+                }
+                Array.Resize(ref msg, b_read);
+                String m = parse(msg);
+                //Debug.Print(m);
+                String[] splt = m.Split("\n");
+                for (int i = 0; i < splt.Length; i++)
+                {
+                    if (splt[i].Contains("OK"))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public String WaitForPass()
+        {
+            NetworkStream ns = routerclient.GetStream();
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
+            {
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
+                try
+                {
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Debug.Print(ex.Message);
+                            break;
+                    }
+                }
+                Array.Resize(ref msg, b_read);
+                String m = parse(msg);
+                //Debug.Print(m);
+                String[] splt = m.Split("\n");
+                int i = 0;
+                for (i = i; i < splt.Length - 1; i++)
+                {
+                    if (splt[i].Contains("#pass") && splt[i].Contains(':'))
+                    {
+                        //Debug.Print(splt[i].Split(':')[1].Trim());
+                        return splt[i].Split(':')[1].Trim();
+                    }
+                }
+            }
+            return "";
+        }
+        public void setuprouterssid(MainForm f)
         {
             if (!connectrouter(f))
             {
+                Debug.Print("Error occured while connecting to router");
+                WaitforRouterClientClose();
                 return;
             }
-            while (!routeranswered)
-            {
+            SendTelnetSetSSID($"{config.WiFiSSID}");
+            WaitforRouterClientClose();
+        }
 
-            }
-            SendTelnet($@"wifi ssid {config.WiFiSSID}");
-            while (!routeranswered)
+        public void setuprouterpassword(MainForm f)
+        {
+            if (!connectrouter(f))
             {
+                Debug.Print("Error occured while connecting to router");
+                WaitforRouterClientClose();
+                return;
+            }
+            SendTelnetASKPass();
+            config.password = WaitForPass();
+            //Debug.Print($"old Password: {config.password}");
+            WaitforRouterClientClose();
+            if (!connectrouter(f))
+            {
+                Debug.Print("Error occured while connecting to router");
+                WaitforRouterClientClose();
+                return;
+            }
+            if (!SendTelnetPasswordrefresh())
+            {
+                Debug.Print("Error occured while refreshing router password");
+                WaitforRouterClientClose();
+                return;
+            }
+            WaitforRouterClientClose();
+            String npw = "";
+            DateTime dateTimestart = DateTime.Now;
+            do
+            {
+                //Debug.Print("Waiting for new Password");
+                if (!connectrouter(f))
+                {
+                    Debug.Print("Error occured while connecting to router");
+                    WaitforRouterClientClose();
+                }
+                SendTelnetASKPass();
+                npw = WaitForPass();
+            } while (npw.Equals(config.password) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 2);
+            WaitforRouterClientClose();
+            config.password = npw;
+            Debug.Print($"Neues Passwort: {npw}");
+        }
 
-            }
-            routerclient.Close();
-            connectrouter(f);
-            while (!routeranswered)
+        private void WaitforRouterClientClose()
+        {
+            if (routerclient.Connected)
             {
+                routerclient.GetStream().Close();
+                routerclient.Close();
+            }
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout) ;
+            routerclient.Dispose();
+        }
 
-            }
-            String pass = "";
-            Random rnd = new Random();
-            for (int i = 0; i < 8; i++)
+        private bool handleReceivedTel(String m)
+        {
+            Debug.Print("handle");
+            Debug.Print(m);
+            if (m.Contains("#pass"))
             {
-                pass += $"{rnd.Next(9)}";
+                String[] lines = m.Split("WMedia>");
+                bool foundline = false;
+                foreach (String line in lines)
+                {
+                    Debug.Print("Something");
+                    Debug.Print($"{line}");
+                    Debug.Print("Something2");
+                    if (line.Contains('#') && line.Contains("pass") && line.Contains(":"))
+                    {
+                        String p = line.Split(":")[1].Split("\n\r")[0].Trim();
+                        config.password = p;
+                        foundline = true;
+                        break;
+                    }
+                }
+                if (!foundline)
+                {
+                    return false;
+                }
+                form.helper.setnewPassword();
             }
-            SendTelnet($@"pass {pass}");
-            Debug.Print("Router Set");
-            while (!routeranswered)
+            else
             {
-
+                return false;
             }
-            routerclient.Close();
-            connectrouter(f);
-            while (!routeranswered)
-            {
-
-            }
-            SendTelnet($@"pass ?");
-            while (!routeranswered)
-            {
-
-            }
+            return true;
         }
 
         private bool connectrouter(MainForm f)
         {
             if (routerclient != null && routerclient.Connected)
             {
-                return false;
+                return true;
             }
             String ip_address = f.ArraytoString(config.IPRouter, 4);
             int port_number = config.PortRouter;
@@ -382,7 +647,7 @@ namespace Spa_Interaction_Screen
                 routerclient = new TcpClient();
                 routerclient.Connect(ip_address, port_number);
 
-                Debug.Print($"[Communication] : [EstablishConnection] : Success connecting to : {ip_address}, port: {port_number}");
+                //Debug.Print($"[Communication] : [EstablishConnection] : Success connecting to : {ip_address}, port: {port_number}");
             }
             catch (Exception e)
             {
@@ -392,11 +657,53 @@ namespace Spa_Interaction_Screen
             }
             if (routerclient == null || !routerclient.Connected)
             {
-                Debug.Print("Error when tried to connect to Entec Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.");
+                Debug.Print("Error when tried to connect to ecler Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.");
                 return false;
             }
-            ListenRouter = Task.Run(() => listenTCPConnection(routerclient, this, true));
-            return true;
+            bool receivedadd = false;
+            NetworkStream ns = routerclient.GetStream();
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now-dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
+            {
+
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
+
+                try
+                {
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Debug.Print(ex.Message);
+                            break;
+                    }
+                }
+                Array.Resize(ref msg, b_read);
+                String m = parse(msg);
+                //Debug.Print(m);
+                String[] splt= m.Split("\n");
+                int i = 0;
+                for (i = i; i< splt.Length-1; i++)
+                {
+                    if (!receivedadd && splt[i].Contains('+'))
+                    {
+                        receivedadd = true;
+                    }
+                }
+                if (receivedadd && splt.Length > i && splt[i].EndsWith("WMedia>"))
+                {
+                    //Debug.Print("Telnet Terminal: ");
+                    return true;
+                }
+            }
+            return false;
         }
 
         //Received data
@@ -443,7 +750,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private static void SystemPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void SystemPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
             int index = -1;
             for (int i = 0; i < c.SystemSettings.Count; i++)
@@ -463,9 +770,17 @@ namespace Spa_Interaction_Screen
             {
                 index = c.SystemSettings.Count + 1;
             }
-            if (index <= 0 && ("video").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+            if (index <= 0 && ("block").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
                 index = c.SystemSettings.Count + 2;
+            }
+            if (index <= 0 && ("video").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+            {
+                index = c.SystemSettings.Count + 3;
+            }
+            if (index <= 0 && ("?").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+            {
+                index = c.SystemSettings.Count + 4;
             }
             switch (index) 
             {
@@ -565,6 +880,48 @@ namespace Spa_Interaction_Screen
                     f.AmbientVolume(volumevalue, null, null);
                         break;
                     case 6:
+                    if (json.ContainsKey("id"))
+                    {
+                        if ((int)json["id"] == 0)
+                        {
+                            f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                        }
+                        else
+                        {
+                            f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
+                        }
+                    }else if (json.ContainsKey("values"))
+                    {
+                        try
+                        {
+                            bool p = Boolean.Parse(((string[])json["values"])[0]);
+                            if (!p)
+                            {
+                                f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                            }
+                            else
+                            {
+                                f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
+                            }
+                        }
+                        catch(FormatException ex){
+                            Debug.Print(ex.Message);
+                            if (((int[])json["values"])[0] == 0)
+                            {
+                                f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                            }
+                            else
+                            {
+                                f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene block");
+                    }
+                    break;
+                    case 7:
                     if (json["values"].GetType() == typeof(string[]))
                     {
                         String Path = ((string[])json["values"])[1];
@@ -584,15 +941,67 @@ namespace Spa_Interaction_Screen
                         Debug.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])");
                     }
                     break;
+                case 8:
+                    String ret = "";
+                    foreach(Constants.SystemSetting ss in c.SystemSettings)
+                    {
+                        RequestJson j = new RequestJson();
+                        j.id = ss.id;
+                        j.label = ss.JsonText;
+                        String[] t = new string[1];
+                        if (ss.value != null && ss.value.Length > 0)
+                        {
+                            t = new string[2];
+                            t[1] = ss.value;
+                            j.values = t;
+                        }
+                        t[0] = ss.ShowText;
+                        ret += assembleQuestionJsonString(j);
+
+                    }
+                    RequestJson r = new RequestJson();
+                    r.Raum = c.Room;
+                    r.type = c.Typenames[0];
+                    r.label = "?";
+                    r.values = [ ret ];
+                    SendTCPMessage(r, null);
+                    break;
                 default:
                     Debug.Print("Couldn't recognize \"type\" argument");
                     break;
             }
         }
-        private static void TCPPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void TCPPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
             if (json.ContainsKey("label"))
             {
+                if (((string)json["label"]).Equals("?"))
+                {
+                    String ret = "";
+                    foreach (Constants.TCPSetting ss in c.TCPSettings)
+                    {
+                        RequestJson j = new RequestJson();
+                        j.id = ss.id;
+                        j.label = ss.JsonText;
+                        String[] t = new string[1];
+                        if (ss.value != null && ss.value.Length > 0)
+                        {
+                            t = new string[2];
+                            t[1] = ss.value;
+                            j.values = t;
+                        }
+                        t[0] = ss.ShowText;
+                        ret += assembleQuestionJsonString(j);
+
+                    }
+                    RequestJson r = new RequestJson();
+                    r.Raum = c.Room;
+                    r.type = c.Typenames[0];
+                    r.label = "?";
+                    r.values = [ret];
+                    SendTCPMessage(r, null);
+                    return;
+                }
                 if (((string[])json["values"]).Length > 2)
                 {
                     foreach (Constants.TCPSetting tcp in c.TCPSettings)
@@ -623,8 +1032,32 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private static void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
+            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            {
+                String ret = "";
+                foreach (Constants.SessionSetting ss in c.SessionSettings)
+                {
+                    RequestJson j = new RequestJson();
+                    j.id = ss.id;
+                    j.label = ss.JsonText;
+                    String[] t = new string[3];
+                    t[0] = ss.ShowText;
+                    t[1] = ss.mins.ToString();
+                    t[2] = ss.should_reset.ToString();
+                    j.values = t;
+                    ret += assembleQuestionJsonString(j);
+
+                }
+                RequestJson r = new RequestJson();
+                r.Raum = c.Room;
+                r.type = c.Typenames[0];
+                r.label = "?";
+                r.values = [ret];
+                SendTCPMessage(r, null);
+                return;
+            }
             if (json.ContainsKey("values") && ((string[])(json["values"])).Length>=0)
             {
                 if (((string[])(json["values"])).Length==1)
@@ -728,6 +1161,7 @@ namespace Spa_Interaction_Screen
                 if (json.ContainsKey("id"))
                 {
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(((int)json["id"]));
+                    f.timeleft = ((int)json["id"]);
                 }
                 else
                 {
@@ -736,9 +1170,32 @@ namespace Spa_Interaction_Screen
             }
             
         }
-        private static void ServicePacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void ServicePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if((json.ContainsKey("id") || (json.ContainsKey("label") && ((string)(json["label"])).Length > 0)) && json.ContainsKey("values") && ((string[])(json["values"])).Length>1)
+            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            {
+                String ret = "";
+                foreach (Constants.ServicesSetting ss in c.ServicesSettings)
+                {
+                    RequestJson j = new RequestJson();
+                    j.id = ss.id;
+                    j.label = ss.JsonText;
+                    String[] t = new string[3];
+                    t[0] = ss.ShowText;
+                    t[1] = ((Constants.ServicesSettingfunction)ss).ToString();
+                    j.values = t;
+                    ret += assembleQuestionJsonString(j);
+
+                }
+                RequestJson r = new RequestJson();
+                r.Raum = c.Room;
+                r.type = c.Typenames[0];
+                r.label = "?";
+                r.values = [ret];
+                SendTCPMessage(r, null);
+                return;
+            }
+            if ((json.ContainsKey("id") || (json.ContainsKey("label") && ((string)(json["label"])).Length > 0)) && json.ContainsKey("values") && ((string[])(json["values"])).Length>1)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
                 ss.id = c.SessionSettings.Count;
@@ -838,8 +1295,35 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private static void DMXScenePacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void DMXScenePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
+            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            {
+                String ret = "";
+                foreach (Constants.DMXScene ss in c.DMXScenes)
+                {
+                    RequestJson j = new RequestJson();
+                    j.id = ss.id;
+                    j.label = ss.JsonText;
+                    String[] t = new string[2+ss.Channelvalues.Length];
+                    t[0] = ss.ShowText;
+                    t[1] = ss.ContentPath;
+
+                    for(int i = 0; i + 2 < t.Length && i < ss.Channelvalues.Length; i++)
+                    {
+                        t[i+2] = ss.Channelvalues[i].ToString();
+                    }
+                    j.values = t;
+                    ret += assembleQuestionJsonString(j);
+                }
+                RequestJson r = new RequestJson();
+                r.Raum = c.Room;
+                r.type = c.Typenames[0];
+                r.label = "?";
+                r.values = [ret];
+                SendTCPMessage(r, null);
+                return;
+            }
             int index = -1;
             if (json.ContainsKey("id"))
             {
@@ -936,6 +1420,7 @@ namespace Spa_Interaction_Screen
                     Debug.Print("DMXScene Paket \"id\" / \"label\" out of range");
                 }
             }
+            f.SendCurrentSceneOverCom();
         }
 
 
@@ -990,60 +1475,30 @@ namespace Spa_Interaction_Screen
 
         private static String parse(byte[] json)
         {
-            String jsonString = "";
+            String resString;
             try
             {
-                jsonString = System.Text.Encoding.Default.GetString(json);
+                resString = System.Text.Encoding.Default.GetString(json);
             }catch(Exception e)
             {
                 Debug.Print(e.Message);
                 return null;
             }
-            Debug.Print(jsonString);
-            return jsonString;
+            return resString;
         }
 
-        public void receivedMessage(byte[] bytes, TcpClient cl, bool isTelnet, Network net)
+        public void receivedMessage(byte[] bytes, TcpClient cl, bool isTelnet, Network net, int index)
         {
             if(parse(bytes) == null)
             {
                 return;
             }
             String m = parse(bytes);
-            m= m.Trim().ToLower();
-            if (isTelnet)
-            {
-                if (m.Contains("WMedia"))
-                {
-                    net.routeranswered = true;
-                    Debug.Print("Received Router answer");
-                }
-                handleReceivedTel(m);
-            }else
-            {
-                Debug.Print(m);
-                Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
-                handleReceivedNet(keyValuePairs);
-            }
-        }
-
-        private void handleReceivedTel(String m)
-        {
+            m = m.Trim().ToLower();
             Debug.Print(m);
-            if (m.Contains("#pass") && m.Contains("OK"))
-            {
-                String[] lines = m.Split("WMedia>");
-                foreach(String line in lines)
-                {
-                    if (line.StartsWith('#') && line.Contains("pass") && line.Contains(":"))
-                    {
-                        String p = line.Split(":")[1].Split("OK")[0];
-                        config.password = p;
-                        break;
-                    }
-                }
-                form.helper.setnewPassword();
-            }
+            Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
+            handleReceivedNet(keyValuePairs);
+
         }
     }
 }

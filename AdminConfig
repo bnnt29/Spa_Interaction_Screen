@@ -9,7 +9,7 @@ maxhelps%5
 XButtonCount%5
 YButtonCount%5
 InlineuntilXButtons%5
-noCom%true
+noCom%false
 noNet%false
 EdgeItemposxdist%60
 EdgeItemposydist%60

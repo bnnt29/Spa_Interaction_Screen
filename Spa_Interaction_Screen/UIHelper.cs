@@ -476,7 +476,6 @@ namespace Spa_Interaction_Screen
             int wartungs = Math.Min(config.TCPSettings.Count, Constants.maxtcpws);
             for (int i = 0; i < wartungs; i++)
             {
-                Debug.Print("WartungsButtons");
                 GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
                 Button bu = null;
                 Constants.createButton(Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle, out bu);
@@ -612,7 +611,7 @@ namespace Spa_Interaction_Screen
 
         }
 
-        public void UpdateActiveDMXScene(int old_scene)
+        public void UpdateActiveDMXScene(int old_scene, bool force)
         {
             for (int i = 0; i < config.DMXScenes.Count; i++)
             {
@@ -631,7 +630,6 @@ namespace Spa_Interaction_Screen
                 try
                 {
                     channel = config.Dimmerchannel[Int32.Parse(slider.Name)];
-
                 }
                 catch (Exception ex)
                 {
@@ -647,7 +645,7 @@ namespace Spa_Interaction_Screen
                 {
                     old_value = (int)((float)((float)(config.DMXScenes[old_scene].Channelvalues[channel]) / (float)255.0) * 100);
                 }
-                if (slider.Value == old_value)
+                if (slider.Value == old_value || force)
                 {
                     slider.ValueChanged -= form.Dimmer_Change;
                     slider.Value = (int)((float)((float)(config.DMXScenes[config.DMXSceneSetting].Channelvalues[channel]) / (float)255.0) * 100);
@@ -656,7 +654,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public void setActiveDMXScene(int index)
+        public void setActiveDMXScene(int index, bool force)
         {
             if(config == null)
             {
@@ -668,7 +666,7 @@ namespace Spa_Interaction_Screen
                 config.DMXSceneSetting = index;
                 config.lastchangetime = DateTime.Now;
             }
-            UpdateActiveDMXScene(old);
+            UpdateActiveDMXScene(old, force);
         }
 
         public void setConfig(Config c)
@@ -753,7 +751,7 @@ namespace Spa_Interaction_Screen
 
             GendynamicServiceButtons();
 
-            UpdateActiveDMXScene(-1);
+            UpdateActiveDMXScene(-1, true);
 
             foreach (ColorSlider.ColorSlider s in FormColorSlides)
             {
@@ -995,10 +993,18 @@ namespace Spa_Interaction_Screen
             Task router = null;
             if (form != null && form.net != null && !Constants.noNet)
             {
-                router = Task.Run(()=> form.net.setuprouter(form));
+                await Task.Delay(15);
+                router = Task.Run(() => {
+                    Task ta = Task.Run(() => form.net.setuprouterpassword(form));
+                    ta.Wait();
+                    ta = Task.Run(() => form.net.setuprouterssid(form));
+                    ta.Wait();
+                });
             }
-
-            form.loadscreen.Debugtext($"Setting up Wifi Router", false);
+            if (form.loadscreen != null)
+            {
+                form.loadscreen.Debugtext($"Setting up Wifi Router", false);
+            }
 
             int Pos_x, Pos_y; 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
@@ -1007,6 +1013,8 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
 
+            router.Wait();
+            
             form.WiFiSSIDLabel.Text = config.WiFiSSID;
 
             form.WiFiPasswortLabel.Text = config.password;
@@ -1014,11 +1022,12 @@ namespace Spa_Interaction_Screen
             form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
 
             form.loadscreen.Debugtext($"", false);
+
         }
 
         public void setnewPassword()
         {
-            if (form != null)
+            /*if (form != null)
             {
                 form.WiFiPasswortLabel.Text = config.password;
                 form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
@@ -1026,7 +1035,7 @@ namespace Spa_Interaction_Screen
                 {
                     form.vlc.newsession();
                 }
-            }
+            }*/
         }
 
 

@@ -27,7 +27,6 @@ namespace Spa_Interaction_Screen
         public int LocalPort = -1;
         public int StateSendInterval = -1;
         public String ComPort = null;
-        public String EnttecComPort = null;
         public String RestrictedDescription = null;
         public int FadeTime = -1;
         public String[] Wartungspin = null;
@@ -67,7 +66,6 @@ namespace Spa_Interaction_Screen
         public String VolumeSliderName = null;
         public int Volume = -1;
         public String VolumeJson = null;
-        public Constants.SessionSetting defaulttimeleftoption = null;
         public List<Constants.SystemSetting> SystemSettings = null;
         public List<Constants.TCPSetting> TCPSettings = null;
         public List<Constants.SessionSetting> SessionSettings = null;
@@ -246,7 +244,6 @@ namespace Spa_Interaction_Screen
             read_all = getcsvFields(stream, ref LocalPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref StateSendInterval, 0, false, read_all);
             read_all = getcsvFields(stream, ref ComPort, 0, false, read_all);
-            read_all = getcsvFields(stream, ref EnttecComPort, 0, false, read_all);
             read_all = getcsvFields(stream, ref RestrictedDescription, 0, false, read_all);
             read_all = getcsvFields(stream, ref FadeTime, 0, false, read_all);
             read_all = getcsvFields(stream, ref Wartungspin, -1, false, read_all);
@@ -462,11 +459,11 @@ namespace Spa_Interaction_Screen
                 {
                     case 1:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        Debug.Print(Typenames[Jtype - 1]);
                         for (int i = 0; i < 4; i++)
                         {
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                             SystemSetting s = new SystemSetting();
+                            s.Typename = Typenames[Jtype - 1];
                             s.JsonText = ReadFields[0];
                             s.id = i;
                             SystemSettings.Add(s);
@@ -486,11 +483,11 @@ namespace Spa_Interaction_Screen
                         break;
                     case 2:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             TCPSetting s = new TCPSetting();
+                            s.Typename = Typenames[Jtype - 1];
                             s.ShowText = ReadFields[0];
                             s.JsonText = ReadFields[1];
                             int ident = -1;
@@ -517,18 +514,24 @@ namespace Spa_Interaction_Screen
                         break;
                     case 3:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
+                        SessionSetting firstss = new SessionSetting();
+                        firstss.mins = int.MinValue + 1;
+                        firstss.JsonText = "";
+                        firstss.ShowText = "";
+                        firstss.should_reset = false;
+                        SessionSettings.Add(firstss);
                         while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             SessionSetting si = new SessionSetting();
+                            si.Typename = Typenames[Jtype - 1];
                             si.id = SessionSettings.Count;
                             int ident = -1;
                             si.JsonText = ReadFields[0];
                             bool parsed = false;
                             if (si.JsonText.Equals("[all_left]"))
                             {
-                                defaulttimeleftoption = si;
+                                si.mins = int.MaxValue-1;
                             }
                             else
                             {
@@ -541,7 +544,6 @@ namespace Spa_Interaction_Screen
                                     Debug.Print(ex.Message);
                                     continue;
                                 }
-                                SessionSettings.Add(si);
                             }
                             try
                             {
@@ -557,17 +559,18 @@ namespace Spa_Interaction_Screen
                             {
                                 si.ShowText = ReadFields[2];
                             }
+                            SessionSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         }
                         read_all = true;
                         break;
                     case 4:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             ServicesSettingfunction si = new ServicesSettingfunction();
+                            si.Typename = Typenames[Jtype - 1];
                             si.id = ServicesSettings.Count;
                             si.JsonText = ReadFields[0];
                             si.ShowText = ReadFields[1];
@@ -588,11 +591,11 @@ namespace Spa_Interaction_Screen
                         break;
                     case 5:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        Debug.Print(Typenames[Jtype - 1]);
                         read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             DMXScene scene = new DMXScene();
+                            scene.Typename = Typenames[Jtype - 1];
                             int i = 0;
                             scene.id = DMXScenes.Count;
                             scene.JsonText = ReadFields[i++];
@@ -664,7 +667,6 @@ namespace Spa_Interaction_Screen
                 Constants.ServicesSetting temp = setupsecondaryfunctionsforServiceButtons(sss);
                 if (temp != null)
                 {
-                    Debug.Print(temp.ShowText);
                     neu.Add(temp);
                 }
             }
