@@ -78,7 +78,7 @@ namespace Spa_Interaction_Screen
             }
             catch (Exception exp)
             {
-                Console.WriteLine(exp);
+                Logger.WriteLine(exp);
                 Debug.Print("Error Connecting to Enttec USB Device");
                 return false;
 

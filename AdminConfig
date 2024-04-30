@@ -9,8 +9,8 @@ maxhelps%5
 XButtonCount%5
 YButtonCount%5
 InlineuntilXButtons%5
-noCom%false
-noNet%false
+noCom%true
+noNet%true
 EdgeItemposxdist%60
 EdgeItemposydist%60
 Logoxsize%200

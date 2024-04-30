@@ -202,7 +202,7 @@ namespace Spa_Interaction_Screen
             {
                 HttpWebResponse response = null;
                 bool connectionok = false;
-                while (true)
+                while (!Constants.noNet)
                 {
                     HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(config.GastroUrl);
                     request.AllowAutoRedirect = true; // find out if this site is up and don't follow a redirector
@@ -220,6 +220,11 @@ namespace Spa_Interaction_Screen
                     }catch (Exception ex)
                     {
                         Debug.Print(ex.Message);
+                    }
+                    if(response == null)
+                    {
+                        Debug.Print("No Connection");
+                        connectionok = false;
                     }
                     if ((int)response.StatusCode > 100 && (int)response.StatusCode < 400)
                     {
@@ -1848,6 +1853,11 @@ namespace Spa_Interaction_Screen
 #else
             Process.Start("shutdown.exe", "-r -f -t 00 -c \"Remote Shutdown received\"");
 #endif
+        }
+
+        public void ShowConsole(object sender, EventArgs e)
+        {
+
         }
     }
 }
