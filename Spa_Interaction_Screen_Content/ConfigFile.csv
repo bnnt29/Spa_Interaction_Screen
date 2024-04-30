@@ -24,7 +24,7 @@
 #String;#Medien Bild;;;;;;;;;;;;;;;;;;;
 #String;#Timer Bild;background.jpg;;;;;;;;;;;;;;;;;;
 #String;#Service Bild;butler.png;;;;;;;;;;;;;;;;;;
-#String;#Wartung Bild;;;;;;;;;;;;;;;;;;;
+#String;#Wartung Bild;;#minuntes before end of Session (shows endpicture (changeable, blocks streaming, switches to TimePage);;;;;;;;;;;;;;;;;
 #String;#EndBild;butler.png;15;;;;;;;;;;;;;;;;;
 #String;#LogFile;"Log:[Date];[Time].txt";;;;;;;;;;;;;;;;;;
 #;#Special DMX Channels;#DMX Channel to change;#Anzeige Text ;#Off Value;#On Value;;;;;;;;;;;;;;;
@@ -47,7 +47,7 @@ Json Type:2;TCPWartung;#Json Label;#id;#value (no Array);;;;;;;;;;;;;;;;
 #;#[More TCP Wartugs Setting Informations can be added (max 5)];;;;;;;;;;;;;;;;;;;
 Json Type:3;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle übrigen werte genutzt werden);#Should reset data;#Anzeige Text  (Mit [id] kann dynamisch die id ersetzt werden);#info;;;;;;;;;;;;;;;
 #String;#Sitzung ist zuende;0;false;Sitzung ist zuende;;;;;;;;;;;;;;;;
-#String;#Sitzung ist fast zuende;5;false;Sitzung ist fast zuende: [id];;;;;;;;;;;;;;;;
+#String;#Sitzung ist fast zuende;15;false;Sitzung ist fast zuende: [id];;;;;;;;;;;;;;;;
 #String;#[id] Minuten verbleibend;[all_left];false;[id] Minuten verbleibend;;;;;;;;;;;;;;;;
 #String;#Start;-1;true;;#negative values are not showen and onl via networ reachable;;;;;;;;;;;;;;;
 #;#[More Session Informations can be added];;;;;;;;;;;;;;;;;;;

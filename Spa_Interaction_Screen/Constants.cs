@@ -12,7 +12,7 @@ namespace Spa_Interaction_Screen
         public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
-        public const int SessionOvertimeBuffer = 0;
+        public const int SessionOvertimeBuffer = 2;
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
 
@@ -52,6 +52,7 @@ namespace Spa_Interaction_Screen
         public static Color ButtonText_color = Text_color;
         public static Color Warning_color = Color.Red;
         public static Font Standart_font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
+        public static Font Time_font = new Font("Segoe UI", 28F, FontStyle.Regular, GraphicsUnit.Point, 0);
 
 
         //USB

@@ -261,12 +261,12 @@ namespace Spa_Interaction_Screen
             label.ForeColor = Constants.Text_color;
             label.Text = "Ambientebeleuchtungsfarbe";
             form.ColorPage.Controls.Add(label);
-            label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy-15);
+            label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy - 15);
             ColorSlider.ColorSlider newslider = null;
             newslider = createColorSlide(100);
 
             form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
-            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3)); 
+            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3));
             form.ColorPage.Controls.Add(form.colorWheelElement);
             form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
             form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
@@ -274,15 +274,15 @@ namespace Spa_Interaction_Screen
             form.ColorPage.BackColor = Constants.Background_color;
 
 
-            newslider.Size = new Size(Constants.Element_width * 2, (int)(form.colorWheelElement.Size.Height*0.75));
-            newslider.Location = new Point(form.colorWheelElement.Size.Width + form.colorWheelElement.Location.X, (Constants.tabheight/2)-(newslider.Size.Height/2));
+            newslider.Size = new Size(Constants.Element_width * 2, (int)(form.colorWheelElement.Size.Height * 0.75));
+            newslider.Location = new Point(form.colorWheelElement.Size.Width + form.colorWheelElement.Location.X, (Constants.tabheight / 2) - (newslider.Size.Height / 2));
             newslider.Orientation = Orientation.Vertical;
             newslider.Value = 100;
             form.ColorPage.Controls.Add(newslider);
             newslider.ValueChanged += form.ColorChanged_Handler;
 
             GetDynamicPosition(5, 0, out Posx, out Posy, 0, 0, false);
-            Constants.createButton(Constants.Element_width, Constants.Element_height, Posx, (Constants.tabheight/2)-(Constants.Element_height/2), null, "Zurrücksetzen", null, form.ColorPage, form, form.resetcolorwheel);
+            Constants.createButton(Constants.Element_width, Constants.Element_height, Posx, (Constants.tabheight / 2) - (Constants.Element_height / 2), null, "Zurrücksetzen", null, form.ColorPage, form, form.resetcolorwheel);
         }
 
         public void createGastroPageElements()
@@ -315,26 +315,83 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.5, false);
             form.WiFiPasswordTitle.Location = new Point(Pos_x, Pos_y);
 
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0.2, 1.5, false);
-            form.TVSettingsAmbienteButton = Constants.createButton(Constants.Element_width * 2, (int)(Constants.Element_height * 0.75), Pos_x, Pos_y, MediaPageButtons, "Ambiente Video", true, form.MediaPage, form, form.Content_Change_Handler);
+            CreateMediaControllingElemets(5);
+        }
+
+        public void CreateMediaControllingElemets(double widthelements)
+        {
+            int Elementsinwidth = (int)widthelements;
+            widthelements -= Elementsinwidth;
+            if (form.TVSettingsAmbienteButton != null)
+            {
+                Button but = form.TVSettingsAmbienteButton;
+                if(but.Parent != null)
+                {
+                    but.Parent.Controls.Remove(but);
+                }
+                but.Hide();
+                form.TVSettingsAmbienteButton = null;
+                MediaPageButtons.Remove(but);
+                but.Dispose();
+            }
+            if (form.TVSettingsStreamingButton != null)
+            {
+                Button but = form.TVSettingsStreamingButton;
+                if(but.Parent != null)
+                {
+                    but.Parent.Controls.Remove(but);
+                }
+                but.Hide();
+                form.TVSettingsStreamingButton = null;
+                MediaPageButtons.Remove(but);
+                but.Dispose();
+            }
+            if (form.MediaPageAmbientVolumeSlider != null)
+            {
+                ColorSlider.ColorSlider but = form.MediaPageAmbientVolumeSlider;
+                if (but.Parent != null)
+                {
+                    but.Parent.Controls.Remove(but);
+                }
+                but.Hide();
+                form.MediaPageAmbientVolumeSlider = null;
+                FormColorSlides.Remove(but);
+                but.Dispose();
+            }
+            if (form.TVSettingsVolumeColorSliderDescribtion != null)
+            {
+                Label but = form.TVSettingsVolumeColorSliderDescribtion;
+                if (but.Parent != null)
+                {
+                    but.Parent.Controls.Remove(but);
+                }
+                but.Hide();
+                form.TVSettingsVolumeColorSliderDescribtion = null;
+                but.Dispose();
+            }
+            int Pos_x, Pos_y = 0;
+            int sizex = Constants.Element_width * 2; 
+            int sizey = (int)(Constants.Element_height * 0.75);
+            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 0.8, false, sizex, sizey);
+            form.TVSettingsAmbienteButton = Constants.createButton(sizex, sizey, Pos_x, Pos_y, MediaPageButtons, "Ambiente Video", true, form.MediaPage, form, form.Content_Change_Handler);
             selectButton(form.TVSettingsAmbienteButton, true, Constants.selected_color);
             form.TVSettingsAmbienteButton.Name = "AmbientVideo";
 
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0.2, 2.3, false);
-            form.TVSettingsStreamingButton = Constants.createButton(Constants.Element_width * 2, (int)(Constants.Element_height * 0.75), Pos_x, Pos_y, MediaPageButtons, "Streaming Video", false, form.MediaPage, form, form.Content_Change_Handler);
+            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 1.8, false, sizex, sizey);
+            form.TVSettingsStreamingButton = Constants.createButton(sizex, sizey, Pos_x, Pos_y, MediaPageButtons, "Streaming Video", false, form.MediaPage, form, form.Content_Change_Handler);
             form.TVSettingsStreamingButton.Name = "StreamingVideo";
 
             SetupLabelofButton(form.TVSettingsAmbienteButton, form.TVSettingsTitle, "Video Einstellungen:");
 
-            ColorSlider.ColorSlider newslider = null;
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0.2, 3.3, false);
-            newslider = createColorSlide(100);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.Size = new Size(Constants.Element_width * 2, (int)(Constants.Element_height * 0.75));
-            newslider.Tag = 3;
-            form.MediaPage.Controls.Add(newslider);
-            FormColorSlides.Add(newslider);
-            newslider.ValueChanged += form.AmbientVolume_Handler;
+            form.MediaPageAmbientVolumeSlider = null;
+            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 2.8, false, sizex, sizey);
+            form.MediaPageAmbientVolumeSlider = createColorSlide(100);
+            form.MediaPageAmbientVolumeSlider.Location = new Point(Pos_x, Pos_y);
+            form.MediaPageAmbientVolumeSlider.Size = new Size(sizex, sizey);
+            form.MediaPageAmbientVolumeSlider.Tag = 3;
+            form.MediaPage.Controls.Add(form.MediaPageAmbientVolumeSlider);
+            FormColorSlides.Add(form.MediaPageAmbientVolumeSlider);
+            form.MediaPageAmbientVolumeSlider.ValueChanged += form.AmbientVolume_Handler;
             /*if (config.Volume >= newslider.Minimum && config.Volume <= newslider.Maximum)
             {
                 newslider.Value = config.Volume;
@@ -421,7 +478,7 @@ namespace Spa_Interaction_Screen
             */
             form.RestrictedAreaDescribtion.Text = config.RestrictedDescription;
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, -0.1, false);
-            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y); 
+            form.RestrictedAreaDescribtion.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y);
             form.RestrictedAreaDescribtion.Show();
 
             int pad_padding = ((int)1.2 * Constants.Element_y_padding);
@@ -484,10 +541,10 @@ namespace Spa_Interaction_Screen
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
-            
+
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
-            
+
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
@@ -525,6 +582,13 @@ namespace Spa_Interaction_Screen
 
         public void GetDynamicPosition(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow)
         {
+            GetDynamicPositionsize(TotalButtonCount, CurrentButtonIndex, out pos_X,out pos_Y,widthOffsetinButtons, heightOffsetinButtons, useDoubleRow, Constants.Element_width, Constants.Element_height);
+        }
+
+        public void GetDynamicPositionsize(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow, int width, int height)
+        {
+            int xpadding = (int)((double)Constants.windowwidth / (Constants.XButtonCount + 1)) - Constants.Element_width;
+            int ypadding = (int)((double)Constants.tabheight / (Constants.YButtonCount + 1)) - Constants.Element_height;
             int mod1, mod2 = pos_X = 0;
 
             if (TotalButtonCount > Constants.InlineUntilXButtons)
@@ -538,12 +602,12 @@ namespace Spa_Interaction_Screen
                 mod1 = mod2 = TotalButtonCount;
             }
 
-            int offsetX = (CurrentButtonIndex % mod1) * (Constants.Element_width + Constants.Element_x_padding);
+            int offsetX = (CurrentButtonIndex % mod1) * (width + xpadding);
 
-            pos_X = (Constants.windowwidth / 2) - (((Constants.Element_width + Constants.Element_x_padding) / 2) * mod2);
+            pos_X = (Constants.windowwidth / 2) - (((width + xpadding) / 2) * mod2);
             pos_X += offsetX;
 
-            offsetX = (int)(widthOffsetinButtons * (Constants.Element_width + Constants.Element_x_padding));
+            offsetX = (int)(widthOffsetinButtons * (width + xpadding));
             pos_X += offsetX;
 
             mod1 = mod2 = pos_Y = 0;
@@ -572,11 +636,11 @@ namespace Spa_Interaction_Screen
                 }
             }
 
-            int offsetY = mod1 * (Constants.Element_height + Constants.Element_y_padding);
-            pos_Y = (Constants.tabheight / 2) - (((Constants.Element_height + Constants.Element_y_padding) / 2) * (mod2));
+            int offsetY = mod1 * (height + ypadding);
+            pos_Y = (Constants.tabheight / 2) - (((height + ypadding) / 2) * (mod2));
             pos_Y += offsetY;
 
-            offsetY = (int)(heightOffsetinButtons * (Constants.Element_height + Constants.Element_y_padding));
+            offsetY = (int)(heightOffsetinButtons * (height + ypadding));
             pos_Y += offsetY;
         }
 
@@ -656,7 +720,7 @@ namespace Spa_Interaction_Screen
 
         public void setActiveDMXScene(int index, bool force)
         {
-            if(config == null)
+            if (config == null)
             {
                 return;
             }
@@ -886,6 +950,10 @@ namespace Spa_Interaction_Screen
             {
                 for (int i = 0; i < tabs.Count; i++)
                 {
+                    if (i == 1 + ((config.showcolor) ? 1 : 0) || (config.showcolor && i == 4 + ((config.showcolor) ? 1 : 0)))
+                    {
+                        continue;
+                    }
                     Label Labeltimeview = new Label();
                     SetEdgePosition(Labeltimeview, config.edgetimePosition);
                     Labeltimeview.AutoSize = true;
@@ -935,7 +1003,7 @@ namespace Spa_Interaction_Screen
             int posx, posy = 0;
             if (pos % 2 == 0)
             {
-                posx = (Constants.windowwidth - Constants.EdgeItemposxdist)-c.Size.Width;
+                posx = (Constants.windowwidth - Constants.EdgeItemposxdist) - c.Size.Width;
             }
             else
             {
@@ -943,7 +1011,7 @@ namespace Spa_Interaction_Screen
             }
             if (pos > 2)
             {
-                posy = (Constants.tabheight - Constants.EdgeItemposydist*2)-c.Size.Height;
+                posy = (Constants.tabheight - Constants.EdgeItemposydist * 2) - c.Size.Height;
             }
             else
             {
@@ -955,41 +1023,6 @@ namespace Spa_Interaction_Screen
         private async void GenNewPassword()
         {
             config.password = "";
-            /*
-            List<string> strings = GetPasswortWords();
-
-            if (strings == null && strings.Count <= 90)
-            {
-                Random r = new Random();
-                Debug.Print("Fallback random PW generator");
-                for (int i = 0; i < 10; i++)
-                {
-                    if (r.Next(0, 2) > 0)
-                    {
-                        config.password += Convert.ToChar(r.Next(65, 91));
-                    }
-                    else
-                    {
-                        config.password += Convert.ToChar(r.Next(48, 58));
-                    }
-                }
-            }
-            else
-            {
-                Random rnd = new();
-                int it = rnd.Next(3);
-                config.password = Passwordparts(config.password, rnd, it);
-                config.password += strings[rnd.Next(strings.Count)];
-                if (config.password.Length <= 7)
-                {
-                    config.password = Passwordparts(config.password, rnd, config.password.Length + rnd.Next(2));
-                    config.password += strings[rnd.Next(strings.Count)];
-                }
-                config.password = Passwordparts(config.password, rnd, Constants.PasswordLength + rnd.Next(3));
-            }
-
-            form.loadscreen.Debugtext($"Sending Password \"{config.password}\" to the router", true);
-            */
             Task router = null;
             if (form != null && form.net != null && !Constants.noNet)
             {
@@ -1006,36 +1039,84 @@ namespace Spa_Interaction_Screen
                 form.loadscreen.Debugtext($"Setting up Wifi Router", false);
             }
 
-            int Pos_x, Pos_y; 
+            int Pos_x, Pos_y;
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
             form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
+            form.WiFiSSIDLabel.Hide();
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
+            form.WiFiPasswortLabel.Hide();
 
-            router.Wait();
-            
+
             form.WiFiSSIDLabel.Text = config.WiFiSSID;
 
             form.WiFiPasswortLabel.Text = config.password;
 
             form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
 
+            setnewPassword();
             form.loadscreen.Debugtext($"", false);
 
         }
 
+        public delegate void MyNoArgument();
         public void setnewPassword()
         {
-            /*if (form != null)
+            if (form.HandleCreate)
             {
-                form.WiFiPasswortLabel.Text = config.password;
-                form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
-                if (form.vlc != null)
+                try
                 {
-                    form.vlc.newsession();
+                    form.Invoke(new MyNoArgument(delegatesetnewPassword));
                 }
-            }*/
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegatesetnewPassword();
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegatesetnewPassword();
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    form.Invoke(new MyNoArgument(delegatesetnewPassword));
+                }
+            }
+        }
+
+        private void delegatesetnewPassword()
+        {
+            if (form != null)
+            {
+                if (config.password != null && config.password.Length > 0)
+                {
+                    CreateMediaControllingElemets(2.3);
+                    form.WiFiSSIDLabel.Show();
+                    form.WiFiPasswortLabel.Show();
+                    form.WiFiPasswordTitle.Show();
+                    form.WiFiSSIDTitle.Show();
+                    form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
+                    if (form.vlc != null)
+                    {
+                        form.vlc.newsession();
+                    }
+
+                }
+                else
+                {
+                    CreateMediaControllingElemets(1);
+                    form.WiFiPasswordTitle.Hide();
+                    form.WiFiSSIDTitle.Hide();
+                    form.WiFiSSIDLabel.Hide();
+                    form.WiFiPasswortLabel.Hide();
+                }
+            }
+            form.WiFiPasswortLabel.Text = config.password;
         }
 
 

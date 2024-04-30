@@ -396,6 +396,7 @@ namespace Spa_Interaction_Screen
         public Button TVSettingsAmbienteButton;
         public Button TVSettingsStreamingButton;
         public Label TVSettingsVolumeColorSliderDescribtion;
+        public ColorSlider.ColorSlider MediaPageAmbientVolumeSlider;
 
         //TimePage
         public Label clock;

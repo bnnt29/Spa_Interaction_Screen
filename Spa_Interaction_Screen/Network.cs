@@ -549,6 +549,7 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print("Error occured while connecting to router");
                 WaitforRouterClientClose();
+                f.helper.setnewPassword();
                 return;
             }
             SendTelnetASKPass();
@@ -559,12 +560,14 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print("Error occured while connecting to router");
                 WaitforRouterClientClose();
+                f.helper.setnewPassword();
                 return;
             }
             if (!SendTelnetPasswordrefresh())
             {
                 Debug.Print("Error occured while refreshing router password");
                 WaitforRouterClientClose();
+                f.helper.setnewPassword();
                 return;
             }
             WaitforRouterClientClose();
@@ -584,10 +587,15 @@ namespace Spa_Interaction_Screen
             WaitforRouterClientClose();
             config.password = npw;
             Debug.Print($"Neues Passwort: {npw}");
+            f.helper.setnewPassword();
         }
 
         private void WaitforRouterClientClose()
         {
+            if(routerclient == null)
+            {
+                return;
+            }
             if (routerclient.Connected)
             {
                 routerclient.GetStream().Close();
@@ -718,7 +726,7 @@ namespace Spa_Interaction_Screen
                 Debug.Print("Invalid Json received: missing \"type\" argument");
                 return;
             }
-            if(!Json.ContainsKey("room") || (int)Json["room"] != config.Room)
+            if(!Json.ContainsKey("room") || (Int64)Json["room"] != config.Room)
             {
                 Debug.Print("Invalid Json received: missing or wrong \"room\" argument");
             }
@@ -788,13 +796,16 @@ namespace Spa_Interaction_Screen
                     Debug.Print("Message received Working Normally. Nothing changed");
                     break;
                 case 1:
+                    Debug.Print("Message received: Resetting");
                     f.reset();
                     break;
                 case 2:
-                    //TODO restart
+                    Debug.Print("Message received: Restarting");
+                    f.Restart();
                     break;
                 case 3:
-                    //TODO shutdown
+                    Debug.Print("Message received: Shutdown");
+                    f.Shutdown();
                     break;
                 case 4:
                     int sceneindex = -1;
@@ -1066,11 +1077,16 @@ namespace Spa_Interaction_Screen
                     try
                     {
                         time = Int32.Parse(((string[])(json["values"]))[0]);
-                    }catch(FormatException ex)
+                    }
+                    catch(FormatException ex)
                     {
                         Debug.Print(ex.Message);
                     }
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(time);
+                    if (f.timeleft >= config.SessionEndShowTimeLeft)
+                    {
+                        f.switchedtotimepage = false;
+                    }
                 }
                 else if(((string[])(json["values"])).Length > 1 && (json.ContainsKey("id") || json.ContainsKey("label")))
                 {
@@ -1160,8 +1176,12 @@ namespace Spa_Interaction_Screen
             {
                 if (json.ContainsKey("id"))
                 {
-                    f.TimeSessionEnd = DateTime.Now.AddMinutes(((int)json["id"]));
-                    f.timeleft = ((int)json["id"]);
+                    f.TimeSessionEnd = DateTime.Now.AddMinutes(((Int64)json["id"]));
+                    f.timeleft = (Int32)((Int64)json["id"]);
+                    if (f.timeleft >= config.SessionEndShowTimeLeft)
+                    {
+                        f.switchedtotimepage = false;
+                    }
                 }
                 else
                 {

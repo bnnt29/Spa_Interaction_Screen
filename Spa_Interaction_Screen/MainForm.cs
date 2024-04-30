@@ -21,13 +21,13 @@ using System.Net;
 using System;
 
 /*TODO:
- * shutdown pc
- * restart pc
  * red marked in word
- * resolve Progamm not exiting on cross click
  * resolve System.InvalidOperationException (Invoke oder BeginInvoke kann für ein Steuerelement)
  * resolve fullscreen flicker
+ * resolve Progamm not exiting on cross click
+ * repair artefacts by change of Media Page
  * Implement all Jsons (sending)
+ * Add TCP Json Type security
  * unblock scene via tcp
  * repair monitor setup (start with 1, then connect 1)
  * do not show elements with no / empty ShowText
@@ -65,7 +65,8 @@ namespace Spa_Interaction_Screen
         public bool SessionEndbool = false;
         private EmbedVLC sessionEndVLC = null;
         public bool SessionendNet = false;
-        public int timeleft = /*int.MaxValue*/ -1;
+        public int timeleft = int.MaxValue;
+        public bool switchedtotimepage = false;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
         private List<Buttonfader> timecoloredbuttons = new List<Buttonfader>();
@@ -583,38 +584,64 @@ namespace Spa_Interaction_Screen
                 clock.Text = $"{Hours}:{Minutes}";
                 clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
             }
-            if (timer != null)
-            {
-                timer.Text = config.SessionSettings[minutes_received].ShowText;
-                timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
-            }
             if (TimeSessionEnd != null)
             {
+                int timeleftnotclamped = (int)Math.Ceiling(((TimeSpan)(TimeSessionEnd - DateTime.Now)).TotalMinutes);
                 if (timeleft > 0)
                 {
-                    timeleft = Math.Max((int)Math.Ceiling(((TimeSpan)(TimeSessionEnd - DateTime.Now)).TotalMinutes), 0);
+                    timeleft = Math.Max(timeleftnotclamped, 0);
                 }
                 if(timeleft <= config.SessionEndShowTimeLeft)
                 {
                     if (!streaming)
                     {
+                        /*
                         if (vlc != null && !SessionEndbool)
                         {
                             vlc.changeMedia(config.SessionEndImage, false);
                         }
                         blocknonstreamingmedia = true;
+                        */
+                        if (!switchedtotimepage)
+                        {
+                            if (config.showtime)
+                            {
+                                Content_Change(false);
+                                int x = 4 + ((config.showcolor)?1:0);
+                                UIControl.SelectTab(x);
+                                if(vlc!= null)
+                                {
+                                    vlc.changeMedia(config.SessionEndImage, false);
+                                }
+                            }
+                        }
+                        TVSettingsAmbienteButton.Hide();
+                        TVSettingsStreamingButton.Hide();
+                        MediaPageAmbientVolumeSlider.Location = new Point(MediaPageAmbientVolumeSlider.Location.X, Constants.tabheight/3);
+                        helper.SetupLabelofTrackbar(MediaPageAmbientVolumeSlider, TVSettingsVolumeColorSliderDescribtion, config.slidernames[((int)MediaPageAmbientVolumeSlider.Tag) - 1]);
+                        switchedtotimepage = true;
                     }
                 }
-                if (timeleft <= 0)
+                else
                 {
-                    foreach (Label l in helper.globaltimelabels)
+                    double z = 2.3;
+                    if (config.password == null || config.password.Length <= 0)
                     {
-                        l.Hide();
+                        z = 1;
                     }
+                    helper.CreateMediaControllingElemets(z);
+                }
+                if (timeleftnotclamped <= 0)
+                {
                     if(timeleft <= Constants.SessionOvertimeBuffer * -1 && !SessionEndbool)
                     {
+                        foreach (Label l in helper.globaltimelabels)
+                        {
+                            l.Hide();
+                        }
                         EndSession();
                     }
+                    return;
                 }
                 Constants.SessionSetting Settingstoapply = null;
                 bool wasbigger = false;
@@ -644,16 +671,24 @@ namespace Spa_Interaction_Screen
                         return;
                     }
                     String s = Settingstoapply.ShowText;
-                    if(s!=null && s.Length > 0)
+                    String min_left = timeleft.ToString();
+                    s = s.Replace("[id]", min_left);
+                    if (s!=null && s.Length > 0)
                     {
-                        String min_left = timeleft.ToString();
-                        s=s.Replace("[id]", min_left);
                         foreach (Label l in helper.globaltimelabels)
                         {
                             l.Text = s;
+                            l.BackColor = Color.Transparent;
+                            l.Font = Constants.Time_font;
                             l.Show();
                             helper.SetEdgePosition(l, config.edgetimePosition);
                         }
+                    }
+                    if (timer != null)
+                    {
+                        timer.Text = s;
+                        timer.Font = Constants.Time_font;
+                        timer.Location = new Point((Constants.windowwidth / 2) - (timer.Size.Width / 2), timer.Location.Y);
                     }
                 }
             }
@@ -1093,6 +1128,11 @@ namespace Spa_Interaction_Screen
             {
                 SwitchToStream = !TVSettingsAmbienteButton.Name.Equals("AmbientVideo");
             }
+            Content_Change(SwitchToStream);
+        }
+
+        private void Content_Change(bool SwitchToStream)
+        {
             helper.selectButton(TVSettingsAmbienteButton, !SwitchToStream, Constants.selected_color);
             helper.selectButton(TVSettingsStreamingButton, SwitchToStream, Constants.selected_color);
             TVSettingsAmbienteButton.Tag = !SwitchToStream;
@@ -1161,7 +1201,6 @@ namespace Spa_Interaction_Screen
 
         public void EndSession()
         {
-#if !DEBUG
             EmbedVLC evlc =new EmbedVLC(this, mainscreen, true);
             if(evlc != null)
             {
@@ -1172,7 +1211,6 @@ namespace Spa_Interaction_Screen
                 vlc.changeMedia(null, true);
             }
             blocknonstreamingmedia = true;
-#endif
         }
 
         public void Service_Request_Handle(object sender, EventArgs e)
@@ -1303,7 +1341,7 @@ namespace Spa_Interaction_Screen
             vlcclosed = false;
             foreach (Button b in helper.RestrictedPageButtons)
             {
-                if (b != null && ((String)b.Tag).Length > 0 && ((String)b.Tag).Equals("VLCClose"))
+                if (b != null && b.Tag != null && ((String)b.Tag).Length > 0 && ((String)b.Tag).Equals("VLCClose"))
                 {
                     b.Show();
                 }
@@ -1424,7 +1462,37 @@ namespace Spa_Interaction_Screen
             reset();
         }
 
+
+        public delegate void MyNoArgument();
         public void reset()
+        {
+            if (HandleCreate)
+            {
+                try
+                {
+                    this.BeginInvoke(new MyNoArgument(delegatereset));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Debug.Print(ex.Message);
+                    delegatereset();
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegatereset();
+                }
+                catch (Exception ex)
+                {
+                    Debug.Print(ex.Message);
+                    this.BeginInvoke(new MyNoArgument(delegatereset));
+                }
+            }
+        }
+
+        public void delegatereset()
         {
             this.Hide();
             loadscreen = new Loading(this, mainscreen);
@@ -1441,10 +1509,11 @@ namespace Spa_Interaction_Screen
             SessionendNet = false;
             scenelocked = false;
             timeleft = int.MaxValue;
-            TimeSessionEnd = DateTime.Now.AddMinutes(1);
+            TimeSessionEnd = null;
             blocknonstreamingmedia = false;
             SessionEndbool = false;
             sessionEndVLC = null;
+            switchedtotimepage = false;
             helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
             loadscreen.updateProgress(50);
@@ -1452,7 +1521,10 @@ namespace Spa_Interaction_Screen
             UIControl.SelectTab(0);
             loadscreen.updateProgress(100);
             this.Show();
-            vlc.showthis();
+            if(vlc != null)
+            {
+                vlc.showthis();
+            }
             loadscreen.Hide();
             loadscreen.Close();
             loadscreen = null;
@@ -1473,6 +1545,16 @@ namespace Spa_Interaction_Screen
         }
         public bool generateQRCode(PictureBox p, int pixelsize, bool quietzone, int size, bool inv)
         {
+            if (config.password == null || config.password.Length <= 0)
+            {
+                p.Image = null;
+                p.Hide();
+                return false;
+            }
+            else
+            {
+                p.Show();
+            }
             QRCodeGenerator qrCodegen = new QRCodeGenerator();
             QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{config.password};;", QRCodeGenerator.ECCLevel.H, true);
             QRCode qrCode = new QRCode(qrCodeData);
@@ -1491,6 +1573,7 @@ namespace Spa_Interaction_Screen
             p.Size = new Size(size, size);
             if(qrCodeImage == null)
             {
+                p.Image = Image.FromFile("QRplaceholderstillcreating.png");
                 return false;
             }
             p.Image = qrCodeImage;
@@ -1741,6 +1824,30 @@ namespace Spa_Interaction_Screen
                 this.showthis();
                 UIControl.SelectTab(UIControl.TabCount - 1);
             }
+        }
+
+        public void Shutdown()
+        {
+#if DEBUG
+            Process.Start("shutdown.exe", "-s -t 100 -c \"Remote Shutdown received\"");
+            reset();
+            Task.Delay(20000).Wait();
+            Process.Start("shutdown.exe", "-a");
+#else
+            Process.Start("shutdown.exe", "-s -f -t 00 -c \"Remote Shutdown received\"");
+#endif
+        }
+
+        public void Restart()
+        {
+#if DEBUG
+            Process.Start("shutdown.exe", "-r -t 100 -c \"Remote Restart received\"");
+            reset();
+            Task.Delay(20000).Wait();
+            Process.Start("shutdown.exe", "-a");
+#else
+            Process.Start("shutdown.exe", "-r -f -t 00 -c \"Remote Shutdown received\"");
+#endif
         }
     }
 }
