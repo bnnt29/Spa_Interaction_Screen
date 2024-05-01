@@ -1,4 +1,4 @@
-﻿#Begin[Spa Raum Controller];#ConfigFile;#Version:;1.2;#('#' is used as a comment indicator);;# needed in leeding empty fields;;;;;;;;;;;;;;
+﻿#Begin[Spa Raum Controller];#ConfigFile;#Version:;1.3;#('#' is used as a comment indicator);;# needed in leeding empty fields;;;;;;;;;;;;;;
 #Integer;#Raum Nummer;1;;;;;;;;;;;;;;;;;;
 #Integer;#Max Rooms;9;;;;;;;;;;;;;;;;;;
 #Array of Integer;#IP Zentrale;192;168;178;67;;;;;;;;;;;;;;;

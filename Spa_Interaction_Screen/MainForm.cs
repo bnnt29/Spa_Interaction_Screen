@@ -70,6 +70,7 @@ namespace Spa_Interaction_Screen
         public bool switchedtotimepage = false;
         public bool RunTask = true;
         public bool consoleshown = false;
+        public bool showconsoleonallsites = false;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
         private List<Buttonfader> timecoloredbuttons = new List<Buttonfader>();
@@ -91,8 +92,20 @@ namespace Spa_Interaction_Screen
         public MainForm()
         {
             Log = new Logger();
-            this.Hide();
+            this.FormClosed += OnFormClosed;
             mainscreen = Screen.PrimaryScreen;
+            loadscreen = new Loading(this, mainscreen);
+            loadscreen.Show();
+            loadscreen.Activate();
+            loadscreen.updateProgress(10);
+            while ((config == null || !config.allread) && !exitProgramm)
+            {
+                config = new Config(null, Log);
+                loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !config.allread);
+                loadscreen.exitp(!config.allread);
+            }
+            loadscreen.updateProgress(25);
+            InitializeComponent();
             if (mainscreen == null)
             {
                 Log.Print("Could not detect main screen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
@@ -100,19 +113,6 @@ namespace Spa_Interaction_Screen
             }
             Constants.recalcsizes(mainscreen.Bounds.Size.Width, mainscreen.Bounds.Size.Height);
             changeddimmerchannels = new byte[3];
-            loadscreen = new Loading(this, mainscreen);
-            loadscreen.Show();
-            loadscreen.Activate();
-            loadscreen.updateProgress(10);
-            InitializeComponent();
-            this.Hide();
-            loadscreen.updateProgress(20);
-            while ((config == null || !config.allread) && !exitProgramm)
-            {
-                config = new Config(null, Log);
-                loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !config.allread);
-                loadscreen.exitp(!config.allread);
-            }
             if (exitProgramm)
             {
                 Application.Exit();
@@ -150,16 +150,19 @@ namespace Spa_Interaction_Screen
             SendCurrentSceneOverCom();
         }
 
+        public void OnFormClosed(object sender, EventArgs e)
+        {
+            RunTask = false;
+        }
+
         public async void Main_Load(object sender, EventArgs e)
         {
+            this.Hide();
             if (exitProgramm)
             {
                 Application.Exit();
                 return;
             }
-
-            this.Hide();
-
             loadscreen.updateProgress(58);
 
             loadscreen.updateProgress(88);
@@ -216,7 +219,7 @@ namespace Spa_Interaction_Screen
                 state.Wait();
             }
             RunTask = true;
-            windows = Task.Run(() => ScreenManagerTaskMethod(this));
+            windows = Task.Run(async () => ScreenManagerTaskMethod(this));
             pinggastro = Task.Run(async () => GastroPing(this));
             if (config.StateSendInterval > 0)
             {
@@ -834,7 +837,6 @@ namespace Spa_Interaction_Screen
                 {
                     helper.removeWartungPageElements();
                     helper.createRestrictedPageElements();
-
                 }
                 else
                 {
@@ -868,6 +870,22 @@ namespace Spa_Interaction_Screen
             }
         }
 
+        public void Login(object sender, EventArgs e)
+        {
+            helper.removeWartungPageElements();
+            helper.createRestrictedPageElements();
+            if (pinfield != null)
+            {
+                pinfield.Tag = -1;
+                pinfield.Hide();
+                pinfield.Text = "";
+                WartungPage.Controls.Remove(pinfield);
+                pinfield = null;
+            }
+            currentPasswordindex = 0;
+            passwordstillvalid = true;
+        }
+
         public void Programm_Exit_Handler(object sender, EventArgs e)
         {
             Programm_Exit();
@@ -892,11 +910,8 @@ namespace Spa_Interaction_Screen
             logout();
         }
 
-        public void logoutTab_Handler(object sender, TabControlCancelEventArgs e)
+        public void Tab_Changed_Handler(object sender, TabControlCancelEventArgs e)
         {
-#if !DEBUG
-            logout();
-#endif
             if (passwordwaswrong)
             {
                 foreach (Button b in helper.WartungPageButtons)
@@ -906,12 +921,25 @@ namespace Spa_Interaction_Screen
                 RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                 passwordwaswrong = !passwordwaswrong;
             }
-            if (sessionEndVLC != null && SessionEndbool && e.TabPageIndex == UIControl.TabCount-1)
+            if (SessionEndbool)
             {
-                e.Cancel = true;
-                sessionEndVLC.Show();
-                sessionEndVLC.BringToFront();
-                SessionEnded(sessionEndVLC, true);
+                if (e.TabPageIndex != UIControl.TabCount - 1 || !(e.TabPageIndex == UIControl.TabCount - 2 && consoleshown))
+                {
+                    e.Cancel = true;
+                    if (sessionEndVLC != null)
+                    {
+                        sessionEndVLC.Show();
+                        sessionEndVLC.BringToFront();
+                    }
+                    SessionEnded(sessionEndVLC, true);
+                }
+            }
+#if !DEBUG
+            logout();
+#endif
+            if (consoleshown && !showconsoleonallsites)
+            {
+                vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabCount - 1);
             }
         }
 
@@ -1357,6 +1385,7 @@ namespace Spa_Interaction_Screen
             ((Button)(sender)).Click -= closePlayer_Handler;
             ((Button)(sender)).Click += OpenPlayer_Handler;
             ((Button)(sender)).Text = "Öffne den Player";
+            helper.selectButton(((Button)(sender)), false, Constants.selected_color);
         }
 
         public void closePlayer(bool screenissue)
@@ -1386,6 +1415,7 @@ namespace Spa_Interaction_Screen
             ((Button)(sender)).Click -= OpenPlayer_Handler;
             ((Button)(sender)).Click += closePlayer_Handler;
             ((Button)(sender)).Text = "Schließe den Player";
+            helper.selectButton(((Button)(sender)), true, Constants.selected_color);
         }
 
         public void OpenPlayer()
@@ -1922,17 +1952,106 @@ namespace Spa_Interaction_Screen
         public void ShowConsole(object sender, EventArgs e)
         {
             helper.createConsolePage();
+            if (showconsoleonallsites)
+            {
+                vlc.toggleConsoleBox(true);
+            }
+            else
+            {
+                vlc.toggleConsoleBox(false);
+            }
+            if(UIControl != null)
+            {
+                UIControl.SelectTab(UIControl.TabCount - 1);
+            }
+            ((Button)(((Button)(sender)).Tag)).Show();
             ((Button)(sender)).Click -= ShowConsole;
             ((Button)(sender)).Click += CloseConsole;
             ((Button)(sender)).Text = "Schließe Konsole";
+            helper.selectButton(((Button)(sender)), true, Constants.selected_color);
         }
 
         public void CloseConsole(object sender, EventArgs e)
         {
-            helper.removeConsolePage(); 
+            helper.removeConsolePage();
+            ((Button)(((Button)(sender)).Tag)).Hide();
             ((Button)(sender)).Click -= CloseConsole;
             ((Button)(sender)).Click += ShowConsole;
             ((Button)(sender)).Text = "Öffne Konsole";
+            helper.selectButton(((Button)(sender)), false, Constants.selected_color);
+        }
+
+        public void ShowConsoleOnallSites(object sender, EventArgs e)
+        {
+            showconsoleonallsites = true;
+            vlc.toggleConsoleBox(true);
+            ((Button)(sender)).Click -= ShowConsoleOnallSites;
+            ((Button)(sender)).Click += ShowConsoleNotOnallSites;
+            ((Button)(sender)).Text = "Zeige Konsole nicht immer";
+            helper.selectButton(((Button)(sender)), true, Constants.selected_color);
+        }
+
+        public void ShowConsoleNotOnallSites(object sender, EventArgs e)
+        {
+            showconsoleonallsites = false;
+            vlc.toggleConsoleBox(false);
+            ((Button)(sender)).Click -= ShowConsoleNotOnallSites;
+            ((Button)(sender)).Click += ShowConsoleOnallSites;
+            ((Button)(sender)).Text = "Zeige Konsole immer";
+            helper.selectButton(((Button)(sender)), false, Constants.selected_color);
+        }
+
+        public String AddConsoleLine(String line)
+        {
+            if(line != null && line.Length > 0)
+            {
+                if (vlc != null && vlc.ConsoleBox != null)
+                {
+                    vlc.ConsoleBox.Text += line;
+                    vlc.ConsoleBox.Text += "\n\r";
+                    return vlc.ConsoleBox.Text;
+                }
+                return line;
+            }
+            return "";
+        }
+
+        public void SetConsoleText(String Text)
+        {
+            if (Text != null && Text.Length > 0)
+            {
+                if (vlc != null && vlc.ConsoleBox != null)
+                {
+                    vlc.ConsoleBox.Clear();
+                    vlc.ConsoleBox.Text += Text;
+                }
+            }
+        }
+
+        public void ClearConsole()
+        {
+            if(vlc != null && vlc.ConsoleBox != null)
+            {
+                vlc.ConsoleBox.Text = "";
+                vlc.ConsoleBox.Clear();
+            }
+        }
+
+        public void comboItemchanged(object sender, EventArgs e)
+        {
+            int Index = ((Constants.ComboItem)((ComboBox)sender).SelectedItem).ID;
+            ClearConsole();
+            SetConsoleText(Log.GetConsoleText((Logger.MessageType)Index, null));
+            
+            Log.setCurrentlyshowing((byte)Index, this);
+        }
+
+        public void Consolepagereload(object sender, EventArgs e)
+        {
+            //TODO test
+            helper.createConsolePage();
+            helper.removeConsolePage();
+            UIControl.SelectTab(UIControl.TabCount - 1);
         }
     }
 }

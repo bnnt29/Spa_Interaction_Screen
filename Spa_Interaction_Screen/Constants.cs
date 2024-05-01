@@ -6,7 +6,7 @@ namespace Spa_Interaction_Screen
     public static class Constants
     {
         //Constants
-        public const String CurrentVersion = "1.2";
+        public const String CurrentVersion = "1.3";
         public static String PreConfigPath = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\AdminConfig";
         public const String PreConfigGastroURL = @"https://www.lieferando.de/";
         public const Char PreConfigDelimiter = '%';
@@ -33,6 +33,7 @@ namespace Spa_Interaction_Screen
         public static int Logoxsize = 50;
         public static int Logoysize = 50;
         public static int buttonupdatemillis = 35;
+        public static int DateTimeFormat = 0;
 
 
         //UI
@@ -156,6 +157,17 @@ namespace Spa_Interaction_Screen
             public byte W;
         }
 
+        public class ComboItem
+        {
+            public byte ID { get; set; }
+            public string Text { get; set; }
+
+            public override string ToString()
+            {
+                return Text;
+            }
+        }
+
         public static Char[] Delimiter
         {
             get { return delimiter; }
@@ -176,7 +188,7 @@ namespace Spa_Interaction_Screen
             Element_y_padding = (int)((double)tabheight / (YButtonCount + 1)) - Element_height;
         }
 
-        public static Button createButton(int width, int height, int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev)
+        public static Button createButton<T>(int width, int height, int Pos_x, int Pos_y, List<T>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev) where T : Button
         {
             Button b = null;
             createButton(Pos_x, Pos_y, bl, Text, Tag, tp, form, ev, out b);
@@ -184,19 +196,19 @@ namespace Spa_Interaction_Screen
             return b;
         }
 
-        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev)
+        public static void createButton<T>(int Pos_x, int Pos_y, List<T>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev) where T : Button
         {
             Button b = new Button();
             createButton(Pos_x, Pos_y, bl, Text, Tag, tp, form, ev, out b);
         }
 
-        public static void createButton(int Pos_x, int Pos_y, List<Button>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev, out Button? b)
+        public static void createButton<T>(int Pos_x, int Pos_y, List<T>? bl, String Text, Object? Tag, Control tp, MainForm? form, EventHandler? ev, out Button? b) where T : Button
         {
             Point point = new Point(Pos_x, Pos_y);
             b = Constants.createButton((bl != null) ? bl.Count : -1, Text, Tag, point);
             if (bl != null)
             {
-                bl.Add(b);
+                bl.Add((T)b);
             }
             tp.Controls.Add(b);
             b.Click += ev;

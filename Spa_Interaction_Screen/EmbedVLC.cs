@@ -25,6 +25,9 @@ namespace Spa_Interaction_Screen
         private Screen scrn;
         private bool HandleCreate = false;
         private bool SessionEnd = false;
+        private bool showingconsole = false;
+
+        public RichTextBox ConsoleBox;
 
         public EmbedVLC(MainForm f, Screen screen, bool Sessionend)
         {
@@ -88,7 +91,7 @@ namespace Spa_Interaction_Screen
             // 
             if (SessionEnd)
             {
-                Constants.createButton((Constants.windowwidth/2)-(Constants.Element_width/2), (Constants.tabheight-Constants.Element_height)-Constants.Element_y_padding, null, "Mitarbeiter Einstellungen", null, this, null, this.exittorestricted);
+                Constants.createButton((Constants.windowwidth / 2) - (Constants.Element_width / 2), (Constants.tabheight - Constants.Element_height) - Constants.Element_y_padding, (List<Button>)null, "Mitarbeiter Einstellungen", null, this, null, this.exittorestricted);
             }
             else
             {
@@ -102,7 +105,14 @@ namespace Spa_Interaction_Screen
                 Controls.Add(welcomeqr);
                 newsession();
             }
-           
+
+            ConsoleBox = new RichTextBox();
+            Controls.Add(ConsoleBox);
+            ConsoleBox.Size = new Size(this.Width, this.Height);
+            ConsoleBox.Location = new Point(0, 0);
+            ConsoleBox.ReadOnly = true;
+            ConsoleBox.Hide();
+
         }
 
         public void exittorestricted(object sender, EventArgs e)
@@ -152,7 +162,7 @@ namespace Spa_Interaction_Screen
         {
             runvideo = false;
             this.BackgroundImage = null;
-            if(TVvideoView != null)
+            if (TVvideoView != null)
             {
                 TVvideoView.Hide();
                 TVvideoView.MediaPlayer.Media = null;
@@ -196,7 +206,7 @@ namespace Spa_Interaction_Screen
 
         private void delegateshowthis()
         {
-            if(this != null && !this.IsDisposed)
+            if (this != null && !this.IsDisposed)
             {
                 this.Show();
             }
@@ -325,7 +335,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             quitMedia(user);
-            if(link == null || link.Length <= 0)
+            if (link == null || link.Length <= 0)
             {
                 return;
             }
@@ -370,6 +380,16 @@ namespace Spa_Interaction_Screen
                 default:
                     Log.Print($"Couldn't use file format of file: {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     break;
+            }
+            if (showingconsole)
+            {
+                ConsoleBox.Show();
+                ConsoleBox.BringToFront();
+            }
+            else
+            {
+                ConsoleBox.Hide();
+                ConsoleBox.SendToBack();
             }
         }
 
@@ -420,10 +440,35 @@ namespace Spa_Interaction_Screen
 
             this.BackgroundImage = image;
             currentlyshowing = link;
-            if(user && welcomeqr != null)
+            if (user && welcomeqr != null)
             {
                 welcomeqr.BringToFront();
             }
+        }
+
+        public void toggleConsoleBox(bool show)
+        {
+            showingconsole = show;
+            if (show)
+            {
+                ConsoleBox.Show();
+                ConsoleBox.BringToFront();
+            }
+            else
+            {
+                ConsoleBox.Hide();
+                ConsoleBox.SendToBack();
+            }
+        }
+
+        public void SetConsoleText(String text)
+        {
+            ConsoleBox.Text = text;
+        }
+
+        public String GetConsoleText()
+        {
+            return ConsoleBox.Text;
         }
     }
 }

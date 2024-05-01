@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ByXB+MmLA/fgl9nkTHArR7u3Zv/661uDLs4JV6pUbFibq0Yy5EAA8o+8HsBNiaXT8VEw4Dv9caOr7krlZC8o8g==",
+  "dgSpecHash": "aHhfk3b5ZAe8WZRt2b6QbIOrahjpYhBcaLAmMsJtWdbGZM+JMstre9/zEwfK3No4+XOGDH8Z/FVyAZTB7eq06w==",
   "success": true,
   "projectFilePath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
   "expectedPackageFiles": [
@@ -21,8 +21,10 @@
     "C:\\Users\\Berni\\.nuget\\packages\\runtime.native.system.io.ports\\8.0.0\\runtime.native.system.io.ports.8.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\runtime.osx-arm64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-arm64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\runtime.osx-x64.runtime.native.system.io.ports\\8.0.0\\runtime.osx-x64.runtime.native.system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Berni\\.nuget\\packages\\system.codedom\\8.0.0\\system.codedom.8.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\system.drawing.common\\6.0.0\\system.drawing.common.6.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\system.io.ports\\8.0.0\\system.io.ports.8.0.0.nupkg.sha512",
+    "C:\\Users\\Berni\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\videolan.libvlc.windows\\3.0.20\\videolan.libvlc.windows.3.0.20.nupkg.sha512"
   ],
   "logs": [

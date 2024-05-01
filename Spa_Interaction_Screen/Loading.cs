@@ -28,7 +28,7 @@ namespace Spa_Interaction_Screen
             form.EnterFullscreen(this, screen, false);
             this.BackColor = Constants.Background_color;
             addcomponents();
-            exit_b = Constants.createButton(Constants.Element_width, Constants.Element_height, 0, 0, null, "ExitProgramm", null, this, null, form.ExitProgramm);
+            exit_b = Constants.createButton(Constants.Element_width, Constants.Element_height, 0, 0, (List<Button>)null, "ExitProgramm", null, this, null, form.ExitProgramm);
             exit_b.Location = new Point((this.Size.Width/2)-(exit_b.Size.Width/2),(progressBar.Location.Y-exit_b.Height)-10);
             exit_b.Hide();
             updateloadGUI();

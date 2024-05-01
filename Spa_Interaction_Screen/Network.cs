@@ -288,7 +288,7 @@ namespace Spa_Interaction_Screen
 
         private void acceptClientsLoop(Network net, TcpListener server)
         {
-            while (true)   //we wait for a connection
+            while (net.form.RunTask)   //we wait for a connection
             {
                 TcpClient client = server.AcceptTcpClient();  //if a connection exists, the server will accept it
                 net.tcpClients.Add(client);
@@ -302,7 +302,7 @@ namespace Spa_Interaction_Screen
         {
             NetworkStream ns = cl.GetStream();
             Log.Print("ListeningTCP", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
-            while (cl.Connected)  //while the client is connected, we look for incoming messages
+            while (cl.Connected && net.form.RunTask)  //while the client is connected, we look for incoming messages
             {
                 byte[] msg = new byte[1024];     //the messages arrive as byte array
                 int b_read = 0;
@@ -653,12 +653,12 @@ namespace Spa_Interaction_Screen
                 routerclient = new TcpClient();
                 routerclient.Connect(ip_address, port_number);
 
-                Log.Print($"Success connecting to : {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Information);
+                Log.Print($"Success connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             }
             catch (Exception e)
             {
                 Log.Print(e.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
-                Log.Print($"Failed while connecting to : {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Log.Print($"Failed while connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 routerclient = null;
             }
             if (routerclient == null || !routerclient.Connected)

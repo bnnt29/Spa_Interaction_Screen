@@ -118,13 +118,20 @@ namespace Spa_Interaction_Screen
                 return false;
             }
             String[] data = res.Split(Constants.PreConfigDelimiter);
-            Log.Print($"Loading Preconfig Version: {data[1]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!data[1].Equals(Constants.CurrentVersion))
             {
                 Log.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
+            try
+            {
+                Constants.DateTimeFormat = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
+            }catch(FormatException e)
+            {
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+            }
+            Log.Print($"Loading Preconfig Version: {data[1]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             Constants.ContentPath = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower()+"\\";
             try 
             {
