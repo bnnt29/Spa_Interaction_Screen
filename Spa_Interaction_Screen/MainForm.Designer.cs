@@ -433,7 +433,12 @@ namespace Spa_Interaction_Screen
         public Button resetscenelockbutton;
 
         //ConsolePage
+        public ComboBox consoletype;
+        public ComboBox tcptype;
+        public TextBox CommandboxLabel;
+        public NumericUpDown Commandboxid;
+        public TextBox Commandboxvalues;
         public ColorSlider.ColorSlider Textscroll;
-        public TextBox Commandbox;
+
     }
 }

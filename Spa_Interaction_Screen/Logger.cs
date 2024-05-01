@@ -5,12 +5,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Spa_Interaction_Screen
 {
     public class Logger
     {
-        private List<List<Log_Element>> log_Elements = new List<List<Log_Element>>();
+        private List<Log_Element>[] log_Elements = new List<Log_Element>[Byte.MaxValue];
         private byte currentlyshowing = Byte.MaxValue;
         private MainForm mainForm;
 
@@ -18,7 +19,7 @@ namespace Spa_Interaction_Screen
         {
             for(int i = 0; i < byte.MaxValue; i++)
             {
-                log_Elements.Add(new List<Log_Element>());
+                log_Elements[i]=new List<Log_Element>();
             }
             Log_Element start = new Log_Element();
             start.type = [MTypetobyte<MessageType>(MessageType.LoggerInfo)];
@@ -184,6 +185,24 @@ namespace Spa_Interaction_Screen
                 {
                     for (int i = 0; i < log.type.Length; i++)
                     {
+                        if (mainForm != null && mainForm.consoletype != null)
+                        {
+                            if (log_Elements[log.type[i]].Count <= 0)
+                            {
+                                mainForm.consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)log.type[i]).ToString(), ID = log.type[i] });
+                            }
+                        }
+                        if (mainForm != null && mainForm.consoleshown && currentlyshowing == log.type[i])
+                        {
+                            if (ShowfullMessageLater)
+                            {
+                                mainForm.AddConsoleLine(log.Message);
+                            }
+                            else
+                            {
+                                mainForm.AddConsoleLine(log.ToString());
+                            }
+                        }
                         log_Elements[log.type[i]].Add(log);
                         if (!ShowfullMessageLater && mainForm != null && log.type[i] == currentlyshowing)
                         {

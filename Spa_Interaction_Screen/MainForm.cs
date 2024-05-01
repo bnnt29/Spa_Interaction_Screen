@@ -1951,6 +1951,7 @@ namespace Spa_Interaction_Screen
 
         public void ShowConsole(object sender, EventArgs e)
         {
+            Log.setCurrentlyshowing(Byte.MaxValue, this);
             helper.createConsolePage();
             if (showconsoleonallsites)
             {
@@ -2037,7 +2038,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public void comboItemchanged(object sender, EventArgs e)
+        public void comboconsoleItemchanged(object sender, EventArgs e)
         {
             int Index = ((Constants.ComboItem)((ComboBox)sender).SelectedItem).ID;
             ClearConsole();
@@ -2046,12 +2047,74 @@ namespace Spa_Interaction_Screen
             Log.setCurrentlyshowing((byte)Index, this);
         }
 
-        public void Consolepagereload(object sender, EventArgs e)
+
+        /*
+            public ComboBox tcptype;
+            public TextBox CommandboxLabel;
+            public NumericUpDown Commandboxid;
+            public TextBox Commandboxvalues;
+         */
+        public void sendTCPfromconsole(object sender, EventArgs e)
         {
-            //TODO test
-            helper.createConsolePage();
-            helper.removeConsolePage();
-            UIControl.SelectTab(UIControl.TabCount - 1);
+            ((Button)sender).BackColor = Constants.alternative_color;
+            addcolortimedButton(((Button)sender), 250, Constants.Button_color, Numberfield_Click);
+
+            String p = "{"; 
+            p += '"';
+            p += "room";
+            p += '"';
+            p += ':';
+            p += config.Room;
+            p += ',';
+            p += '"';
+            p += "type";
+            p += '"';
+            p += ':';
+            p += '"';
+            p += config.Typenames[tcptype.SelectedIndex];
+            p += '"';
+            if (CommandboxLabel.Text.Length > 0)
+            {
+                p += ", ";
+                p += '"';
+                p += "label";
+                p += '"';
+                p += ":";
+                p += '"';
+                p += CommandboxLabel.Text;
+                p += '"';
+            }
+            if(Commandboxid.Value >= 0)
+            {
+                p += ", ";
+                p += '"';
+                p += "id";
+                p += '"';
+                p += ':';
+                p += Commandboxid.Value;
+            }
+            if (Commandboxvalues.Text.Length > 0)
+            {
+                p += ", ";
+                p+='"';
+                p +="values";
+                p +='"';
+                p +=":[";
+                foreach (String s in Commandboxvalues.Text.Split(','))
+                {
+                    p += '"';
+                    p += s.Trim();
+                    p += '"';
+                    p += ',';
+                }
+                if (p.EndsWith(','))
+                {
+                    p = p.Substring(0, p.Length - 1);
+                }
+                p += ']';
+            }
+            p += '}';
+            net.Messageafterparse(p);
         }
     }
 }

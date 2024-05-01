@@ -719,36 +719,39 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            if (!Json.ContainsKey("type"))
+            if (!(Json.ContainsKey("type") && Json["type"] != null))
             {
                 Log.Print("Invalid Json received: missing \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
-            if(!Json.ContainsKey("room") || (Int64)Json["room"] != config.Room)
+            if(!(Json.ContainsKey("room") && Json["room"] != null) || (Int64)Json["room"] != config.Room)
             {
                 Log.Print("Invalid Json received: missing or wrong \"room\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
             bool processedjson = false;
             int x = -1;
-            if (int.TryParse(((String)Json["type"]).Trim(),out x))
+            if (int.TryParse(((String)Json["type"]).Trim().ToLower(), out x))
             {
                 processedjson = indexsjsontypewitch(Json, x);
             }
-            switch (((String)Json["type"]).Trim().ToLower())
+            else
             {
-                case "status":
-                    Log.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
-                    processedjson = true;
-                    break;
-                default:
-                    for (int i = 0; i < config.Typenames.Length && !processedjson; i++)
-                    {
-                        if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
+                switch (((String)Json["type"]).Trim().ToLower())
+                {
+                    case "status":
+                        Log.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        processedjson = true;
+                        break;
+                    default:
+                        for (int i = 0; i < config.Typenames.Length && !processedjson; i++)
                         {
-                            processedjson = indexsjsontypewitch(Json, i);
+                            if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
+                            {
+                                processedjson = indexsjsontypewitch(Json, i);
+                            }
                         }
-                    }
-                    break;
+                        break;
+                }
             }
             if (!processedjson)
             {
@@ -807,12 +810,12 @@ namespace Spa_Interaction_Screen
                     break;
                 case 4:
                     int sceneindex = -1;
-                    if (json.ContainsKey("id"))
+                    if (json.ContainsKey("id") && json["id"] != null)
                     {
 
                         sceneindex = (int)json["id"];
                     }
-                    else if (json.ContainsKey("values"))
+                    else if (json.ContainsKey("values") && json["values"] != null)
                     {
                        if (((string[])json["values"])[0] != null && ((string[])json["values"])[0].Length >= 0)
                         {
@@ -855,11 +858,11 @@ namespace Spa_Interaction_Screen
                     break;
                 case 5:
                     int volumevalue = -1;
-                    if (json.ContainsKey("id"))
+                    if (json.ContainsKey("id") && json["id"] != null)
                     {
                         volumevalue = (int)json["id"];
                     }
-                    else if (json.ContainsKey("values"))
+                    else if (json.ContainsKey("values") && json["values"] != null)
                     {
                         if (((string[])json["values"])[0] != null && ((string[])json["values"])[0].Length >= 0)
                         {
@@ -889,7 +892,7 @@ namespace Spa_Interaction_Screen
                     f.AmbientVolume(volumevalue, null, null);
                         break;
                     case 6:
-                    if (json.ContainsKey("id"))
+                    if (json.ContainsKey("id") && json["id"] != null)
                     {
                         if ((int)json["id"] == 0)
                         {
@@ -899,7 +902,7 @@ namespace Spa_Interaction_Screen
                         {
                             f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
                         }
-                    }else if (json.ContainsKey("values"))
+                    }else if (json.ContainsKey("values") && json["values"] != null)
                     {
                         try
                         {
@@ -985,7 +988,7 @@ namespace Spa_Interaction_Screen
         }
         private void TCPPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label"))
+            if (json.ContainsKey("label") && json["label"] != null)
             {
                 if (((string)json["label"]).Equals("?"))
                 {
@@ -1046,7 +1049,7 @@ namespace Spa_Interaction_Screen
 
         private void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.SessionSetting ss in c.SessionSettings)
@@ -1070,7 +1073,7 @@ namespace Spa_Interaction_Screen
                 SendTCPMessage(r, null);
                 return;
             }
-            if (json.ContainsKey("values") && ((string[])(json["values"])).Length>=0)
+            if (json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length>=0)
             {
                 if (((string[])(json["values"])).Length==1)
                 {
@@ -1089,7 +1092,7 @@ namespace Spa_Interaction_Screen
                         f.switchedtotimepage = false;
                     }
                 }
-                else if(((string[])(json["values"])).Length > 1 && (json.ContainsKey("id") || json.ContainsKey("label")))
+                else if(((string[])(json["values"])).Length > 1 && ((json.ContainsKey("id") && json["id"] != null) || (json.ContainsKey("label") && json["label"] != null)))
                 {
                     Constants.SessionSetting session = new Constants.SessionSetting();
                     session.id = c.SessionSettings.Count;
@@ -1123,11 +1126,11 @@ namespace Spa_Interaction_Screen
                     }
                     else if(neueSession)
                     {
-                        if (json.ContainsKey("id"))
+                        if (json.ContainsKey("id") && json["id"] != null)
                         {
                             session.JsonText = ((string)json["id"]);
                         }
-                        else if(json.ContainsKey("label"))
+                        else if(json.ContainsKey("label") && json["label"] != null)
                         {
                             session.JsonText = ((string)json["label"]);
                         }
@@ -1175,7 +1178,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                if (json.ContainsKey("id"))
+                if (json.ContainsKey("id") && json["id"] != null)
                 {
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(((Int64)json["id"]));
                     f.timeleftnet = (Int32)((Int64)json["id"]);
@@ -1193,7 +1196,7 @@ namespace Spa_Interaction_Screen
         }
         private void ServicePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.ServicesSetting ss in c.ServicesSettings)
@@ -1216,12 +1219,12 @@ namespace Spa_Interaction_Screen
                 SendTCPMessage(r, null);
                 return;
             }
-            if ((json.ContainsKey("id") || (json.ContainsKey("label") && ((string)(json["label"])).Length > 0)) && json.ContainsKey("values") && ((string[])(json["values"])).Length>1)
+            if (((json.ContainsKey("id") && json["id"] != null) || (json.ContainsKey("label") && json["label"] != null && ((string)(json["label"])).Length > 0)) && json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length>1)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
                 ss.id = c.SessionSettings.Count;
                 int x = -1;
-                if (json.ContainsKey("id") && ((int)json["id"])>=0 && ((int)json["id"]) < c.ServicesSettings.Count)
+                if (json.ContainsKey("id") && json["id"] != null && ((int)json["id"])>=0 && ((int)json["id"]) < c.ServicesSettings.Count)
                 {
                     x = ((int)json["id"]);
                 }
@@ -1250,11 +1253,12 @@ namespace Spa_Interaction_Screen
                 {
                     ss = (ServicesSettingfunction)c.ServicesSettings[x];
                 }
-                if((json.ContainsKey("label") && ((string)(json["label"])).Length > 0))
+                if((json.ContainsKey("label") && json["label"] != null && ((string)(json["label"])).Length > 0))
                 {
                     ss.JsonText = ((string)(json["label"]));
                 }
-                else if (json.ContainsKey("id")){
+                else if (json.ContainsKey("id") && json["id"] != null)
+                {
                     ss.JsonText = ((string)(json["id"]));
                 }
                 ss.ShowText = ((string[])(json["values"]))[0];
@@ -1269,7 +1273,7 @@ namespace Spa_Interaction_Screen
                     f.helper.GendynamicServiceButtons();
                 }
             }
-            else if(json.ContainsKey("values") && ((string[])(json["values"])).Length > 2)
+            else if(json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length > 2)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
                 ss.id = c.SessionSettings.Count;
@@ -1318,7 +1322,7 @@ namespace Spa_Interaction_Screen
 
         private void DMXScenePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && ((string)json["label"]).Equals("?"))
+            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.DMXScene ss in c.DMXScenes)
@@ -1346,11 +1350,11 @@ namespace Spa_Interaction_Screen
                 return;
             }
             int index = -1;
-            if (json.ContainsKey("id"))
+            if (json.ContainsKey("id") && json["id"] != null)
             {
                 index = (int)json["id"];
             }
-            else if (json.ContainsKey("label") && ((String)(json["label"])).Length >= 0)
+            else if (json.ContainsKey("label") && json["label"] != null && ((String)(json["label"])).Length >= 0)
             {
                 for (int i = 0; i < c.DMXScenes.Count; i++)
                 {
@@ -1370,7 +1374,7 @@ namespace Spa_Interaction_Screen
                 Log.Print("DMXScene Paket doesn't contain necesarry Keys (\"id\" or \"label\") to identify the scene to be edited", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
-            if (json.ContainsKey("values"))
+            if (json.ContainsKey("values") && json["values"] != null)
             {
                 if (c.DMXScenes.Count > index && index >= 0)
                 {
@@ -1510,16 +1514,20 @@ namespace Spa_Interaction_Screen
 
         public void receivedMessage(byte[] bytes, TcpClient cl, bool isTelnet, Network net, int index)
         {
-            if(parse(bytes) == null)
+            if (parse(bytes) == null)
             {
                 return;
             }
-            String m = parse(bytes);
+            Messageafterparse(parse(bytes));
+
+        }
+
+        public void Messageafterparse(String m)
+        {
             m = m.Trim().ToLower();
             Log.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
             handleReceivedNet(keyValuePairs);
-
         }
     }
 }
