@@ -16,6 +16,7 @@ namespace Spa_Interaction_Screen
 {
     public class EnttecCom
     {
+        private Logger Log;
         private MainForm form;
         private Config config;
         private SerialPort port = null;
@@ -23,9 +24,10 @@ namespace Spa_Interaction_Screen
 
         public EnttecCom(MainForm f, Config c)
         {
+            Log = f.Log;
             form = f;
             config = c;
-            open = new OpenDMX();
+            open = new OpenDMX(f.Log);
             connect();
         }
 
@@ -33,15 +35,15 @@ namespace Spa_Interaction_Screen
         {
             if (OpenDMX.status == FT_STATUS.FT_DEVICE_NOT_FOUND)
             {
-                Debug.Print("No Enttec USB Device Found");
+                Log.Print("No Enttec USB Device Found", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
             }
             byte[] temp = new byte[config.DMXScenes[0].Channelvalues.Length+1];
             Buffer.BlockCopy(channels, 0, temp, 1, channels.Length);
             for(int i = 0; i < temp.Length; i++) 
             {
-                OpenDMX.setDmxValue(i, temp[i]);
+                open.setDmxValue(i, temp[i]);
             }
-            //Debug.Print($"Enttec written bytes: {OpenDMX.bytesWritten}");
+            //Log.Print($"Enttec written bytes: {OpenDMX.bytesWritten}");
         }
 
         public bool isopen()
@@ -58,28 +60,28 @@ namespace Spa_Interaction_Screen
         {
             try
             {
-                OpenDMX.start();//find and connect to devive (first found if multiple)
+                open.start();//find and connect to devive (first found if multiple)
                 if (OpenDMX.status == FT_STATUS.FT_DEVICE_NOT_FOUND)
                 {
                     //update status
-                    Debug.Print("No Enttec USB Device Found");
+                    Log.Print("No Enttec USB Device Found", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
                     return false;
                 }
                 else if (OpenDMX.status == FT_STATUS.FT_OK)
                 {
-                    Debug.Print("Found DMX on USB");
+                    Log.Print("Found DMX on USB", Logger.MessageType.Licht, Logger.MessageSubType.Information);
                 }
                 else
                 {
-                    Debug.Print("Error Opening Device");
+                    Log.Print("Error Opening Device", Logger.MessageType.Licht, Logger.MessageSubType.Error);
                     return false;
                 }
 
             }
             catch (Exception exp)
             {
-                Logger.WriteLine(exp);
-                Debug.Print("Error Connecting to Enttec USB Device");
+                Log.Print(exp.Message, Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                Log.Print("Error Connecting to Enttec USB Device", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
                 return false;
 
             }

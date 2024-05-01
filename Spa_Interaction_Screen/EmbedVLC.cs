@@ -14,7 +14,7 @@ namespace Spa_Interaction_Screen
 {
     public partial class EmbedVLC : Form
     {
-
+        private Logger Log;
         private LibVLC libvlc;
         private MainForm main = null;
         private Task? keepVideoalive = null;
@@ -28,6 +28,8 @@ namespace Spa_Interaction_Screen
 
         public EmbedVLC(MainForm f, Screen screen, bool Sessionend)
         {
+            Log = f.Log;
+            this.FormClosed += OnFormClosed;
             SessionEnd = Sessionend;
             InitializeComponent();
             this.HandleCreated += new EventHandler((sender, args) =>
@@ -52,6 +54,14 @@ namespace Spa_Interaction_Screen
             {
                 f.SessionEnded(this, false);
             }
+        }
+
+        public void OnFormClosed(object sender, EventArgs e)
+        {
+#if DEBUG
+            main.vlcclosed = true;
+#endif
+            main.vlc = null;
         }
 
         private void createElements()
@@ -118,7 +128,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatequitMedia(user);
                 }
             }
@@ -130,7 +141,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
                 }
             }
@@ -162,7 +174,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegateshowthis();
                 }
             }
@@ -174,7 +187,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegateshowthis));
                 }
             }
@@ -198,7 +212,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatehidethis();
                 }
             }
@@ -210,7 +225,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegatehidethis));
                 }
             }
@@ -231,7 +247,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatenewsession();
                 }
             }
@@ -243,7 +260,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegatenewsession));
                 }
             }
@@ -276,7 +294,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatechangeMedia(link, user);
                 }
             }
@@ -288,7 +307,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Log.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.BeginInvoke(new MychangeMedia(delegatechangeMedia), delegateArray);
                 }
             }
@@ -309,7 +329,7 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            Debug.Print($"Showing {link}");
+            Log.Print($"Showing {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Information);
             int index = link.LastIndexOf('.');
             switch (link.Substring(index))
             {
@@ -348,7 +368,7 @@ namespace Spa_Interaction_Screen
                     picture(link, user);
                     break;
                 default:
-                    Debug.Print($"Couldn't use file format of file: {link}");
+                    Log.Print($"Couldn't use file format of file: {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     break;
             }
         }
@@ -357,7 +377,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(link))
             {
-                Debug.Print("Video Media not found");
+                Log.Print("Video Media not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
             }
             var uri = new Uri(link);
             // Use command line options as Options for media playback (https://wiki.videolan.org/VLC_command-line_help/)
@@ -392,7 +412,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(link))
             {
-                Debug.Print("Video Media not found");
+                Log.Print("Video Media not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
             }
             Uri uri = new Uri(link);
 

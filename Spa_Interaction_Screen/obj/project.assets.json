@@ -1957,24 +1957,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Berni\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Berni\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Berni\\Documents\\Github\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
+      "projectUniqueName": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
       "projectName": "Spa_Interaction_Screen",
-      "projectPath": "C:\\Users\\Berni\\Documents\\Github\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
+      "projectPath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
       "packagesPath": "C:\\Users\\Berni\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Berni\\Documents\\Github\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\obj\\",
+      "outputPath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
         "C:\\Users\\Berni\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

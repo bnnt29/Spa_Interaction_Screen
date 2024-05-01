@@ -9,6 +9,7 @@ namespace Spa_Interaction_Screen
 {
     public class UIHelper
     {
+        private Logger Log;
         private MainForm form;
         private Config config;
 
@@ -41,6 +42,7 @@ namespace Spa_Interaction_Screen
 
         public UIHelper(MainForm f, Config c)
         {
+            Log = f.Log;
             form = f;
 
             form.BackColor = Constants.alternative_color;
@@ -551,13 +553,26 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
+            if (form.vlcclosed)
+            {
+                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Öffne den Player", "VLCClose", form.WartungPage, form, form.OpenPlayer_Handler);
+            }
+            else
+            {
+                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
+            }
 
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
             Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Konsole", "Console", form.WartungPage, form, form.ShowConsole);
-
+            if (form.consoleshown)
+            {
+                Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Schließe Konsole", "Console", form.WartungPage, form, form.CloseConsole);
+            }
+            else
+            {
+                Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Öffne Konsole", "Console", form.WartungPage, form, form.ShowConsole);
+            }
             setConfigRestricted(config);
         }
 
@@ -700,7 +715,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }
                 int old_value = 0;
@@ -929,7 +944,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (IOException e)
                     {
-                        Debug.Print(e.Message);
+                        Log.Print(e.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     }
                     Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
                     SetEdgePosition(Logoview, config.Logoposition);
@@ -1023,7 +1038,37 @@ namespace Spa_Interaction_Screen
             c.Location = new Point(posx, posy);
         }
 
-        private async void GenNewPassword()
+        private void GenNewPassword()
+        {
+            if (form.HandleCreate)
+            {
+                try
+                {
+                    form.BeginInvoke(new MyNoArgument(delegateGenNewPassword));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    delegateGenNewPassword();
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegateGenNewPassword();
+                }
+                catch (Exception ex)
+                {
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    form.BeginInvoke(new MyNoArgument(delegateGenNewPassword));
+                }
+            }
+        }
+
+        private async void delegateGenNewPassword()
         {
             config.password = "";
             Task router = null;
@@ -1051,16 +1096,8 @@ namespace Spa_Interaction_Screen
             form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
             form.WiFiPasswortLabel.Hide();
 
-
-            form.WiFiSSIDLabel.Text = config.WiFiSSID;
-
-            form.WiFiPasswortLabel.Text = config.password;
-
-            form.generateQRCode(form.WiFiQRCodePicturebox, 20, false, (int)(Constants.Element_width * 1.5), true);
-
             setnewPassword();
             form.loadscreen.Debugtext($"", false);
-
         }
 
         public delegate void MyNoArgument();
@@ -1074,7 +1111,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegatesetnewPassword();
                 }
             }
@@ -1086,7 +1124,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     form.Invoke(new MyNoArgument(delegatesetnewPassword));
                 }
             }
@@ -1138,5 +1177,18 @@ namespace Spa_Interaction_Screen
             selectButton(b, config.DMXSceneSetting == 1, Constants.selected_color);
         }
 
+        public void createConsolePage()
+        {
+            form.UIControl.Controls.Add(form.ConsolePage);
+            form.consoleshown = true;
+            form.resizeUIControlItems();
+        }
+
+        public void removeConsolePage()
+        {
+            form.UIControl.Controls.Remove(form.ConsolePage);
+            form.consoleshown = false;
+            form.resizeUIControlItems();
+        }
     }
 }

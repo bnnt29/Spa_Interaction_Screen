@@ -11,7 +11,7 @@
 #Array of Integer;#Wartungs Pin;1;2;3;4;5;6;;;;;;;;;;;;;
 #String;#Gastronomie Adresse;https://www.soundcraft.com/ui-demo/mixer.html;#(Connecting to Port 80/443);;;;;;;;;;;;;;;;;
 #String;#WiFi SSID (Mit [Room] kann dynamisch der Raum ersetzt werden);WifiName_ofRoom:[Room];;;;;;;;;;;;;;;;;;
-#Array of Integer;#IP Router;192;168;178;105;;;;;;;;;;;;;;;
+#Array of Integer;#IP Router;192;168;4;130;;;;;;;;;;;;;;;
 #String;#Port Router;23;;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;true;;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Eck Zeit;true;3;;;;;;;;;;;;;;;;;

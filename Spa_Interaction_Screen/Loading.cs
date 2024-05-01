@@ -1,19 +1,29 @@
 ﻿using System.Windows.Forms;
 using System.Diagnostics;
+using Microsoft.VisualBasic.ApplicationServices;
+using static System.Windows.Forms.LinkLabel;
 
 namespace Spa_Interaction_Screen
 {
     public partial class Loading : Form
     {
+        private Logger Log;
         private MainForm form;
         private Label progress;
         private ProgressBar progressBar;
         private Label DebugText;
         private Button exit_b;
 
+        private bool HandleCreate = false;
+
         public Loading(MainForm f, Screen screen)
         {
+            Log = f.Log;
             InitializeComponent();
+            this.HandleCreated += new EventHandler((sender, args) =>
+            {
+                HandleCreate = true;
+            });
             form = f;
             form.EnterFullscreen(this, screen, false);
             this.BackColor = Constants.Background_color;
@@ -34,7 +44,41 @@ namespace Spa_Interaction_Screen
             progressBar.Maximum = 100;
         }
 
+        public delegate void MyDebugText(String Text, bool show);
         public void Debugtext(String Text, bool show)
+        {
+            object[] delegateArray = new object[2];
+            delegateArray[0] = Text;
+            delegateArray[1] = show;
+            if (HandleCreate)
+            {
+                try
+                {
+                    this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    delegateDebugtext(Text, show);
+                }
+            }
+            else
+            {
+                try
+                {
+                    delegateDebugtext(Text, show);
+                }
+                catch (Exception ex)
+                {
+                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Log.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
+                }
+            }
+        }
+
+        private void delegateDebugtext(String Text, bool show)
         {
             if (DebugText == null)
             {
@@ -49,7 +93,7 @@ namespace Spa_Interaction_Screen
             if (show)
             {
                 DebugText.Show();
-                Debug.Print($"DebugText: {Text}");
+                Log.Print($"DebugText: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
             }
             else
             {

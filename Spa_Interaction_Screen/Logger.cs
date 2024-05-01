@@ -9,127 +9,160 @@ namespace Spa_Interaction_Screen
 {
     public class Logger
     {
-        private List<Log_Element> log_Elements = new List<Log_Element>();
+        private List<List<Log_Element>> log_Elements = new List<List<Log_Element>>();
+
+        public Logger() 
+        {
+            for(int i = 0; i < byte.MaxValue; i++)
+            {
+                log_Elements.Add(new List<Log_Element>());
+            }
+            Log_Element start = new Log_Element();
+            start.type = [MTypetobyte<MessageType>(MessageType.LoggerInfo)];
+            start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
+            start.time = DateTime.Now;
+            start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
+        }
 
         public class Log_Element
         {
-            public String SubType;
+            public byte? SubType;
             public String Message;
-            public byte type;
+            public DateTime time;
+            public byte[] type;
         }
 
-        public enum MessageType
+
+        public enum MessageType : byte
         {
             Ohne_Kategorie = 0,
             Hauptprogramm = 1,
             Benutzeroberfläche = 2,
-            Zentrale = 3,
-            Router = 4,
-            Gastro = 5,
-            Licht = 6,
-            Intern = 7,
-            Extern = 8,
-            Konfig = 9
+            TCPReceive = 3,
+            TCPSend = 4,
+            Router = 5,
+            Gastro = 6,
+            Licht = 7,
+            VideoProjektion = 8,
+            Intern = 9,
+            Extern = 10,
+            Konfig = 11,
+            LoggerInfo = 12
         }
 
-        public void Print(String Message, MessageType? Type, String? Subtype)
+        public enum MessageSubType : byte
         {
-            String p = "";
-            Log_Element log = new Log_Element();
-            if(Type != null)
-            {
-                p += '[';
-                p += getStringfromMessaeType(Type);
-                p += ']';
-                log.type = MTypetobyte(Type);
-                if (log.type == Byte.MaxValue)
-                {
+            Ohne_Kategorie = 0,
+            Error = 1,
+            Notice = 2,
+            Information = 3,
+        }
 
+        public void Print(String Message, MessageType? Type, MessageSubType? Subtype)
+        {
+            Log_Element log = new Log_Element();
+            String p = "";
+            p += TimeToString(DateTime.Now); 
+            p += " : ";
+            if (Type != null)
+            {
+                p += '{';
+                p += Type.ToString();
+                if (Subtype != null)
+                {
+                    p += ':';
+                    p += Subtype.ToString();
+                }
+                p += '}';
+                log.type = [MTypetobyte(Type)];
+            }
+            p += ' ';
+            p += Message;
+            if (log.type[0] != Byte.MaxValue)
+            {
+                log.time = DateTime.Now;
+                log.SubType = MTypetobyte(Subtype);
+                log.Message = Message;
+                log_Elements[log.type[0]].Add(log);
+            }
+            Debug.Print(p);
+
+        }
+
+        public void Print(String Message, MessageType?[] Type, MessageSubType? Subtype)
+        {
+            Log_Element log = new Log_Element();
+            String p = "";
+            p += TimeToString(DateTime.Now);
+            p += " : ";
+            int valid = 0;
+            if (Type != null)
+            {
+                p += '{';
+                p += Type.ToString();
+                if (Subtype != null)
+                {
+                    p += ':';
+                    p += Subtype.ToString();
+                }
+                p += '}';
+                log.type = new byte[Type.Length];
+                for(int i = 0; i < Type.Length; i++)
+                {
+                    log.type[i] = MTypetobyte(Type[i]);
+                    if (log.type[i] != Byte.MaxValue) 
+                    { 
+                        valid++;
+                    }
+                    else
+                    {
+                        i--;
+                    }
                 }
             }
-            
+            p += ' ';
+            p += Message;
+            if (valid>0)
+            {
+                log.time = DateTime.Now;
+                log.SubType = MTypetobyte(Subtype);
+                log.Message = Message;
+                for(int i = 0; i < log.type.Length; i++)
+                {
+                    log_Elements[log.type[i]].Add(log);
+                }
+            }
+            Debug.Print(p);
+
         }
 
-        public byte MTypetobyte(MessageType? type)
+        private string TimeToString(DateTime time)
         {
-            if(type == 0)
+            string p = "";
+            p += '[';
+            p += time.Year;
+            p += '.';
+            p += time.Month;
+            p += '.';
+            p += time.Day;
+            p += ';';
+            p += time.Hour;
+            p += ":";
+            p += time.Minute;
+            p += ":";
+            p += time.Second;
+            p += ']';
+            return p;
+        }
+
+        public byte MTypetobyte<T>(T? type) where T : struct, IConvertible
+        {
+            if(type == null)
             {
                 return Byte.MaxValue;
             }
-            int t = Byte.MaxValue;
-            if (type.HasValue)
-            {
-                t = (int)type.Value;
-            }
-            else
-            {
-                switch (type)
-                {
-                    case MessageType.Ohne_Kategorie:
-                        t = 0;
-                        break;
-                    case MessageType.Hauptprogramm:
-                        t = 1;
-                        break;
-                    case MessageType.Benutzeroberfläche:
-                        t = 2;
-                        break;
-                    case MessageType.Zentrale:
-                        t = 3;
-                        break;
-                    case MessageType.Router:
-                        t = 4;
-                        break;
-                    case MessageType.Gastro:
-                        t = 5;
-                        break;
-                    case MessageType.Licht:
-                        t = 6;
-                        break;
-                    case MessageType.Intern:
-                        t = 7;
-                        break;
-                    case MessageType.Extern:
-                        t = 8;
-                        break;
-                    case MessageType.Konfig:
-                        t = 9;
-                        break;
-                    default:
-                        t = Byte.MaxValue;
-                        break;
-                }
-            }
+            Object t = Convert.ChangeType(type, ((T)type).GetTypeCode());
             return (byte)t;
-        }
-
-        public String getStringfromMessaeType(MessageType? mt)
-        {
-            switch (mt)
-            {
-                case MessageType.Ohne_Kategorie:
-                    return "Ohne_Kategorie";
-                case MessageType.Hauptprogramm:
-                    return "Hauptprogramm";
-                case MessageType.Benutzeroberfläche:
-                    return "Benutzeroberfläche";
-                case MessageType.Zentrale:
-                    return "Zentrale";
-                case MessageType.Router:
-                    return "Router";
-                case MessageType.Gastro:
-                    return "Gastro";
-                case MessageType.Licht:
-                    return "Licht";
-                case MessageType.Intern:
-                    return "Intern";
-                case MessageType.Extern:
-                    return "Extern";
-                case MessageType.Konfig:
-                    return "Konfig";
-                default:
-                    return "other";
-            }
         }
     }
 }

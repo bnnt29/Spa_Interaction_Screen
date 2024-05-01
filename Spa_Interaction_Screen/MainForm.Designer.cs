@@ -14,6 +14,7 @@ using System.Reflection;
 using Microsoft.Web.WebView2.Core;
 using ColorSlider;
 using Cyotek.Windows.Forms;
+using System.Windows.Forms;
 
 
 namespace Spa_Interaction_Screen
@@ -69,6 +70,7 @@ namespace Spa_Interaction_Screen
             RestrictedAreaDescribtion = new Label();
             RestrictedAreaTitle = new Label();
             ColorPage = new TabPage();
+            ConsolePage = new TabPage();
             UIControl.SuspendLayout();
             AmbientePage.SuspendLayout();
             GastronomiePage.SuspendLayout();
@@ -79,6 +81,7 @@ namespace Spa_Interaction_Screen
             ColorPage.SuspendLayout();
             ServicePage.SuspendLayout();
             WartungPage.SuspendLayout();
+            ConsolePage.SuspendLayout();
             SuspendLayout();
             // 
             // UIControl
@@ -322,6 +325,18 @@ namespace Spa_Interaction_Screen
             RestrictedAreaTitle.TabIndex = 2;
             RestrictedAreaTitle.Text = "Zugriff nur für Mitarbeitende";
             // 
+            // ConsolePage
+            // 
+            ConsolePage.BackColor = Constants.Background_color;
+            ConsolePage.Font = Constants.Standart_font;
+            ConsolePage.ForeColor = Constants.Text_color;
+            ConsolePage.Location = new Point(4, 4);
+            ConsolePage.Name = "AmbientePage";
+            ConsolePage.Padding = new Padding(3);
+            ConsolePage.RightToLeft = RightToLeft.No;
+            ConsolePage.TabIndex = 10;
+            ConsolePage.Text = "Konsole";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -353,6 +368,8 @@ namespace Spa_Interaction_Screen
             ServicePage.PerformLayout();
             WartungPage.ResumeLayout(false);
             WartungPage.PerformLayout();
+            ConsolePage.ResumeLayout(false);
+            ConsolePage.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -372,6 +389,7 @@ namespace Spa_Interaction_Screen
         public TabPage TimePage;
         public TabPage ServicePage;
         public TabPage WartungPage;
+        public TabPage ConsolePage;
 
         //AmbientePage
         public Label Dimmer1ColorSliderDescribtion;

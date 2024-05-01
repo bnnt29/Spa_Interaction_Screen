@@ -12,6 +12,8 @@ namespace Spa_Interaction_Screen
 {
     public class Config
     {
+        private Logger Log;
+
         public bool allread = false;
         public byte[] currentvalues = null;
         public DateTime lastchangetime;
@@ -72,11 +74,12 @@ namespace Spa_Interaction_Screen
         public List<Constants.ServicesSetting> ServicesSettings = null;
         public List<Constants.DMXScene> DMXScenes = null;
 
-        public Config(Config? c)
+        public Config(Config? c, Logger L)
         {
+            Log = L;
             if (!LoadPreConfig())
             {
-                Debug.Print("Problem in loading PreConfig");
+                Log.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
             LoadContentConfig();
@@ -86,7 +89,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(Constants.PreConfigPath))
             {
-                Debug.Print("Config not Found ");
+                Log.Print("Config not find PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             StreamReader stream = null;
@@ -96,8 +99,8 @@ namespace Spa_Interaction_Screen
             }
             catch (IOException ex)
             {
-                Debug.Print(ex.Message);
-                Debug.Print("Could not open Config File");
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Log.Print("Could not open Config File", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             if (stream == null)
             {
@@ -110,15 +113,15 @@ namespace Spa_Interaction_Screen
             }
             if (stream.EndOfStream)
             {
-                Debug.Print("Reached End of file unexpectedly. No Data Read.");
+                Log.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
             String[] data = res.Split(Constants.PreConfigDelimiter);
-            Debug.Print($"Loading Preconfig Version: {data[1]}");
+            Log.Print($"Loading Preconfig Version: {data[1]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!data[1].Equals(Constants.CurrentVersion))
             {
-                Debug.Print("Config doesnt have the Correct Version");
+                Log.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
@@ -129,7 +132,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             { 
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             Char[] seps = new Char[2];
@@ -147,7 +150,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             try
@@ -157,7 +160,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             try
@@ -169,7 +172,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             return true;
@@ -187,7 +190,7 @@ namespace Spa_Interaction_Screen
                 s = stream.ReadLine();
             }catch (IOException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             return (s!=null)?s:"";
         }
@@ -195,10 +198,10 @@ namespace Spa_Interaction_Screen
         private void LoadContentConfig()
         {
             String Path = Constants.ContentPath + "ConfigFile.csv";
-            Debug.Print($"Using {Path} for the MainConfig Path");
+            Log.Print($"Using {Path} for the MainConfig Path", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!File.Exists(Path))
             {
-                Debug.Print("Config not Found ");
+                Log.Print("Config not find Config", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
             StreamReader stream = null;
@@ -208,8 +211,8 @@ namespace Spa_Interaction_Screen
             }
             catch (IOException ex)
             {
-                Debug.Print(ex.Message);
-                Debug.Print("Could not open Config File");
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Log.Print("Could not open Config File", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
 
             if (stream == null)
@@ -224,15 +227,15 @@ namespace Spa_Interaction_Screen
             }
             if (stream.EndOfStream)
             {
-                Debug.Print("Reached End of file unexpectedly. No Data Read.");
+                Log.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return;
             }
             String[] fields = stripComments(res.Split(Constants.Delimiter[0]), Constants.Delimiter[1]);
-            Debug.Print($"Loading CSV Config Version: {fields[0]}");
+            Log.Print($"Loading CSV Config Version: {fields[0]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!fields[0].Equals(Constants.CurrentVersion))
             {
-                Debug.Print("Config doesnt have the Correct Version");
+                Log.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return;
             }
@@ -261,7 +264,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Debug.Print(ex.Message);
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             try
             {
@@ -269,7 +272,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Debug.Print(ex.Message);
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
             String[] sl = null;
@@ -280,7 +283,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             showLogo = new bool[(sl.Length - 1 > 7) ? 7 : sl.Length - 1];
             try
@@ -292,7 +295,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref QRLogoFilePath, 0, true, read_all);
@@ -311,12 +314,12 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Debug.Print(ex.Message);
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogPath, 0, true, read_all);
             if (!read_all)
             {
-                Debug.Print("Something went wrong in reading the single Variables (x01)");
+                Log.Print("Something went wrong in reading the single Variables (x01)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return;
             }
@@ -340,8 +343,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.");
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Log.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
@@ -353,8 +356,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.");
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Log.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             field = null;
             read_all = getcsvFields(stream, ref field, -1, false, read_all);
@@ -366,8 +369,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Debug.Print(e.Message);
-                Debug.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.");
+                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Log.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             String[] ReadFields = null;
             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -385,8 +388,8 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
-                        Debug.Print(e.Message);
-                        Debug.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.");
+                        Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        Log.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }
                     atleastonechannel = true;
                 }
@@ -403,7 +406,7 @@ namespace Spa_Interaction_Screen
 
             if (!read_all)
             {
-                Debug.Print("Something went wrong in reading the single Variables (x02)");
+                Log.Print("Something went wrong in reading the single Variables (x02)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return;
             }
@@ -413,7 +416,7 @@ namespace Spa_Interaction_Screen
             }
             if (!read_all)
             {
-                Debug.Print("Something went wrong in reading the bunch Variables (x03)");
+                Log.Print("Something went wrong in reading the bunch Variables (x03)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return;
             }
@@ -446,7 +449,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
-                        Debug.Print(e.Message);
+                        Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         continue;
                     }
                 }
@@ -497,7 +500,7 @@ namespace Spa_Interaction_Screen
                             }
                             catch (FormatException ex)
                             {
-                                Debug.Print(ex.Message);
+                                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             if (ident >= 0)
                             {
@@ -541,7 +544,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
-                                    Debug.Print(ex.Message);
+                                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                     continue;
                                 }
                             }
@@ -552,7 +555,7 @@ namespace Spa_Interaction_Screen
                             catch (FormatException ex)
                             {
                                 parsed = false;
-                                Debug.Print(ex.Message);
+                                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             si.should_reset = parsed;
                             if (ReadFields.Length >= 3)
@@ -618,7 +621,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
-                                    Debug.Print(ex.Message);
+                                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                 }
                                 save = Math.Min(255, save);
                                 save = Math.Max(0, save);
@@ -711,7 +714,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    Debug.Print(ex.Message);
+                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                     return null;
                 }
                 if (z >= 0 && z < Typenames.Length)
@@ -740,7 +743,7 @@ namespace Spa_Interaction_Screen
             configclasses functionclass = null;
             if (functionspecs.Length < 2)
             {
-                Debug.Print("Not enough Secondary Function arguments");
+                Log.Print("Not enough Secondary Function arguments", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 return null;
             }
             ServicesSettingfunction res = new ServicesSettingfunction();
@@ -799,7 +802,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Debug.Print(ex.Message);
+                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             if (functionspecs.Length > 4 && functionspecs[4].Length > 0)
             {
@@ -875,7 +878,7 @@ namespace Spa_Interaction_Screen
             String line = stream.ReadLine();
             if (!lasttry)
             {
-                Debug.Print("Something went wrong in reading the single Variables (x05)");
+                Log.Print("Something went wrong in reading the single Variables (x05)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
@@ -892,8 +895,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    Debug.Print(ex.Message);
-                    Debug.Print("Beim einlesen der Konfig konnte eine Einstellung nicht in den benötigten Typen umgewandelt werden.");
+                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Log.Print("Beim einlesen der Konfig konnte eine Einstellung nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 }
             }
             else
@@ -906,8 +909,8 @@ namespace Spa_Interaction_Screen
                     }
                     catch (Exception ex)
                     {
-                        Debug.Print(ex.Message);
-                        Debug.Print("Beim einlesen der Konfig konnte eine Einstellungsmenge nicht in den benötigten Typen umgewandelt werden.");
+                        Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        Log.Print("Beim einlesen der Konfig konnte eine Einstellungsmenge nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }
                 }
                 else
