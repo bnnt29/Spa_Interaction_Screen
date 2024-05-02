@@ -92,7 +92,6 @@ namespace Spa_Interaction_Screen
         public MainForm()
         {
             Log = new Logger();
-            //SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             this.FormClosed += OnFormClosed;
             mainscreen = Screen.PrimaryScreen;
             loadscreen = new Loading(this, mainscreen);
@@ -164,7 +163,9 @@ namespace Spa_Interaction_Screen
                 Application.Exit();
                 return;
             }
+            loadscreen.updateProgress(58);
 
+            loadscreen.updateProgress(88);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
             for (int i = 0; i < UIControl.TabCount; i++)
             {
@@ -2008,22 +2009,14 @@ namespace Spa_Interaction_Screen
                 if (vlc != null && vlc.ConsoleBox != null)
                 {
                     bool scroll = true;
-<<<<<<< HEAD
-                    if(vlc.ConsoleBox.SelectionStart == vlc.ConsoleBox.Text.Length)
-=======
                     if (vlc.ConsoleBox.SelectionStart == vlc.ConsoleBox.Text.Length)
->>>>>>> working
                     {
                         scroll = false;
                     }
                     vlc.ConsoleBox.Text += line;
                     vlc.ConsoleBox.Text += "\n\r";
-<<<<<<< HEAD
-                    if(scroll) {
-=======
                     if (scroll)
                     {
->>>>>>> working
                         vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
                         ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
                         vlc.ConsoleBox.ScrollToCaret();
@@ -2054,11 +2047,7 @@ namespace Spa_Interaction_Screen
                     vlc.ConsoleBox.Text = Text;
                     vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
                     vlc.ConsoleBox.ScrollToCaret();
-<<<<<<< HEAD
-                    if(TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
-=======
                     if (TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
->>>>>>> working
                     {
                         ConsoleTextscroll.Maximum = vlc.ConsoleBox.Text.Length;
                         ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
@@ -2086,6 +2075,7 @@ namespace Spa_Interaction_Screen
             int Index = ((Constants.ComboItem)((ComboBox)sender).SelectedItem).ID;
             ClearConsole();
             SetConsoleText(Log.GetConsoleText((Logger.MessageType)Index, null));
+            
             Log.setCurrentlyshowing((byte)Index, this);
         }
 
@@ -2111,11 +2101,7 @@ namespace Spa_Interaction_Screen
 
         public void TCPMessage_Change_handler(object sender, EventArgs e)
         {
-<<<<<<< HEAD
-            if(Messagepreview == null || Messagepreview.Tag == null)
-=======
             if (Messagepreview == null || Messagepreview.Tag == null)
->>>>>>> working
             {
                 return;
             }
@@ -2153,21 +2139,13 @@ namespace Spa_Interaction_Screen
                 p += '"';
             }
             int id = -1;
-<<<<<<< HEAD
-            if(Commandboxid.Text != null && Commandboxid.Text.Length > 0)
-=======
             if (Commandboxid.Text != null && Commandboxid.Text.Length > 0)
->>>>>>> working
             {
                 try
                 {
                     id = Int32.Parse(Commandboxid.Text);
-<<<<<<< HEAD
-                }catch(FormatException ex)
-=======
                 }
                 catch (FormatException ex)
->>>>>>> working
                 {
                     Log.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                 }
@@ -2205,11 +2183,7 @@ namespace Spa_Interaction_Screen
             return p;
         }
 
-<<<<<<< HEAD
-        public  void CommandId_KeyPress(object sender, KeyPressEventArgs e)
-=======
         public void CommandId_KeyPress(object sender, KeyPressEventArgs e)
->>>>>>> working
         {
             if (!(e.KeyChar == 8 || (e.KeyChar >= 48 && e.KeyChar <= 57) || e.KeyChar == 46))
             {
