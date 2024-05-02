@@ -1102,6 +1102,8 @@ namespace Spa_Interaction_Screen
                     ta.Wait();
                     ta = Task.Run(() => form.net.setuprouterssid(form));
                     ta.Wait();
+                    ta = Task.Run(() => form.net.wakeup(form));
+                    ta.Wait();
                 });
             }
             if (form.loadscreen != null)
@@ -1211,11 +1213,11 @@ namespace Spa_Interaction_Screen
                 form.UIControl.Controls.Remove(rem);
                 ConsoleElements.Remove(rem);
             }
-            int posx, poxy = 0;
+            int posx, posy = 0;
             form.UIControl.Controls.Add(form.ConsolePage);
             form.consoleshown = true;
 
-            GetDynamicPosition(3, 1, out posx, out poxy, 0, 1, false);
+            GetDynamicPosition(3, 1, out posx, out posy, 0, 1, false);
             form.consoletype = new ComboBox();
             Array types = Enum.GetValues(typeof(Logger.MessageType));
             foreach (Logger.MessageType mt in types)
@@ -1225,38 +1227,38 @@ namespace Spa_Interaction_Screen
                     form.consoletype.Items.Add(new Constants.ComboItem { Text = mt.ToString(), ID = Log.MTypetobyte<Logger.MessageType>(mt) });
                 }
             }
-            form.consoletype.Location = new Point(posx, poxy);
+            form.consoletype.Location = new Point(posx, posy);
             form.consoletype.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.consoletype.SelectedIndexChanged += form.comboconsoleItemchanged;
             ConsoleElements.Add(form.consoletype);
             form.ConsolePage.Controls.Add(form.consoletype);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 0, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 0, false);
             Label lab = new Label();
             lab.AutoSize = true;
             lab.Text = "TCP Message";
             lab.ForeColor = Constants.Text_color;
-            lab.Location = new Point(posx, poxy);
+            lab.Location = new Point(posx, posy);
             lab.Font = new Font("Segoe UI", 23F, FontStyle.Regular, GraphicsUnit.Point, 0);
             form.ConsolePage.Controls.Add(lab);
             ConsoleElements.Add(lab);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 0.5, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 0.5, false);
             Label la = new Label();
             la.AutoSize = true;
             la.Text = $"Room: {config.Room}";
             la.ForeColor = Constants.Text_color;
-            la.Location = new Point(posx, poxy);
+            la.Location = new Point(posx, posy);
             la.Font = Constants.Standart_font;
             form.ConsolePage.Controls.Add(la);
             ConsoleElements.Add(la);
 
-            GetDynamicPosition(3, 1, out posx, out poxy, 0, 0, false);
+            GetDynamicPosition(3, 1, out posx, out posy, 0, 0, false);
             Label l = new Label();
             l.AutoSize = true;
             l.Text = "Console";
             l.ForeColor = Constants.Text_color;
-            l.Location = new Point(posx, poxy);
+            l.Location = new Point(posx, posy);
             l.Font = new Font("Segoe UI", 23F, FontStyle.Regular, GraphicsUnit.Point, 0);
             form.ConsolePage.Controls.Add(l);
             ConsoleElements.Add(l);
@@ -1268,53 +1270,81 @@ namespace Spa_Interaction_Screen
                 public TextBox Commandboxvalues;
             */
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 1, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 1, false);
             form.tcptype = new ComboBox();
             for (int i = 0; i<config.Typenames.Length;i++)
             {
                 form.tcptype.Items.Add(new Constants.ComboItem { Text = config.Typenames[i], ID = i });
             }
-            form.tcptype.Location = new Point(posx, poxy);
+            form.tcptype.Location = new Point(posx, posy);
             form.tcptype.Size = new Size(Constants.Element_width, Constants.Element_height);
             //form.tcptype.SelectedIndexChanged += form.comboTCPItemchanged;
             ConsoleElements.Add(form.tcptype);
             form.ConsolePage.Controls.Add(form.tcptype);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 1.5, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 1.5, false);
             form.CommandboxLabel = new TextBox();
             form.CommandboxLabel.PlaceholderText = "Label";
             form.CommandboxLabel.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.CommandboxLabel.Location = new Point(posx, poxy);
+            form.CommandboxLabel.Location = new Point(posx, posy);
+            //form.CommandboxLabel.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.CommandboxLabel);
             form.ConsolePage.Controls.Add(form.CommandboxLabel);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 2, false);
-            form.Commandboxid = new NumericUpDown();
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 2, false);
+            form.Commandboxid = new TextBox();
             form.Commandboxid.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.Commandboxid.Location = new Point(posx, poxy);
+            form.Commandboxid.Location = new Point(posx, posy);
+            //form.Commandboxid.KeyPress += form.CommandId_KeyPress;
+            //form.Commandboxid.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.Commandboxid);
             form.ConsolePage.Controls.Add(form.Commandboxid);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 2.5, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 2.5, false);
             form.Commandboxvalues = new TextBox();
             form.Commandboxvalues.PlaceholderText = "values (komma seperated)";
             form.Commandboxvalues.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.Commandboxvalues.Location = new Point(posx, poxy);
+            form.Commandboxvalues.Location = new Point(posx, posy);
             ConsoleElements.Add(form.Commandboxvalues);
             form.ConsolePage.Controls.Add(form.Commandboxvalues);
 
-            GetDynamicPosition(3, 0, out posx, out poxy, 0, 3, false);
+            GetDynamicPosition(3, 0, out posx, out posy, 0, 3, false);
             Button bu = null; 
-            Constants.createButton(posx, poxy, (List<Button>)null, "Send Message", "sendtcp", form.ConsolePage, form, form.sendTCPfromconsole,out bu);
+            Constants.createButton(posx, posy, (List<Button>)null, "Send Message", "sendtcp", form.ConsolePage, form, form.sendTCPfromconsole,out bu);
             ConsoleElements.Add(bu);
 
-            GetDynamicPosition(3, 2, out posx, out poxy, 0, 1, false);
+            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
             form.Textscroll = createColorSlide(0);
             form.Textscroll.Orientation = Orientation.Vertical;
-            form.Textscroll.Location = new Point(posx, poxy);
+            form.Textscroll.Location = new Point(posx, posy);
             form.Textscroll.Size = new Size(form.Textscroll.Size.Width, (Constants.Element_height+Constants.Element_y_padding)*3);
+            //form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.Textscroll);
             form.ConsolePage.Controls.Add(form.Textscroll);
+
+            Point lp = new Point(0, 4);
+            GetDynamicPosition(3, lp.X, out posx, out posy, 0, lp.Y, false);
+            form.Messagepreview = new Label();
+            form.Messagepreview.AutoSize = true;
+            form.Messagepreview.Text = "";
+            form.Messagepreview.ForeColor = Constants.Text_color;
+            form.Messagepreview.Location = new Point(posx, posy);
+            form.Messagepreview.Tag = new Point(0, 4);
+            form.Messagepreview.Font = Constants.Standart_font;
+            form.ConsolePage.Controls.Add(form.Messagepreview);
+            ConsoleElements.Add(form.Messagepreview);
+
+            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
+            form.ConsoleTextscroll = createColorSlide(0);
+            form.ConsoleTextscroll.ShowDivisionsText = false;
+            form.ConsoleTextscroll.ShowSmallScale = false;
+            form.ConsoleTextscroll.Orientation = Orientation.Vertical;
+            form.ConsoleTextscroll.Location = new Point(posx, posy);
+            form.ConsoleTextscroll.Size = new Size(form.ConsoleTextscroll.Size.Width, (Constants.Element_height + Constants.Element_y_padding) * 3);
+            form.ConsoleTextscroll.Hide();
+            //form.ConsoleTextscroll.ValueChanged += form.consolescroll;
+            ConsoleElements.Add(form.ConsoleTextscroll);
+            form.ConsolePage.Controls.Add(form.ConsoleTextscroll);
 
             form.resizeUIControlItems();
         }

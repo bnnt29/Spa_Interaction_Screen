@@ -2084,14 +2084,26 @@ namespace Spa_Interaction_Screen
                 p += CommandboxLabel.Text;
                 p += '"';
             }
-            if(Commandboxid.Value >= 0)
+            int id = -1;
+            if (Commandboxid.Text != null && Commandboxid.Text.Length > 0)
+            {
+                try
+                {
+                    id = Int32.Parse(Commandboxid.Text);
+                }
+                catch (FormatException ex)
+                {
+                    Log.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                }
+            }
+            if (id >= 0)
             {
                 p += ", ";
                 p += '"';
                 p += "id";
                 p += '"';
                 p += ':';
-                p += Commandboxid.Value;
+                p += id;
             }
             if (Commandboxvalues.Text.Length > 0)
             {

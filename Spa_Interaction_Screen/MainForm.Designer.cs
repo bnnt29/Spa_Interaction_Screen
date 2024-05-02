@@ -436,9 +436,11 @@ namespace Spa_Interaction_Screen
         public ComboBox consoletype;
         public ComboBox tcptype;
         public TextBox CommandboxLabel;
-        public NumericUpDown Commandboxid;
+        public TextBox Commandboxid;
         public TextBox Commandboxvalues;
-        public ColorSlider.ColorSlider Textscroll;
+        public ColorSlider.ColorSlider Textscroll; 
+        public Label Messagepreview;
+        public ColorSlider.ColorSlider ConsoleTextscroll;
 
     }
 }
