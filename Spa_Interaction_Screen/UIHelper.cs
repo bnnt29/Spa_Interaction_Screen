@@ -1314,6 +1314,10 @@ namespace Spa_Interaction_Screen
             form.CommandboxLabel.PlaceholderText = "Label";
             form.CommandboxLabel.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.CommandboxLabel.Location = new Point(posx, posy);
+<<<<<<< HEAD
+=======
+            form.CommandboxLabel.TextChanged += form.TCPMessage_Change_handler;
+>>>>>>> working
             ConsoleElements.Add(form.CommandboxLabel);
             form.CommandboxLabel.TextChanged += form.TCPMessage_Change_handler;
             form.ConsolePage.Controls.Add(form.CommandboxLabel);
@@ -1323,7 +1327,11 @@ namespace Spa_Interaction_Screen
             form.Commandboxid.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.Commandboxid.Location = new Point(posx, posy);
             form.Commandboxid.KeyPress += form.CommandId_KeyPress;
+<<<<<<< HEAD
             form.Commandboxid.TextChanged += form.TCPMessage_Change_handler; 
+=======
+            form.Commandboxid.TextChanged += form.TCPMessage_Change_handler;
+>>>>>>> working
             ConsoleElements.Add(form.Commandboxid);
             form.ConsolePage.Controls.Add(form.Commandboxid);
 
@@ -1332,7 +1340,10 @@ namespace Spa_Interaction_Screen
             form.Commandboxvalues.PlaceholderText = "values (komma seperated)";
             form.Commandboxvalues.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.Commandboxvalues.Location = new Point(posx, posy);
+<<<<<<< HEAD
             form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
+=======
+>>>>>>> working
             ConsoleElements.Add(form.Commandboxvalues);
             form.ConsolePage.Controls.Add(form.Commandboxvalues);
 
@@ -1341,6 +1352,7 @@ namespace Spa_Interaction_Screen
             Constants.createButton(posx, posy, (List<Button>)null, "Send Message", "sendtcp", form.ConsolePage, form, form.sendTCPfromconsole,out bu);
             ConsoleElements.Add(bu);
 
+<<<<<<< HEAD
             Point lp = new Point(0, 4);
             GetDynamicPosition(3, lp.X, out posx, out posy, 0, lp.Y, false);
             form.Messagepreview = new Label();
@@ -1360,6 +1372,40 @@ namespace Spa_Interaction_Screen
             form.ConsoleTextscroll.Orientation = Orientation.Vertical;
             form.ConsoleTextscroll.Location = new Point(posx, posy);
             form.ConsoleTextscroll.Size = new Size(form.ConsoleTextscroll.Size.Width, (Constants.Element_height+Constants.Element_y_padding)*3);
+            form.ConsoleTextscroll.Hide();
+            form.ConsoleTextscroll.ValueChanged += form.consolescroll;
+            ConsoleElements.Add(form.ConsoleTextscroll);
+            form.ConsolePage.Controls.Add(form.ConsoleTextscroll);
+=======
+            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
+            form.Textscroll = createColorSlide(0);
+            form.Textscroll.Orientation = Orientation.Vertical;
+            form.Textscroll.Location = new Point(posx, posy);
+            form.Textscroll.Size = new Size(form.Textscroll.Size.Width, (Constants.Element_height+Constants.Element_y_padding)*3);
+            form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
+            ConsoleElements.Add(form.Textscroll);
+            form.ConsolePage.Controls.Add(form.Textscroll);
+>>>>>>> working
+
+            Point lp = new Point(0, 4);
+            GetDynamicPosition(3, lp.X, out posx, out posy, 0, lp.Y, false);
+            form.Messagepreview = new Label();
+            form.Messagepreview.AutoSize = true;
+            form.Messagepreview.Text = "";
+            form.Messagepreview.ForeColor = Constants.Text_color;
+            form.Messagepreview.Location = new Point(posx, posy);
+            form.Messagepreview.Tag = new Point(0, 4);
+            form.Messagepreview.Font = Constants.Standart_font;
+            form.ConsolePage.Controls.Add(form.Messagepreview);
+            ConsoleElements.Add(form.Messagepreview);
+
+            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
+            form.ConsoleTextscroll = createColorSlide(0);
+            form.ConsoleTextscroll.ShowDivisionsText = false;
+            form.ConsoleTextscroll.ShowSmallScale = false;
+            form.ConsoleTextscroll.Orientation = Orientation.Vertical;
+            form.ConsoleTextscroll.Location = new Point(posx, posy);
+            form.ConsoleTextscroll.Size = new Size(form.ConsoleTextscroll.Size.Width, (Constants.Element_height + Constants.Element_y_padding) * 3);
             form.ConsoleTextscroll.Hide();
             form.ConsoleTextscroll.ValueChanged += form.consolescroll;
             ConsoleElements.Add(form.ConsoleTextscroll);
