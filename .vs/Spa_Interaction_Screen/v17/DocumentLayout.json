@@ -3,11 +3,11 @@
   "WorkspaceRootPath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -102,8 +102,7 @@
               "RelativeToolTip": "Spa_Interaction_Screen\\UIHelper.cs",
               "ViewState": "AQIAAPcEAAAAAAAAAAAuwAkFAAAMAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-01T22:38:53.903Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-01T22:38:53.903Z"
             },
             {
               "$type": "Document",
