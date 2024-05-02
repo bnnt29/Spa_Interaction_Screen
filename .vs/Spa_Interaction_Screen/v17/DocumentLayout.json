@@ -3,32 +3,24 @@
   "WorkspaceRootPath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\uihelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\logger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\logger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\loading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\loading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\mainform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\mainform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\constants.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\network.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\config.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -37,6 +29,18 @@
     {
       "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\embedvlc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\embedvlc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|c:\\users\\berni\\documents\\github\\spa_interaction_screen\\spa_interaction_screen\\embedvlc.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\embedvlc.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\logger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\logger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\loading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|solutionrelative:spa_interaction_screen\\loading.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5FE6FE75-AB9E-42D6-9C86-1027A7A3E496}|Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj|C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\spa_interaction_screen\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -58,11 +62,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 742,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 5,
               "Title": "Config.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Config.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Config.cs",
@@ -76,13 +80,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "MainForm.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.cs",
-              "ViewState": "AQIAAPkHAAAAAAAAAAAqwBAIAAAVAAAA",
+              "ViewState": "AQIAAJYAAAAAAAAAAAAtwKoAAAAQAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-30T23:38:24.438Z",
               "IsPinned": true,
@@ -90,7 +94,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 2,
               "Title": "Constants.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Constants.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Constants.cs",
@@ -104,13 +108,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "UIHelper.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\UIHelper.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\UIHelper.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\UIHelper.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\UIHelper.cs",
-              "ViewState": "AQIAANkEAAAAAAAAAAAAAOgEAAAVAAAA",
+              "ViewState": "AQIAADkAAAAAAAAAAAD4v1QAAAArAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-05-01T22:38:53.903Z",
               "EditorCaption": ""
@@ -123,14 +127,14 @@
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Network.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Network.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\Network.cs",
-              "ViewState": "AQIAAOUFAAAAAAAAAAAuwPcFAAAVAAAA",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAB8AAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-05-01T00:26:24.704Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 8,
               "Title": "Logger.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Logger.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Logger.cs",
@@ -138,12 +142,11 @@
               "RelativeToolTip": "Spa_Interaction_Screen\\Logger.cs",
               "ViewState": "AQIAAKgAAAAAAAAAAAAewLsAAAAYAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-01T00:26:17.306Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-01T00:26:17.306Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 9,
               "Title": "Loading.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Loading.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Loading.cs",
@@ -151,25 +154,24 @@
               "RelativeToolTip": "Spa_Interaction_Screen\\Loading.cs",
               "ViewState": "AQIAAAcAAAAAAAAAAIA7wB4AAABlAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-01T00:25:48.345Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-01T00:25:48.345Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 6,
               "Title": "EmbedVLC.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\EmbedVLC.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\EmbedVLC.cs",
-              "ViewState": "AQIAAIEBAAAAAAAAAADwv10AAADCAAAA",
+              "ViewState": "AQIAAKsBAAAAAAAAAADwv9IBAAAIAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-05-01T00:29:12.711Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Program.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\Program.cs",
@@ -181,20 +183,33 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 3,
               "Title": "MainForm.Designer.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.Designer.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.Designer.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.Designer.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.Designer.cs",
-              "ViewState": "AQIAAJsBAAAAAAAAAAAAALMBAAAjAAAA",
+              "ViewState": "AQIAACEAAAAAAAAAAAAYwDAAAAAoAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-05-01T00:47:28.322Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 7,
+              "Title": "EmbedVLC.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.Designer.cs",
+              "RelativeDocumentMoniker": "Spa_Interaction_Screen\\EmbedVLC.Designer.cs",
+              "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EmbedVLC.Designer.cs",
+              "RelativeToolTip": "Spa_Interaction_Screen\\EmbedVLC.Designer.cs",
+              "ViewState": "AQIAABMAAAAAAAAAAAAgwB4AAAASAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-05-02T20:03:56.894Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
               "Title": "OpenDMX.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\OpenDMX.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\OpenDMX.cs",
@@ -206,7 +221,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "EnttecCom.cs",
               "DocumentMoniker": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\EnttecCom.cs",
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\EnttecCom.cs",

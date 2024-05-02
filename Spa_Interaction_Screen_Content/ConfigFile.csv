@@ -22,7 +22,7 @@
 #String;#Ambiente Hintergrund Bild;;;;;;;;;;;;;;;;;;;
 #String;#Color Hintergrund Bild;;;;;;;;;;;;;;;;;;;
 #String;#Medien Bild;;;;;;;;;;;;;;;;;;;
-#String;#Timer Bild;background.jpg;;;;;;;;;;;;;;;;;;
+#String;#Timer Bild;background.bmp;;;;;;;;;;;;;;;;;;
 #String;#Service Bild;butler.png;;;;;;;;;;;;;;;;;;
 #String;#Wartung Bild;;#minuntes before end of Session (shows endpicture (changeable, blocks streaming, switches to TimePage);;;;;;;;;;;;;;;;;
 #String;#EndBild;butler.png;15;;;;;;;;;;;;;;;;;

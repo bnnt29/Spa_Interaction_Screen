@@ -14,6 +14,7 @@ using ENTTEC.Devices.MessageFilters;
 using System.Diagnostics.Eventing.Reader;
 using static Spa_Interaction_Screen.Constants;
 using static System.Collections.Specialized.BitVector32;
+using System.Text.RegularExpressions;
 
 namespace Spa_Interaction_Screen
 {
@@ -428,6 +429,71 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
+        public bool SendTelnetWakeup()
+        {
+            if (routerclient == null || !routerclient.Connected)
+            {
+                Log.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                return false;
+            }
+            NetworkStream ns = routerclient.GetStream();
+
+            Byte[] data = Encoding.Default.GetBytes($"standby wakeup\n");
+            try
+            {
+                ns.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                switch (ex)
+                {
+                    case ArgumentNullException:
+                    case ArgumentOutOfRangeException:
+                    case InvalidOperationException:
+                    case IOException:
+                        Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                        break;
+                }
+                return false;
+            }
+            ns = routerclient.GetStream();
+            DateTime dateTimestart = DateTime.Now;
+            while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
+            {
+                byte[] msg = new byte[1024];     //the messages arrive as byte array
+                int b_read = 0;
+
+                try
+                {
+                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                }
+                catch (Exception ex)
+                {
+                    switch (ex)
+                    {
+                        case ArgumentNullException:
+                        case ArgumentOutOfRangeException:
+                        case InvalidOperationException:
+                        case IOException:
+                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
+                    }
+                }
+
+                Array.Resize(ref msg, b_read);
+                String m = parse(msg);
+                String[] splt = m.Split("\n");
+                for (int i = 0; i < splt.Length; i++)
+                {
+                    if (splt[i].Contains("WMedia") || splt[i].Contains("wifi"))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
+
         public bool SendTelnetPasswordrefresh()
         {
             if (routerclient == null || !routerclient.Connected)
@@ -533,17 +599,6 @@ namespace Spa_Interaction_Screen
             }
             return "";
         }
-        public void setuprouterssid(MainForm f)
-        {
-            if (!connectrouter(f))
-            {
-                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
-                WaitforRouterClientClose();
-                return;
-            }
-            SendTelnetSetSSID($"{config.WiFiSSID}");
-            WaitforRouterClientClose();
-        }
 
         public void setuprouterpassword(MainForm f)
         {
@@ -554,7 +609,11 @@ namespace Spa_Interaction_Screen
                 f.helper.setnewPassword();
                 return;
             }
-            SendTelnetASKPass();
+            if (!SendTelnetASKPass())
+            {
+                Log.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+            }
+            
             config.password = WaitForPass();
             //Log.Print($"old Password: {config.password}");
             WaitforRouterClientClose();
@@ -583,13 +642,47 @@ namespace Spa_Interaction_Screen
                     Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                     WaitforRouterClientClose();
                 }
-                SendTelnetASKPass();
+                if (!SendTelnetASKPass())
+                {
+                    Log.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                }
                 npw = WaitForPass();
             } while (npw.Equals(config.password) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 2);
             WaitforRouterClientClose();
             config.password = npw;
             Log.Print($"Neues Passwort: {npw}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             f.helper.setnewPassword();
+        }
+        public void setuprouterssid(MainForm f)
+        {
+            if (!connectrouter(f))
+            {
+                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                WaitforRouterClientClose();
+                return;
+            }
+            if (!SendTelnetSetSSID($"{config.WiFiSSID}"))
+            {
+                Log.Print("Error occured while Setting new Router SSID", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+
+            }
+            WaitforRouterClientClose();
+        }
+
+        public void wakeup(MainForm f)
+        {
+            if (!connectrouter(f))
+            {
+                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                WaitforRouterClientClose();
+                return;
+            }
+            if (!SendTelnetWakeup())
+            {
+                Log.Print("Error occured while tried to wakeup Router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+
+            }
+            WaitforRouterClientClose();
         }
 
         private void WaitforRouterClientClose()
@@ -812,8 +905,7 @@ namespace Spa_Interaction_Screen
                     int sceneindex = -1;
                     if (json.ContainsKey("id") && json["id"] != null)
                     {
-
-                        sceneindex = (int)json["id"];
+                        sceneindex = (Int32)(Int64)json["id"];
                     }
                     else if (json.ContainsKey("values") && json["values"] != null)
                     {
@@ -844,17 +936,17 @@ namespace Spa_Interaction_Screen
                         {
                             Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to). Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
-                        if(sceneindex < 0 || sceneindex >= c.DMXScenes.Count)
-                        {
-                            Log.Print("Index / value outside Scenes Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
-                            break;
-                        }
-                        f.Ambiente_Change(c.DMXScenes[sceneindex], true, false, false);
                     }
                     else
                     {
                         Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
+                    if (sceneindex < 0 || sceneindex >= c.DMXScenes.Count)
+                    {
+                        Log.Print("Index / value outside Scenes Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        break;
+                    }
+                    f.Ambiente_Change(c.DMXScenes[sceneindex], true, false, false);
                     break;
                 case 5:
                     int volumevalue = -1;
@@ -1528,6 +1620,75 @@ namespace Spa_Interaction_Screen
             Log.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
             handleReceivedNet(keyValuePairs);
+        }
+
+        public String jsonsorter(String m)
+        {
+            if (!m.Contains(',') || !m.Contains("room") || !m.Contains("type"))
+            {
+                return "";
+            }
+            String s = "{";
+            String[] ls = m.Split(',');
+            foreach (String s2 in ls)
+            {
+                if (s2.Contains("room"))
+                {
+                    s += $"{s2},";
+                    break;
+                }
+            }
+            foreach (String s2 in ls)
+            {
+                if (s2.Contains("id"))
+                {
+                    s += $"{s2},";
+                    break;
+                }
+            }
+            if (m.Contains("label"))
+            {
+                foreach (String s2 in ls)
+                {
+                    if (s2.Contains("label"))
+                    {
+                        s += $"{s2},";
+                        break;
+                    }
+                }
+            }
+            if (m.Contains("id"))
+            {
+                foreach (String s2 in ls)
+                {
+                    if (s2.Contains("id"))
+                    {
+                        s += $"{s2},";
+                        break;
+                    }
+                }
+            }
+            if (m.Contains("values"))
+            {
+                for (int i = 0;i<ls.Length;i++)
+                {
+                    if (ls[i].Contains("id"))
+                    {
+                        s += $"{ls[i++]}";
+                        while (!ls[i].Contains(']'))
+                        {
+                            s += ls[i++];
+                        }
+                        break;
+                    }
+                }
+            }
+            if (s.EndsWith(','))
+            {
+                s = s.Substring(0,s.Length-1);
+            }
+            s += '}';
+            return s;
         }
     }
 }
