@@ -438,10 +438,6 @@ namespace Spa_Interaction_Screen
         public TextBox CommandboxLabel;
         public TextBox Commandboxid;
         public TextBox Commandboxvalues;
-<<<<<<< HEAD
-=======
-        public ColorSlider.ColorSlider Textscroll; 
->>>>>>> working
         public Label Messagepreview;
         public ColorSlider.ColorSlider ConsoleTextscroll;
 
