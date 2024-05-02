@@ -2008,8 +2008,28 @@ namespace Spa_Interaction_Screen
             {
                 if (vlc != null && vlc.ConsoleBox != null)
                 {
+                    bool scroll = true;
+                    if (vlc.ConsoleBox.SelectionStart == vlc.ConsoleBox.Text.Length)
+                    {
+                        scroll = false;
+                    }
                     vlc.ConsoleBox.Text += line;
                     vlc.ConsoleBox.Text += "\n\r";
+                    if (scroll)
+                    {
+                        vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
+                        ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
+                        vlc.ConsoleBox.ScrollToCaret();
+                    }
+                    if (TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
+                    {
+                        ConsoleTextscroll.Maximum = vlc.ConsoleBox.Text.Length;
+                        ConsoleTextscroll.Show();
+                    }
+                    else
+                    {
+                        ConsoleTextscroll.Hide();
+                    }
                     return vlc.ConsoleBox.Text;
                 }
                 return line;
@@ -2024,7 +2044,19 @@ namespace Spa_Interaction_Screen
                 if (vlc != null && vlc.ConsoleBox != null)
                 {
                     vlc.ConsoleBox.Clear();
-                    vlc.ConsoleBox.Text += Text;
+                    vlc.ConsoleBox.Text = Text;
+                    vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
+                    vlc.ConsoleBox.ScrollToCaret();
+                    if (TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
+                    {
+                        ConsoleTextscroll.Maximum = vlc.ConsoleBox.Text.Length;
+                        ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
+                        ConsoleTextscroll.Show();
+                    }
+                    else
+                    {
+                        ConsoleTextscroll.Hide();
+                    }
                 }
             }
         }
@@ -2058,8 +2090,30 @@ namespace Spa_Interaction_Screen
         {
             ((Button)sender).BackColor = Constants.alternative_color;
             addcolortimedButton(((Button)sender), 250, Constants.Button_color, Numberfield_Click);
+            net.Messageafterparse(CreateMessagString());
+        }
 
-            String p = "{"; 
+        public void consolescroll(object sender, EventArgs e)
+        {
+            vlc.ConsoleBox.SelectionStart = (((int)((ColorSlider.ColorSlider)(sender)).Value) - (int)((ColorSlider.ColorSlider)(sender)).Maximum) * -1;
+            vlc.ConsoleBox.ScrollToCaret();
+        }
+
+        public void TCPMessage_Change_handler(object sender, EventArgs e)
+        {
+            if (Messagepreview == null || Messagepreview.Tag == null)
+            {
+                return;
+            }
+            int posx, posy = 0;
+            helper.GetDynamicPosition(3, ((Point)Messagepreview.Tag).X, out posx, out posy, 0, ((Point)Messagepreview.Tag).Y, false);
+            Messagepreview.Text = CreateMessagString();
+            Messagepreview.Location = new Point((posx + Constants.Element_width / 2) - (Messagepreview.Size.Width / 2), posy);
+        }
+
+        public String CreateMessagString()
+        {
+            String p = "{";
             p += '"';
             p += "room";
             p += '"';
@@ -2108,10 +2162,10 @@ namespace Spa_Interaction_Screen
             if (Commandboxvalues.Text.Length > 0)
             {
                 p += ", ";
-                p+='"';
-                p +="values";
-                p +='"';
-                p +=":[";
+                p += '"';
+                p += "values";
+                p += '"';
+                p += ":[";
                 foreach (String s in Commandboxvalues.Text.Split(','))
                 {
                     p += '"';
@@ -2126,7 +2180,15 @@ namespace Spa_Interaction_Screen
                 p += ']';
             }
             p += '}';
-            net.Messageafterparse(p);
+            return p;
+        }
+
+        public void CommandId_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!(e.KeyChar == 8 || (e.KeyChar >= 48 && e.KeyChar <= 57) || e.KeyChar == 46))
+            {
+                e.Handled = true;
+            }
         }
     }
 }

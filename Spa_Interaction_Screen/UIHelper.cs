@@ -1287,7 +1287,7 @@ namespace Spa_Interaction_Screen
             form.CommandboxLabel.PlaceholderText = "Label";
             form.CommandboxLabel.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.CommandboxLabel.Location = new Point(posx, posy);
-            //form.CommandboxLabel.TextChanged += form.TCPMessage_Change_handler;
+            form.CommandboxLabel.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.CommandboxLabel);
             form.ConsolePage.Controls.Add(form.CommandboxLabel);
 
@@ -1295,8 +1295,8 @@ namespace Spa_Interaction_Screen
             form.Commandboxid = new TextBox();
             form.Commandboxid.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.Commandboxid.Location = new Point(posx, posy);
-            //form.Commandboxid.KeyPress += form.CommandId_KeyPress;
-            //form.Commandboxid.TextChanged += form.TCPMessage_Change_handler;
+            form.Commandboxid.KeyPress += form.CommandId_KeyPress;
+            form.Commandboxid.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.Commandboxid);
             form.ConsolePage.Controls.Add(form.Commandboxid);
 
@@ -1318,7 +1318,7 @@ namespace Spa_Interaction_Screen
             form.Textscroll.Orientation = Orientation.Vertical;
             form.Textscroll.Location = new Point(posx, posy);
             form.Textscroll.Size = new Size(form.Textscroll.Size.Width, (Constants.Element_height+Constants.Element_y_padding)*3);
-            //form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
+            form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.Textscroll);
             form.ConsolePage.Controls.Add(form.Textscroll);
 
@@ -1342,7 +1342,7 @@ namespace Spa_Interaction_Screen
             form.ConsoleTextscroll.Location = new Point(posx, posy);
             form.ConsoleTextscroll.Size = new Size(form.ConsoleTextscroll.Size.Width, (Constants.Element_height + Constants.Element_y_padding) * 3);
             form.ConsoleTextscroll.Hide();
-            //form.ConsoleTextscroll.ValueChanged += form.consolescroll;
+            form.ConsoleTextscroll.ValueChanged += form.consolescroll;
             ConsoleElements.Add(form.ConsoleTextscroll);
             form.ConsolePage.Controls.Add(form.ConsoleTextscroll);
 
