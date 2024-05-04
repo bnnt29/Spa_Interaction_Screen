@@ -15,7 +15,6 @@ namespace Test
     public class OpenDMX
 
     {
-        private Logger Log;
 
         public static byte[] buffer = new byte[513];
         public static FT_HANDLE handle;
@@ -61,12 +60,7 @@ namespace Test
         [DllImport("FTD2XX.dll")]
         public static extern FT_STATUS FT_SetDivisor(FT_HANDLE ftHandle, char usDivisor);
 
-        public OpenDMX(Logger L)
-        {
-            Log = L;
-        }
-
-        public void start()
+        public static void start()
         {   
             done = true;
             if (handle != null || handle != 0)
@@ -77,7 +71,7 @@ namespace Test
             status = FT_Open(0, ref handle);
             if(status != FT_STATUS.FT_OK)
             {
-                Log.Print($"Failed to Open enttec: {status}", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
+                Logger.Print($"Failed to Open enttec: {status}", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
                 return;
             }
             if (write_thread != null)
@@ -90,7 +84,7 @@ namespace Test
             setDmxValue(0, 0);  //Set DMX Start Code
         }
 
-        public void setDmxValue(int channel, byte value)
+        public static void setDmxValue(int channel, byte value)
         {
             if (buffer != null)
             {
@@ -98,7 +92,7 @@ namespace Test
             }
         }
 
-        public void writeData()
+        public static void writeData()
         {
             while (!done)
             {
@@ -111,7 +105,7 @@ namespace Test
 
         }
 
-        public int write(FT_HANDLE handle, byte[] data, int length)
+        public static int write(FT_HANDLE handle, byte[] data, int length)
   {
             IntPtr ptr = Marshal.AllocHGlobal((int)length);
             Marshal.Copy(data, 0, ptr, (int)length);
@@ -119,7 +113,7 @@ namespace Test
             status = FT_Write(handle, ptr, (uint)length, ref bytesWritten);
             if(status != FT_STATUS.FT_OK)
             {
-                Log.Print($"Enttec Error state: {status}", Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                Logger.Print($"Enttec Error state: {status}", Logger.MessageType.Licht, Logger.MessageSubType.Error);
                 if(status == FT_STATUS.FT_INVALID_HANDLE || status == FT_STATUS.FT_IO_ERROR || status == FT_STATUS.FT_DEVICE_NOT_FOUND || status == FT_STATUS.FT_OTHER_ERROR)
                 {
                     start();
@@ -128,7 +122,7 @@ namespace Test
             return (int)bytesWritten;
         }
 
-        public void initOpenDMX()
+        public static void initOpenDMX()
         {
             status = FT_ResetDevice(handle);
             status = FT_SetDivisor(handle, (char)12);  // set baud rate

@@ -7,7 +7,6 @@ namespace Spa_Interaction_Screen
 {
     public partial class Loading : Form
     {
-        private Logger Log;
         private MainForm form;
         private Label progress;
         private ProgressBar progressBar;
@@ -18,7 +17,6 @@ namespace Spa_Interaction_Screen
 
         public Loading(MainForm f, Screen screen)
         {
-            Log = f.Log;
             InitializeComponent();
             this.HandleCreated += new EventHandler((sender, args) =>
             {
@@ -58,8 +56,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateDebugtext(Text, show);
                 }
             }
@@ -69,10 +67,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegateDebugtext(Text, show);
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
                 }
             }
@@ -93,7 +91,7 @@ namespace Spa_Interaction_Screen
             if (show)
             {
                 DebugText.Show();
-                Log.Print($"DebugText: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                Logger.Print($"DebugText: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
             }
             else
             {

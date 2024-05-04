@@ -1,25 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.Drawing.Design;
+using System.IO;
 using static QRCoder.PayloadGenerator;
 using static Spa_Interaction_Screen.Constants;
+using static Spa_Interaction_Screen.Logger;
 
 namespace Spa_Interaction_Screen
 {
     public class Config
     {
-        private Logger Log;
-
         public bool allread = false;
         public byte[] currentvalues = null;
         public DateTime lastchangetime;
 
         //current generated wifi password
-        public String password = null;
+        public String Wifipassword = null;
 
         //Config
         public int Room = -1;
@@ -74,12 +75,11 @@ namespace Spa_Interaction_Screen
         public List<Constants.ServicesSetting> ServicesSettings = null;
         public List<Constants.DMXScene> DMXScenes = null;
 
-        public Config(Config? c, Logger L)
+        public Config(Config? c)
         {
-            Log = L;
             if (!LoadPreConfig())
             {
-                Log.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
             LoadContentConfig();
@@ -89,21 +89,22 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(Constants.PreConfigPath))
             {
-                Log.Print("Config not find PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Could not find PreConfig: {Constants.PreConfigPath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             StreamReader stream = null;
-            try
+            FileStream fstream = CreateStream(Constants.PreConfigPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (fstream != null && fstream.CanRead)
             {
-                stream = File.OpenText(Constants.PreConfigPath);
+                stream = new StreamReader(fstream);
             }
-            catch (IOException ex)
+            else
             {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Log.Print("Could not open Config File", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
             }
-            if (stream == null)
+            if (fstream == null || stream == null)
             {
+                Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
             String res = null;
@@ -113,40 +114,43 @@ namespace Spa_Interaction_Screen
             }
             if (stream.EndOfStream)
             {
-                Log.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
             String[] data = res.Split(Constants.PreConfigDelimiter);
             if (!data[1].Equals(Constants.CurrentVersion))
             {
-                Log.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print("PreConfig doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
             try
             {
                 Constants.DateTimeFormat = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
-            }catch(FormatException e)
-            {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
-            Log.Print($"Loading Preconfig Version: {data[1]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
-            Constants.ContentPath = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower()+"\\";
-            try 
+            catch (FormatException e)
+            {
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+            }
+            Logger.Print($"Loading Preconfig Version: {data[1]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
+            Constants.ContentPath = @$"{ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower()}";
+            try
             {
                 Constants.UDPReceivePort = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
             }
             catch (FormatException e)
-            { 
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+            {
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                stream.Close();
                 return false;
             }
-            Char[] seps = new Char[2];
+            Char[] seps = new Char[3];
             seps[0] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             seps[1] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
+            seps[2] = ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             Constants.Delimiter = seps;
-           try
+            try
             {
                 Constants.maxscenes = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
                 Constants.maxhelps = Int32.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1]);
@@ -157,17 +161,20 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                stream.Close();
                 return false;
             }
             try
             {
                 Constants.noCOM = Boolean.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower());
                 Constants.noNet = Boolean.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower());
+                Constants.showdirectlypotentiallyfalsewificreds = Boolean.Parse(ReadPreConfig(stream).Split(Constants.PreConfigDelimiter)[1].ToLower());
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                stream.Close();
                 return false;
             }
             try
@@ -179,10 +186,43 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                stream.Close();
                 return false;
             }
+            stream.Close();
             return true;
+        }
+
+        private static FileStream CreateStream(String path, FileMode fm, FileAccess fa,FileShare fs)
+        {
+            FileStream fstream = null;
+            try
+            {
+                File.SetAttributes(path, FileAttributes.Normal);
+                fstream = File.Open(path, fm, fa, fs);
+            }
+            catch (IOException ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Could not open File: {path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                if (fstream != null)
+                {
+                    fstream.Close();
+                }
+                return null;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                if (fstream != null)
+                {
+                    fstream.Close();
+                }
+                return null;
+            }
+            return fstream;
         }
 
         private String ReadPreConfig(StreamReader stream)
@@ -197,33 +237,35 @@ namespace Spa_Interaction_Screen
                 s = stream.ReadLine();
             }catch (IOException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             return (s!=null)?s:"";
         }
 
         private void LoadContentConfig()
         {
-            String Path = Constants.ContentPath + "ConfigFile.csv";
-            Log.Print($"Using {Path} for the MainConfig Path", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
-            if (!File.Exists(Path))
+            String FilePath = "ConfigFile.csv";
+            finalizePaths(out FilePath, FilePath);
+            Logger.Print($"Using {FilePath} for the MainConfig Path", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
+            if (!File.Exists(FilePath))
             {
-                Log.Print("Config not find Config", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Could not find Config: {FilePath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
-            StreamReader stream = null;
-            try
-            {
-                stream = File.OpenText(Path);
-            }
-            catch (IOException ex)
-            {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Log.Print("Could not open Config File", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-            }
 
-            if (stream == null)
+            StreamReader stream = null;
+            FileStream fstream = CreateStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (fstream != null && fstream.CanRead)
             {
+                stream = new StreamReader(fstream);
+            }
+            else
+            {
+                Logger.Print("Opened Config, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
+            }
+            if (fstream == null || stream == null)
+            {
+                Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
             String res = null;
@@ -234,16 +276,16 @@ namespace Spa_Interaction_Screen
             }
             if (stream.EndOfStream)
             {
-                Log.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-                stream.Close();
+                Logger.Print("Reached End of file unexpectedly. No Data Read.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                stream.Close(); 
                 return;
             }
-            String[] fields = stripComments(res.Split(Constants.Delimiter[0]), Constants.Delimiter[1]);
-            Log.Print($"Loading CSV Config Version: {fields[0]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
+            String[] fields = stripComments(res.Split(Constants.Delimiter[0]), Constants.Delimiter[1], Constants.Delimiter[2]);
+            Logger.Print($"Loading CSV Config Version: {fields[0]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!fields[0].Equals(Constants.CurrentVersion))
             {
-                Log.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-                stream.Close();
+                Logger.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                stream.Close(); 
                 return;
             }
             bool read_all = true;
@@ -271,7 +313,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             try
             {
@@ -279,7 +321,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
             String[] sl = null;
@@ -290,7 +332,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             showLogo = new bool[(sl.Length - 1 > 7) ? 7 : sl.Length - 1];
             try
@@ -302,7 +344,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
             read_all = getcsvFields(stream, ref QRLogoFilePath, 0, true, read_all);
@@ -321,13 +363,13 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogPath, 0, true, read_all);
             if (!read_all)
             {
-                Log.Print("Something went wrong in reading the single Variables (x01)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-                stream.Close();
+                Logger.Print("Something went wrong in reading the single Variables (x01)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                stream.Close(); 
                 return;
             }
             finalizePaths(out LogoFilePath, LogoFilePath);
@@ -339,6 +381,13 @@ namespace Spa_Interaction_Screen
             finalizePaths(out ServiceBackgroundImage, ServiceBackgroundImage);
             finalizePaths(out WartungBackgroundImage, WartungBackgroundImage);
             finalizePaths(out SessionEndImage, SessionEndImage);
+            LogPath = LogPath.Replace("[Date]", $"{DateTime.Now.Year}.{DateTime.Now.Month}.{DateTime.Now.Day}");
+            LogPath = LogPath.Replace("[Time]", $"{DateTime.Now.Hour}-{DateTime.Now.Minute}");
+            LogPath = LogPath.Replace('<', '-').Replace('>', '-').Replace(':', '-').Replace('"', '-');
+            LogPath = LogPath.Replace('/', '_').Replace('\\', '_').Replace('|', '_').Replace('?', '_').Replace('*', '_');
+            finalizePaths(out LogPath, LogPath);
+            Debug.Print(LogPath);
+            Logger.InitLogfromBackup(this);
             stream.ReadLine();
             String[] Dimmerchannelval1 = null;
             read_all = getcsvFields(stream, ref Dimmerchannelval1, -1, false, read_all);
@@ -350,8 +399,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Log.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
@@ -363,8 +412,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Log.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             field = null;
             read_all = getcsvFields(stream, ref field, -1, false, read_all);
@@ -376,8 +425,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
-                Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Log.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             String[] ReadFields = null;
             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -395,8 +444,8 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
-                        Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                        Log.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                        Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        Logger.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }
                     atleastonechannel = true;
                 }
@@ -413,8 +462,8 @@ namespace Spa_Interaction_Screen
 
             if (!read_all)
             {
-                Log.Print("Something went wrong in reading the single Variables (x02)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-                stream.Close();
+                Logger.Print("Something went wrong in reading the single Variables (x02)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                stream.Close(); 
                 return;
             }
             while (!read_all || ReadFields == null || ReadFields.Length <= 0 || (!ReadFields[0].Contains("Json Type:")))
@@ -423,8 +472,8 @@ namespace Spa_Interaction_Screen
             }
             if (!read_all)
             {
-                Log.Print("Something went wrong in reading the bunch Variables (x03)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-                stream.Close();
+                Logger.Print("Something went wrong in reading the bunch Variables (x03)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                stream.Close(); 
                 return;
             }
             Typenames = new String[5];
@@ -456,7 +505,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
-                        Log.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         continue;
                     }
                 }
@@ -507,7 +556,7 @@ namespace Spa_Interaction_Screen
                             }
                             catch (FormatException ex)
                             {
-                                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             if (ident >= 0)
                             {
@@ -551,7 +600,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
-                                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                                    Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                     continue;
                                 }
                             }
@@ -562,7 +611,7 @@ namespace Spa_Interaction_Screen
                             catch (FormatException ex)
                             {
                                 parsed = false;
-                                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             si.should_reset = parsed;
                             if (ReadFields.Length >= 3)
@@ -588,11 +637,11 @@ namespace Spa_Interaction_Screen
                             {
                                 Constants.rawfunctiontext f = new Constants.rawfunctiontext();
                                 f.functionText = ReadFields[2];
-                                si.function = f;
+                                si.secondary = f;
                             }
                             else
                             {
-                                si.function = null;
+                                si.secondary = null;
                             }
                             ServicesSettings.Add(si);
                             read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
@@ -628,7 +677,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
-                                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                                    Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                 }
                                 save = Math.Min(255, save);
                                 save = Math.Max(0, save);
@@ -645,13 +694,25 @@ namespace Spa_Interaction_Screen
                 }
                 x--;
             }
-            stream.Close();
+            stream.Close(); 
             if (!read_all)
             {
                 return;
             }
             SessionSettings = SessionSettings.OrderBy(x => x.mins).ToList<SessionSetting>();
-            while (DMXScenes.Count < 2)
+            int MaxChannels = Math.Max(Math.Max(Dimmerchannel[0], Dimmerchannel[1]), Math.Max(Dimmerchannel[1], ObjectLightchannel));
+            for (int i = 0; i < colorwheelvalues.Length; i++)
+            {
+                for (int j = 0; j < colorwheelvalues[i].Length; j++)
+                {
+                    MaxChannels = Math.Max(MaxChannels, colorwheelvalues[i][j]);
+                }
+            }
+            for(int i = 0; i< DMXScenes.Count; i++)
+            {
+                MaxChannels = Math.Max(MaxChannels, DMXScenes[i].Channelvalues.Length);
+            }
+            while (DMXScenes.Count < 3)
             {
                 DMXScene scene = new DMXScene();
                 scene.ShowText = $"Generated {DMXScenes.Count}";
@@ -663,7 +724,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    scene.Channelvalues = new byte[Math.Max(Math.Max(Dimmerchannel[0], Dimmerchannel[1]), Math.Max(Dimmerchannel[1], ObjectLightchannel))];
+                    scene.Channelvalues = new byte[MaxChannels];
                 }
                 for (int i = 0; i < scene.Channelvalues.Length - 1; i++)
                 {
@@ -681,23 +742,19 @@ namespace Spa_Interaction_Screen
                 }
             }
             ServicesSettings = neu;
-            currentvalues = new byte[DMXScenes[0].Channelvalues.Length];
+            currentvalues = new byte[MaxChannels];
             allread = true;
         }
 
         public Constants.ServicesSetting setupsecondaryfunctionsforServiceButtons(Constants.ServicesSettingfunction sss)
         {
 
-            if (sss.function == null || ((Constants.rawfunctiontext)(sss.function)).functionText == null || ((Constants.rawfunctiontext)(sss.function)).functionText.Length <= 0 || !((Constants.rawfunctiontext)(sss.function)).functionText.Contains(',') || ((Constants.rawfunctiontext)(sss.function)).functionText.Split(',').Length < 2)
+            if (sss.secondary == null || ((Constants.rawfunctiontext)(sss.secondary)).functionText == null || ((Constants.rawfunctiontext)(sss.secondary)).functionText.Length <= 0 || !((Constants.rawfunctiontext)(sss.secondary)).functionText.Contains(',') || ((Constants.rawfunctiontext)(sss.secondary)).functionText.Split(',').Length < 2)
             {
-                ServicesSetting ss = new ServicesSetting();
-                ss.id = sss.id;
-                ss.ShowText = sss.ShowText;
-                ss.JsonText = sss.JsonText;
-                return ss;
+                return (ServicesSetting)sss;
             }
             bool typefound = false;
-            ServicesSettingfunction service = null;
+            String f = ((Constants.rawfunctiontext)(sss.secondary)).functionText.Split(',')[0].Trim().ToLower();
             for (int i = 0; i < Typenames.Length; i++)
             {
                 String s = Typenames[i];
@@ -705,11 +762,11 @@ namespace Spa_Interaction_Screen
                 {
                     continue;
                 }
-                String f = ((Constants.rawfunctiontext)(sss.function)).functionText.Split(',')[0].Trim().ToLower();
                 if (s.Equals(f))
                 {
-                    service = getServiceFunctionFromString(i, sss);
+                    getServiceFunctionFromString(i, sss);
                     typefound = true;
+                    break;
                 }
             }
             if (!typefound)
@@ -717,46 +774,40 @@ namespace Spa_Interaction_Screen
                 int z = -1;
                 try
                 {
-                    z = Int32.Parse(((Constants.rawfunctiontext)(sss.function)).functionText.Split(',')[0].Trim());
+                    z = Int32.Parse(((Constants.rawfunctiontext)(sss.secondary)).functionText.Split(',')[0].Trim());
                 }
                 catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                     return null;
                 }
                 if (z >= 0 && z < Typenames.Length)
                 {
-                    service = getServiceFunctionFromString(z, sss);
+                    getServiceFunctionFromString(z, sss);
                 }
             }
-            if (service == null)
+            if (sss == null)
             {
-                Constants.ServicesSetting ser = new ServicesSetting();
-                ser.id = sss.id;
-                ser.ShowText = sss.ShowText;
-                ser.JsonText = sss.JsonText;
-                return ser;
+                return sss;
             }
-            service.id = sss.id;
-            service.ShowText = sss.ShowText;
-            service.JsonText = sss.JsonText;
-            service.hassecondary = true;
-            return service;
+            sss.hassecondary = true;
+            Logger.Print($"Added secondary: {sss.ToString()} to Service Button: {sss.ShowText}", MessageType.Konfig, MessageSubType.Information);
+            return sss;
         }
 
         private ServicesSettingfunction getServiceFunctionFromString(int type, Constants.ServicesSettingfunction s)
         {
-            String[] functionspecs = ((Constants.rawfunctiontext)(s.function)).functionText.Split(',');
+            Debug.Print(((Constants.rawfunctiontext)(s.secondary)).functionText);
+            String[] functionspecs = ((Constants.rawfunctiontext)(s.secondary)).functionText.Split(',');
             configclasses functionclass = null;
             if (functionspecs.Length < 2)
             {
-                Log.Print("Not enough Secondary Function arguments", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print("Not enough Secondary Function arguments", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 return null;
             }
-            ServicesSettingfunction res = new ServicesSettingfunction();
-            res.function = null;
-            res.functionclass = Getconfigclasstype(type);
-            if (res.functionclass == null)
+            s.secondary = null;
+            s.functionclass = Getconfigclasstype(type);
+            if (s.functionclass == null)
             {
                 return null;
             }
@@ -765,18 +816,18 @@ namespace Spa_Interaction_Screen
             {
                 if (sys.JsonText.Equals(functionspecs[1]))
                 {
-                    res.function = sys;
+                    s.secondary = sys;
                     break;
                 }
             }
-            if (res.function == null)
+            if (s.secondary == null)
             {
                 int rese = -1;
                 if (functionspecs.Length > 0 && int.TryParse(functionspecs[1], out rese))
                 {
                     if (rese != 0 && rese >= 0 && rese < getListfromint(type).Count)
                     {
-                        res.function = getListfromint(type)[rese];
+                        s.secondary = getListfromint(type)[rese];
                     }
                     else
                     {
@@ -788,38 +839,69 @@ namespace Spa_Interaction_Screen
                     return null;
                 }
             }
+            int index = 2;
             try
             {
-                if (functionspecs.Length > 2)
+                if (functionspecs.Length > index)
                 {
-                    res.enable = Boolean.Parse(functionspecs[2]);
+                    s.enable = Boolean.Parse(functionspecs[index++]);
                 }
                 else
                 {
-                    res.enable = false;
+                    s.enable = false;
                 }
-                if (functionspecs.Length > 3)
+                if (functionspecs.Length > index)
                 {
-                    res.block = Boolean.Parse(functionspecs[3]);
+                    s.block = Boolean.Parse(functionspecs[index++]);
                 }
                 else
                 {
-                    res.block = false;
+                    s.block = false;
+                }
+                if (functionspecs.Length > index)
+                {
+                    s.canceling = Boolean.Parse(functionspecs[index++]);
+                }
+                else
+                {
+                    s.canceling = false;
+                }
+                if (functionspecs.Length > index)
+                {
+                    s.toggle = Boolean.Parse(functionspecs[index++]);
+                }
+                else
+                {
+                    s.toggle = false;
                 }
             }
             catch (FormatException ex)
             {
-                Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
-            if (functionspecs.Length > 4 && functionspecs[4].Length > 0)
+            if (functionspecs.Length > index)
             {
-                res.value = functionspecs[4];
+                s.value = functionspecs[index++];
             }
             else
             {
-                res.value = null;
+                s.value = null;
             }
-            return res;
+            try
+            {
+                if (functionspecs.Length > index && functionspecs[index].Length > 0)
+                {
+                    s.delay = Int32.Parse(functionspecs[index++]);
+                }
+                else
+                {
+                    s.delay = 0;
+                }
+            }catch (FormatException ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, MessageSubType.Error);
+            }
+            return s;
         }
 
         private static Type Getconfigclasstype(int type)
@@ -865,7 +947,7 @@ namespace Spa_Interaction_Screen
             {
                 if (s.Length >= 0)
                 {
-                    s = $@"{Constants.ContentPath}{s.ToLower()}";
+                    s = Path.Combine(Constants.ContentPath, s.ToLower());
                 }
                 else
                 {
@@ -885,11 +967,11 @@ namespace Spa_Interaction_Screen
             String line = stream.ReadLine();
             if (!lasttry)
             {
-                Log.Print("Something went wrong in reading the single Variables (x05)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                Logger.Print("Something went wrong in reading the single Variables (x05)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 stream.Close();
                 return false;
             }
-            String[] s = stripComments(line.Split(Delimiter[0]), Delimiter[1]);
+            String[] s = stripComments(line.Split(Delimiter[0]), Delimiter[1], Delimiter[2]);
             if (s == null || s.Length <= 0)
             {
                 return canbeempty;
@@ -900,10 +982,10 @@ namespace Spa_Interaction_Screen
                 {
                     variable = (T)Convert.ChangeType(s[index], typeof(T));
                 }
-                catch (Exception ex)
+                catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                    Log.Print("Beim einlesen der Konfig konnte eine Einstellung nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Logger.Print("Beim einlesen der Konfig konnte eine Einstellung nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 }
             }
             else
@@ -914,10 +996,10 @@ namespace Spa_Interaction_Screen
                     {
                         variable = (T)(object)Convert.ChangeType(s, typeof(T));
                     }
-                    catch (Exception ex)
+                    catch (FormatException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                        Log.Print("Beim einlesen der Konfig konnte eine Einstellungsmenge nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                        Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        Logger.Print("Beim einlesen der Konfig konnte eine Einstellungsmenge nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }
                 }
                 else
@@ -932,7 +1014,7 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
-        public String[] stripComments(String[] field, Char CommandDelimiters)
+        public String[] stripComments(String[] field, Char CommandDelimiters, Char EmptyDelimiter)
         {
             String[] res = new String[field.Length];
             int x = 0;
@@ -940,11 +1022,112 @@ namespace Spa_Interaction_Screen
             {
                 if (s != null && !s.StartsWith(CommandDelimiters) && !s.Equals("") && s.Length > 0)
                 {
-                    res[x++] = s;
+                    if(!s.Equals(EmptyDelimiter.ToString()))
+                    {
+                        res[x++] = s;
+                    }
+                    else
+                    {
+                        res[x++] = null;
+                    }
                 }
             }
             Array.Resize(ref res, x);
             return res;
+        }
+
+        public bool UseoldWiFicreds()
+        {
+            FileStream tmp = null;
+            if (!File.Exists(Constants.WifiCreds))
+            {
+                Logger.Print("Old WiFi Credentials are non existent", MessageType.Konfig, MessageSubType.Error);
+                return false;
+            }
+            StreamReader stream = null;
+            File.SetAttributes(Constants.WifiCreds, FileAttributes.Normal);
+            FileStream fstream = CreateStream(Constants.WifiCreds, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (fstream != null && fstream.CanRead)
+            {
+                stream = new StreamReader(fstream);
+            }
+            else
+            {
+                Logger.Print("Opened WiFi Credentials, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
+            }
+            String line;
+            bool foundssid = false;
+            bool foundpassword = false;
+            while (stream != null &&!stream.EndOfStream)
+            {
+                line = stream.ReadLine();
+                if(line != null && line.Length > 0 && line.Contains(Constants.PreConfigDelimiter))
+                {
+                    if (line.Contains("SSID"))
+                    {
+                        WiFiSSID = line.Split(Constants.PreConfigDelimiter)[1].Trim();
+                        foundssid = true;
+                    }
+                    else if (line.Contains("Password")){
+                        Wifipassword = line.Split(Constants.PreConfigDelimiter)[1].Trim();
+                        foundpassword = true;
+                    }
+                    else
+                    {
+                        Logger.Print("Found unknown WiFi Credentials Keys in WiFi Credentials File", MessageType.Konfig, MessageSubType.Notice);
+                    }
+                }
+                else
+                {
+                    Logger.Print("Could not read old WiFi Credentials", MessageType.Konfig, MessageSubType.Error);
+                    stream.Close();
+                    return false;
+                }
+            }
+            if(!foundssid || !foundpassword)
+            {
+                Logger.Print("The showen WiFi Credentials could be wrong, since not every needed Information could be found in the File", MessageType.Konfig, MessageSubType.Error);
+            }
+            stream.Close();
+            return true;
+        }
+
+        public void updateWificreds()
+        {
+            if (WiFiSSID == null || WiFiSSID.Length <= 0 || Wifipassword == null || Wifipassword.Length <= 0)
+            {
+                return;
+            }
+            try
+            {
+                File.Create(Constants.WifiCreds).Close();
+            }catch(IOException ex)
+            {
+                Logger.Print(ex.Message, MessageType.Konfig, MessageSubType.Error);
+            }
+            if (!File.Exists(Constants.WifiCreds))
+            {
+                Logger.Print($"Filesystem Error cannot find file: {Constants.WifiCreds}", MessageType.Konfig, MessageSubType.Error);
+                return;
+            }
+            File.SetAttributes(Constants.WifiCreds, FileAttributes.Normal);
+            StreamWriter stream = null;
+            FileStream fstream = CreateStream(Constants.WifiCreds, FileMode.Append, FileAccess.Write, FileShare.Read);
+            if (fstream != null && fstream.CanWrite)
+            {
+                stream = new StreamWriter(fstream);
+            }
+            else
+            {
+                Logger.Print("Opened WiFi Credentials, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
+            }
+            if (stream != null)
+            {
+                stream.WriteLine($"SSID{Constants.PreConfigDelimiter}{WiFiSSID}");
+                stream.WriteLine($"Password{Constants.PreConfigDelimiter}{Wifipassword}");
+                stream.Flush();
+            }
+            stream.Close();
         }
     }
 }

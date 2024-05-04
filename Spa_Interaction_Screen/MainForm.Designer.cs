@@ -423,6 +423,8 @@ namespace Spa_Interaction_Screen
 
         //ServicePage
         public Label HowCanIHelpYouDescribtion;
+        public Label ZentraleNotReachable;
+        public Label Servicelockedlabel;
 
         //WartungPage
         public Label WartungCodeField;
@@ -431,16 +433,16 @@ namespace Spa_Interaction_Screen
         //RestrictedPage
         public Label RestrictedAreaTitle;
         public Button resetscenelockbutton;
+        public Button resetSessionlockbutton;
+        public Button resetServicelockbutton;
 
         //ConsolePage
-        public ComboBox consoletype;
         public ComboBox tcptype;
         public TextBox CommandboxLabel;
         public TextBox Commandboxid;
         public TextBox Commandboxvalues;
-        public ColorSlider.ColorSlider Textscroll; 
         public Label Messagepreview;
-        public ColorSlider.ColorSlider ConsoleTextscroll;
+        public Label Programmstate;
 
     }
 }

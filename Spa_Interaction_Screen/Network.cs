@@ -20,7 +20,6 @@ namespace Spa_Interaction_Screen
 {
     public class Network
     {
-        private Logger Log;
         private MainForm form;
         private Config config;
         public List<TcpClient> tcpClients = new List<TcpClient>();
@@ -32,7 +31,6 @@ namespace Spa_Interaction_Screen
 
         public Network(MainForm f, Config c)
         {
-            Log = f.Log;
             form = f;
             config = c;
             StartTCPServer();
@@ -133,7 +131,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                    return null;
                 }
 
                 List<TcpClient> possibilities = new List<TcpClient>();
@@ -184,6 +183,26 @@ namespace Spa_Interaction_Screen
             return cl;
         }
 
+        public bool isClientZentrale(TcpClient client)
+        {
+            if (config != null && config.IPZentrale != null && client != null && client.Connected)
+            {
+                return false;
+            }
+            byte[] ip = new byte[4];
+            for (int i = 0; i < config.IPZentrale.Length; i++)
+            {
+                ip[i] = Byte.Parse(config.IPZentrale[i]);
+            }
+            IPAddress specifiedIP = new IPAddress(ip);
+            IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+            if (!endpoint.Address.Equals(specifiedIP))
+            {
+                return false;
+            }
+            return true;
+        }
+
 
         //UDP
         /*
@@ -202,14 +221,14 @@ namespace Spa_Interaction_Screen
                 {
                     result = await udpClient.ReceiveAsync();
                     Byte[] receivedBytes = result.Buffer;
-                    Log.Print($"{Encoding.ASCII.GetString(receivedBytes)}");
+                    Logger.Print($"{Encoding.ASCII.GetString(receivedBytes)}");
                     if (receivedBytes != null && receivedBytes.Length > 0)
                     {
                         handleReceivedUDP(parse(receivedBytes));
                     }
                     else
                     {
-                        Log.Print("Recaived UDP Paket with no Json Content");
+                        Logger.Print("Recaived UDP Paket with no Json Content");
                     }
                 }
             });
@@ -220,7 +239,7 @@ namespace Spa_Interaction_Screen
         {
             if (debug)
             {
-                Log.Print($"Send {req.type} Request to {req.destination}:{req.port} with {req.label}, {req.id}");
+                Logger.Print($"Send {req.type} Request to {req.destination}:{req.port} with {req.label}, {req.id}");
             }
             UdpClient client = new UdpClient();
             IPAddress serverAddr = IPAddress.Parse(req.destination);
@@ -234,10 +253,10 @@ namespace Spa_Interaction_Screen
             }
             catch (Exception e)
             {
-                Log.Print(e.Message);
+                Logger.Print(e.Message);
             }
-            Log.Print($"[{req.type}]Bytes send via UDP: {num}");
-            Log.Print(text);
+            Logger.Print($"[{req.type}]Bytes send via UDP: {num}");
+            Logger.Print(text);
         }
         */
 
@@ -254,7 +273,7 @@ namespace Spa_Interaction_Screen
             }
             if (cl == null)
             {
-                Log.Print("No connected Clients",Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
+                Logger.Print("No connected Clients",Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
                 return false;
             }
             NetworkStream stream = cl.GetStream();
@@ -272,7 +291,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        Log.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
                         break;
                 }
                 return false;
@@ -295,14 +314,14 @@ namespace Spa_Interaction_Screen
                 net.tcpClients.Add(client);
                 net.ListeningClients.Add(Task.Run(() => listenTCPConnection(client, net, false, ListeningClients.Count)));
                 IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
-                Log.Print($"Client with IP:{endpoint.Address} connected", [Logger.MessageType.TCPReceive, Logger.MessageType.TCPSend], Logger.MessageSubType.Information);
+                Logger.Print($"Client with IP:{endpoint.Address} connected", [Logger.MessageType.TCPReceive, Logger.MessageType.TCPSend], Logger.MessageSubType.Information);
             }
         }
 
         private void listenTCPConnection(TcpClient cl, Network net, bool isTelnet, int index)
         {
             NetworkStream ns = cl.GetStream();
-            Log.Print("ListeningTCP", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+            Logger.Print("ListeningTCP", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             while (cl.Connected && net.form.RunTask)  //while the client is connected, we look for incoming messages
             {
                 byte[] msg = new byte[1024];     //the messages arrive as byte array
@@ -319,7 +338,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             break;
                     }
                 }
@@ -336,7 +355,7 @@ namespace Spa_Interaction_Screen
         {
             if (routerclient == null || !routerclient.Connected)
             {
-                Log.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 return false;
             }
             NetworkStream ns = routerclient.GetStream();
@@ -354,12 +373,12 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
                 return false;
             }
-            //Log.Print("pass ?");
+            //Logger.Print("pass ?");
             return true;
         }
 
@@ -367,7 +386,7 @@ namespace Spa_Interaction_Screen
         {
             if (routerclient == null || !routerclient.Connected)
             {
-                Log.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 return false;
             }
             NetworkStream ns = routerclient.GetStream();
@@ -385,7 +404,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
                 return false;
@@ -409,7 +428,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
                 }
@@ -425,7 +444,7 @@ namespace Spa_Interaction_Screen
                     }
                 }
             }
-            Log.Print($"wifi ssid {SSID}", Logger.MessageType.Router, Logger.MessageSubType.Information);
+            Logger.Print($"wifi ssid {SSID}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             return true;
         }
 
@@ -433,7 +452,7 @@ namespace Spa_Interaction_Screen
         {
             if (routerclient == null || !routerclient.Connected)
             {
-                Log.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 return false;
             }
             NetworkStream ns = routerclient.GetStream();
@@ -451,7 +470,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
                 return false;
@@ -475,7 +494,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
                 }
@@ -498,7 +517,7 @@ namespace Spa_Interaction_Screen
         {
             if (routerclient == null || !routerclient.Connected)
             {
-                Log.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Couldnt Send Telnet to router. Check if Router is reachable.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 return false;
             }
             NetworkStream ns = routerclient.GetStream();
@@ -516,7 +535,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
                 return false;
@@ -540,13 +559,12 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
                 }
                 Array.Resize(ref msg, b_read);
                 String m = parse(msg);
-                //Log.Print(m);
                 String[] splt = m.Split("\n");
                 for (int i = 0; i < splt.Length; i++)
                 {
@@ -579,20 +597,19 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
                 }
                 Array.Resize(ref msg, b_read);
                 String m = parse(msg);
-                //Log.Print(m);
                 String[] splt = m.Split("\n");
                 int i = 0;
                 for (i = i; i < splt.Length - 1; i++)
                 {
                     if (splt[i].Contains("#pass") && splt[i].Contains(':'))
                     {
-                        //Log.Print(splt[i].Split(':')[1].Trim());
+                        //Logger.Print(splt[i].Split(':')[1].Trim());
                         return splt[i].Split(':')[1].Trim();
                     }
                 }
@@ -604,66 +621,79 @@ namespace Spa_Interaction_Screen
         {
             if (!connectrouter(f))
             {
-                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                f.helper.setnewPassword();
+                if (config.UseoldWiFicreds())
+                {
+                    f.helper.setnewPassword();
+                }
                 return;
             }
             if (!SendTelnetASKPass())
             {
-                Log.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
             }
             
-            config.password = WaitForPass();
-            //Log.Print($"old Password: {config.password}");
+            config.Wifipassword = WaitForPass();
+            //Logger.Print($"old Password: {config.password}");
             WaitforRouterClientClose();
             if (!connectrouter(f))
             {
-                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                f.helper.setnewPassword();
+                if (config.UseoldWiFicreds())
+                {
+                    f.helper.setnewPassword();
+                }
                 return;
             }
             if (!SendTelnetPasswordrefresh())
             {
-                Log.Print("Error occured while refreshing router password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while refreshing router password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                f.helper.setnewPassword();
+                if (config.UseoldWiFicreds())
+                {
+                    f.helper.setnewPassword();
+                }
                 return;
             }
             WaitforRouterClientClose();
-            String npw = "";
+            String npw;
             DateTime dateTimestart = DateTime.Now;
             do
             {
-                //Log.Print("Waiting for new Password");
+                //Logger.Print("Waiting for new Password");
                 if (!connectrouter(f))
                 {
-                    Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                    Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                     WaitforRouterClientClose();
                 }
                 if (!SendTelnetASKPass())
                 {
-                    Log.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                    Logger.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 }
                 npw = WaitForPass();
-            } while (npw.Equals(config.password) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 2);
+            } while (npw.Equals(config.Wifipassword) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 1.5);
             WaitforRouterClientClose();
-            config.password = npw;
-            Log.Print($"Neues Passwort: {npw}", Logger.MessageType.Router, Logger.MessageSubType.Information);
+            config.Wifipassword = npw;
+            Logger.Print($"Neues Passwort: {npw}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             f.helper.setnewPassword();
         }
         public void setuprouterssid(MainForm f)
         {
             if (!connectrouter(f))
             {
-                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
+                if (config.UseoldWiFicreds())
+                {
+                    f.helper.setnewPassword();
+                }
                 return;
             }
             if (!SendTelnetSetSSID($"{config.WiFiSSID}"))
             {
-                Log.Print("Error occured while Setting new Router SSID", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while Setting new Router SSID", Logger.MessageType.Router, Logger.MessageSubType.Notice);
 
             }
             WaitforRouterClientClose();
@@ -673,13 +703,13 @@ namespace Spa_Interaction_Screen
         {
             if (!connectrouter(f))
             {
-                Log.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
                 return;
             }
             if (!SendTelnetWakeup())
             {
-                Log.Print("Error occured while tried to wakeup Router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error occured while tried to wakeup Router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
 
             }
             WaitforRouterClientClose();
@@ -703,7 +733,7 @@ namespace Spa_Interaction_Screen
 
         private bool handleReceivedTel(String m)
         {
-            Log.Print($"Received Message: {m}", Logger.MessageType.Router, Logger.MessageSubType.Information);
+            Logger.Print($"Received Message: {m}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             if (m.Contains("#pass"))
             {
                 String[] lines = m.Split("WMedia>");
@@ -713,7 +743,7 @@ namespace Spa_Interaction_Screen
                     if (line.Contains('#') && line.Contains("pass") && line.Contains(":"))
                     {
                         String p = line.Split(":")[1].Split("\n\r")[0].Trim();
-                        config.password = p;
+                        config.Wifipassword = p;
                         foundline = true;
                         break;
                     }
@@ -746,17 +776,17 @@ namespace Spa_Interaction_Screen
                 routerclient = new TcpClient();
                 routerclient.Connect(ip_address, port_number);
 
-                Log.Print($"Success connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Information);
+                Logger.Print($"Success connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             }
             catch (Exception e)
             {
-                Log.Print(e.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
-                Log.Print($"Failed while connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print(e.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                Logger.Print($"Failed while connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 routerclient = null;
             }
             if (routerclient == null || !routerclient.Connected)
             {
-                Log.Print("Error when tried to connect to ecler Router via Telnet over TCP\nCannot change Password or name remotely nor display the current password.", Logger.MessageType.Router, Logger.MessageSubType.Notice);
+                Logger.Print("Error when tried to connect to ecler Router via Telnet over TCP.Cannot change Password or name remotely nor display the current password. Trying to Fallback to previous WiFi Credentials", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 return false;
             }
             bool receivedadd = false;
@@ -780,13 +810,13 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            Log.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
                 }
                 Array.Resize(ref msg, b_read);
                 String m = parse(msg);
-                //Log.Print(m);
+                //Logger.Print(m);
                 String[] splt= m.Split("\n");
                 int i = 0;
                 for (i = i; i< splt.Length-1; i++)
@@ -798,7 +828,7 @@ namespace Spa_Interaction_Screen
                 }
                 if (receivedadd && splt.Length > i && splt[i].EndsWith("WMedia>"))
                 {
-                    //Log.Print("Telnet Terminal: ");
+                    //Logger.Print("Telnet Terminal: ");
                     return true;
                 }
             }
@@ -814,12 +844,12 @@ namespace Spa_Interaction_Screen
             }
             if (!(Json.ContainsKey("type") && Json["type"] != null))
             {
-                Log.Print("Invalid Json received: missing \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Invalid Json received: missing \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
             if(!(Json.ContainsKey("room") && Json["room"] != null) || (Int64)Json["room"] != config.Room)
             {
-                Log.Print("Invalid Json received: missing or wrong \"room\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Invalid Json received: missing or wrong \"room\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
             bool processedjson = false;
             int x = -1;
@@ -832,7 +862,7 @@ namespace Spa_Interaction_Screen
                 switch (((String)Json["type"]).Trim().ToLower())
                 {
                     case "status":
-                        Log.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         processedjson = true;
                         break;
                     default:
@@ -848,7 +878,7 @@ namespace Spa_Interaction_Screen
             }
             if (!processedjson)
             {
-                Log.Print("Json could be related to a given \"type\".", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Json could be related to a given \"type\".", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
         }
 
@@ -887,18 +917,18 @@ namespace Spa_Interaction_Screen
             switch (index) 
             {
                 case 0:
-                    Log.Print("Message received Working Normally. Nothing changed", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    Logger.Print("Message received Working Normally. Nothing changed", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                     break;
                 case 1:
-                    Log.Print("Message received: Resetting", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Message received: Resetting", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     f.reset();
                     break;
                 case 2:
-                    Log.Print("Message received: Restarting", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Message received: Restarting", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     f.Restart();
                     break;
                 case 3:
-                    Log.Print("Message received: Shutdown", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Message received: Shutdown", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     f.Shutdown();
                     break;
                 case 4:
@@ -917,7 +947,7 @@ namespace Spa_Interaction_Screen
                             }
                             catch (FormatException ex)
                             {
-                                Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                                Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             }
                             if (sceneindex <= 0)
                             {
@@ -934,16 +964,16 @@ namespace Spa_Interaction_Screen
                         }
                         else
                         {
-                            Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to). Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to). Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
                     {
-                        Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     if (sceneindex < 0 || sceneindex >= c.DMXScenes.Count)
                     {
-                        Log.Print("Index / value outside Scenes Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("Index / value outside Scenes Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         break;
                     }
                     f.Ambiente_Change(c.DMXScenes[sceneindex], true, false, false);
@@ -964,21 +994,21 @@ namespace Spa_Interaction_Screen
                             }
                             catch (FormatException ex)
                             {
-                                Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                                Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             }
                         }
                         else
                         {
-                            Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change valume to. Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change valume to. Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
                     {
-                        Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change valume to", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change valume to", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     if(volumevalue < 0 || volumevalue > 100)
                     {
-                        Log.Print("index / value outside Volume Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("index / value outside Volume Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         break;
                     }
                     f.AmbientVolume(volumevalue, null, null);
@@ -1009,7 +1039,7 @@ namespace Spa_Interaction_Screen
                             }
                         }
                         catch(FormatException ex){
-                            Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                            Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             if (((int[])json["values"])[0] == 0)
                             {
                                 f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
@@ -1022,7 +1052,7 @@ namespace Spa_Interaction_Screen
                     }
                     else
                     {
-                        Log.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene block", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene block", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     break;
                     case 7:
@@ -1035,17 +1065,17 @@ namespace Spa_Interaction_Screen
                             if (f.vlc != null)
                             {
                                 f.vlc.changeMedia(Path, false);
-                                Log.Print($"Projecting Path {Path}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                                Logger.Print($"Projecting Path {Path}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                             }
                         }
                         else
                         {
-                            Log.Print("No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            Logger.Print("No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
                     {
-                        Log.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     break;
                 case 8:
@@ -1074,7 +1104,7 @@ namespace Spa_Interaction_Screen
                     SendTCPMessage(r, null);
                     break;
                 default:
-                    Log.Print("Couldn't recognize \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Couldn't recognize \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     break;
             }
         }
@@ -1118,7 +1148,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("Not enough Arguments provided to edit existing TCP Button (3-4 required)", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Not enough Arguments provided to edit existing TCP Button (3-4 required)", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
                 return;
             }else if(c.TCPSettings.Count <= Constants.maxtcpws)
@@ -1130,12 +1160,12 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("Not enough Arguments provided to create new TCP Button (3-4 required)", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Not enough Arguments provided to create new TCP Button (3-4 required)", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
             }
             else
             {
-                Log.Print("Already reached max number of TCP Wartungs Buttons and it was no label given to edit TCP button", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Already reached max number of TCP Wartungs Buttons and it was no label given to edit TCP button", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
         }
 
@@ -1176,7 +1206,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch(FormatException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                     }
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(time);
                     if (f.timeleftnet >= config.SessionEndShowTimeLeft)
@@ -1208,8 +1238,8 @@ namespace Spa_Interaction_Screen
                         session.should_reset = Boolean.Parse(((string[])json["values"])[i++]);
                     }catch(FormatException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                        Log.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                        Logger.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         return;
                     }
                     if (((string[])(json["values"])).Length > 2)
@@ -1252,8 +1282,8 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                        Log.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                        Logger.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         return;
                     }
                     session.JsonText = (string)json["id"];
@@ -1265,7 +1295,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("Couldn't match given Arguments to a form that is useable.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Couldn't match given Arguments to a form that is useable.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
             }
             else
@@ -1281,7 +1311,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("Missing necesarry Json key (\"id\", to set time to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("Missing necesarry Json key (\"id\", to set time to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
             }
             
@@ -1327,7 +1357,7 @@ namespace Spa_Interaction_Screen
                         x = Int32.Parse(((string)json["label"]));
                     }catch(FormatException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                     }
                     if (x < 0)
                     {
@@ -1356,7 +1386,7 @@ namespace Spa_Interaction_Screen
                 ss.ShowText = ((string[])(json["values"]))[0];
                 Constants.rawfunctiontext fun = new Constants.rawfunctiontext();
                 fun.functionText = ((string[])(json["values"]))[1];
-                ss.function = fun;
+                ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
                 ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
                 if (!c.ServicesSettings.Contains(ss))
@@ -1376,7 +1406,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                 }
                 if (x < 0)
                 {
@@ -1397,7 +1427,7 @@ namespace Spa_Interaction_Screen
                 Constants.rawfunctiontext fun = new Constants.rawfunctiontext();
                 fun.functionText = ((string[])(json["values"]))[1];
                 ss.JsonText = ((string[])(json["values"]))[2];
-                ss.function = fun;
+                ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
                 ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
                 if (!c.ServicesSettings.Contains(ss))
@@ -1408,7 +1438,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                Log.Print("Given arguments do not meet the requirements to add or edit a Service Button", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Given arguments do not meet the requirements to add or edit a Service Button", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
         }
 
@@ -1454,7 +1484,7 @@ namespace Spa_Interaction_Screen
                     {
                         if (index > 0)
                         {
-                            Log.Print("DMXScene Paket label has more than 1 reference in scenes. Taking first found scene", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            Logger.Print("DMXScene Paket label has more than 1 reference in scenes. Taking first found scene", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                             continue;
                         }
                         index = i;
@@ -1463,7 +1493,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                Log.Print("DMXScene Paket doesn't contain necesarry Keys (\"id\" or \"label\") to identify the scene to be edited", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("DMXScene Paket doesn't contain necesarry Keys (\"id\" or \"label\") to identify the scene to be edited", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
             if (json.ContainsKey("values") && json["values"] != null)
@@ -1489,21 +1519,21 @@ namespace Spa_Interaction_Screen
                         {
                             c.DMXScenes[index].ContentPath = Path;
                             f.helper.GendynamicAmbientButtons();
-                            Log.Print($"Name and Path of Scene {c.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                            Logger.Print($"Name and Path of Scene {c.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                         }
                         else
                         {
-                            Log.Print($"Only Name of Scene {c.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            Logger.Print($"Only Name of Scene {c.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
                     {
-                        Log.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                 }
                 else
                 {
-                    Log.Print("DMXScene Paket id out of range. Creating new temporary scene. To show scene in UI you have to send another packet to set showname and (optionally) the Content Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("DMXScene Paket id out of range. Creating new temporary scene. To show scene in UI you have to send another packet to set showname and (optionally) the Content Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     Constants.DMXScene scene = new Constants.DMXScene();
                     scene.id = c.DMXScenes.Count;
                     scene.JsonText = (string)json["type"];
@@ -1519,10 +1549,10 @@ namespace Spa_Interaction_Screen
                     }
                     else
                     {
-                        Log.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[]), aborting creation.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[]), aborting creation.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     c.DMXScenes.Add(scene);
-                    Log.Print($"Added DMXScene with Json label: {scene.JsonText}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    Logger.Print($"Added DMXScene with Json label: {scene.JsonText}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                 }
             }
             else
@@ -1534,7 +1564,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("DMXScene Paket \"id\" / \"label\" out of range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    Logger.Print("DMXScene Paket \"id\" / \"label\" out of range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
             }
             f.SendCurrentSceneOverCom();
@@ -1576,8 +1606,8 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
-                Log.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                Log.Print("Aborted new TCP creation, because of invalid \"id\"", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                Logger.Print("Aborted new TCP creation, because of invalid \"id\"", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
             if (((string[])json["values"]).Length > 3)
@@ -1587,7 +1617,7 @@ namespace Spa_Interaction_Screen
             c.TCPSettings.Add(tcp);
             f.logout();
             f.UIControl.SelectTab(f.UIControl.TabCount - 1);
-            Log.Print("Added new TCP Setting to the \"Wartungs\" Page", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+            Logger.Print("Added new TCP Setting to the \"Wartungs\" Page", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
         }
 
         private String parse(byte[] json)
@@ -1596,9 +1626,9 @@ namespace Spa_Interaction_Screen
             try
             {
                 resString = System.Text.Encoding.Default.GetString(json);
-            }catch(Exception e)
+            }catch(DecoderFallbackException e)
             {
-                Log.Print(e.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                Logger.Print(e.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                 return null;
             }
             return resString;
@@ -1617,7 +1647,7 @@ namespace Spa_Interaction_Screen
         public void Messageafterparse(String m)
         {
             m = m.Trim().ToLower();
-            Log.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+            Logger.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
             handleReceivedNet(keyValuePairs);
         }

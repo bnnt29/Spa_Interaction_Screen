@@ -26,7 +26,7 @@
 #String;#Service Bild;butler.png;;;;;;;;;;;;;;;;;;
 #String;#Wartung Bild;;#minuntes before end of Session (shows endpicture (changeable, blocks streaming, switches to TimePage);;;;;;;;;;;;;;;;;
 #String;#EndBild;butler.png;15;;;;;;;;;;;;;;;;;
-#String;#LogFile;"Log:[Date];[Time].txt";;;;;;;;;;;;;;;;;;
+#String;#LogFile ([Date],[Time] are replaced ([Date]->Year.Month.Day, [Time]->Hour-Minute));Log.txt;;;;;;;;;;;;;;;;;;
 #;#Special DMX Channels;#DMX Channel to change;#Anzeige Text ;#Off Value;#On Value;;;;;;;;;;;;;;;
 #Integer;#Dimmer1 Channel;5;Dusche;#;#;;;;;;;;;;;;;;;
 #Integer;#Dimmer2 Channel;6;Raum;#;#;;;;;;;;;;;;;;;
@@ -44,25 +44,25 @@ Json Type:1;System;#Json Label;;;;;;;;;;;;;;;;;;
 Json Type:2;TCPWartung;#Json Label;#id;#value (no Array);;;;;;;;;;;;;;;;
 #Integer;Whirlpool spülen;Whirlpool;1;;;;;;;;;;;;;;;;;
 #Integer;Whirlpool ablassen;Whirlpool;2;;;;;;;;;;;;;;;;;
-#;#[More TCP Wartugs Setting Informations can be added (max 5)];;;;;;;;;;;;;;;;;;;
+#;#[More TCP Wartugs Setting Informations can be added (max 5 mit Anzeige Text)];;;;;;;;;;;;;;;;;;;
 Json Type:3;Session;#Json id (Mit [all_left] kann dynamisch die Zeile für alle übrigen werte genutzt werden);#Should reset data;#Anzeige Text  (Mit [id] kann dynamisch die id ersetzt werden);#info;;;;;;;;;;;;;;;
 #String;#Sitzung ist zuende;0;false;Sitzung ist zuende;;;;;;;;;;;;;;;;
 #String;#Sitzung ist fast zuende;15;false;Sitzung ist fast zuende: [id];;;;;;;;;;;;;;;;
 #String;#[id] Minuten verbleibend;[all_left];false;[id] Minuten verbleibend;;;;;;;;;;;;;;;;
 #String;#Start;-1;true;;#negative values are not showen and onl via networ reachable;;;;;;;;;;;;;;;
 #;#[More Session Informations can be added];;;;;;;;;;;;;;;;;;;
-Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Subtype;enable,block,(optional)value)";#Info;;;;;;;;;;;;;;;
+Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Subtype;enable,block, cancleTCPCall, toggle(optional)value, (optional)delay";#Info;;;;;;;;;;;;;;;
 #String;#0;ServiceText;Was kann ich heute für Sie tun?;;#(Text auf der Service Seite);;;;;;;;;;;;;;;
 #String;#1;Ruf;anderer Wunsch;;#(Standart Button, falls Gastro ausfällt);;;;;;;;;;;;;;;
-#String;#2;Notfall;Arzt;DMXScenes,Putzlicht,true,true;;;;;;;;;;;;;;;;
-#String;#3;Handtuch;frische Handtücher;;;;;;;;;;;;;;;;;
-#;#[More Serives can be added (max 12)];;;;;;;;;;;;;;;;;;;
+#String;#2;Notfall;Arzt;DMXScenes,Putzlicht,true,true, false;;;;;;;;;;;;;;;;
+#String;#3;Handtuch;frische Handtücher;Services,Notfall,true,true, false;;;;;;;;;;;;;;;;
+#;#[More Serives can be added (max 12 mit Anzeige Text)];;;;;;;;;;;;;;;;;;;
 Json Type:5;DMXScenes;#Json Label;#Anzeige Text;#CH0;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
-#Order Importance;#0;default;Standart;0;255;56;0;0;128;128;255;0;0;0;0;0;0;0;WerbeVideo.mp4;
-#Order Importance;#1;Putzlicht;Putzlicht/Notfall;0;255;200;128;255;255;255;255;0;0;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
-#Order Importance;#2;Colorwheel;Farbwahl;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)
+#Order Importance;#0;default;!;;255;56;0;0;128;128;255;0;0;0;0;0;0;0;WerbeVideo.mp4;
+#Order Importance;#1;Putzlicht;!;0;255;200;128;255;255;255;255;0;0;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
+#Order Importance;#2;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)
 #;#3;Kamin;Kamin;0;255;0;0;0;0;0;0;0;0;0;0;0;0;0;Werbung.jpeg;
 #;#4;Wellen;Wellen;0;0;255;0;0;0;0;0;0;0;0;0;0;0;0;;
 #;#5;Wald;Wald;0;0;0;255;0;128;128;0;0;0;0;0;0;0;0;WerbeVideo.mp4;
-#;#[More Scenes can be added (max 15)];;;;;;;;;;;;;;;;;;;
+#;#[More Scenes can be added (max 15 mit Anzeige Text)];;;;;;;;;;;;;;;;;;;
 #End of Data Placeholder;;;;;;;;;;;;;;;;;;;;

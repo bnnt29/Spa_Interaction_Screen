@@ -20,24 +20,20 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System;
 using QRCoder.Extensions;
+using System.Net.Sockets;
+using Test;
 
 /*TODO:
- * red marked in word
- * resolve System.InvalidOperationException (Invoke oder BeginInvoke kann für ein Steuerelement)
- * resolve fullscreen flicker
- * resolve Progamm not exiting on cross click
- * repair artefacts by change of Media Page
  * Implement all Jsons (sending)
  * Add TCP Json Type security
  * unblock scene via tcp
  * repair monitor setup (start with 1, then connect 1)
- * do not show elements with no / empty ShowText
- * Implement UPD Send/Receive
+ * Implement UDP Send/Receive
  * Test TCPButtons
  * Code //TODO's
  * Refactor for performance
- * Spid out DMX
  * Remove left over artefacts
+ * repair artefacts by change of Media Page
  * 
  */
 
@@ -60,7 +56,9 @@ namespace Spa_Interaction_Screen
         private bool streaming = false;
         public bool vlcclosed = false;
         private int minutes_received = 0;
-        public bool scenelocked = false;
+        public bool Sessionlocked = false;
+        public bool Servicelocked = false;
+        public bool Scenelocked = false;
         public DateTime? TimeSessionEnd = null;
         private bool blocknonstreamingmedia = false;
         public bool SessionEndbool = false;
@@ -69,8 +67,8 @@ namespace Spa_Interaction_Screen
         public int timeleftnet = int.MaxValue;
         public bool switchedtotimepage = false;
         public bool RunTask = true;
-        public bool consoleshown = false;
         public bool showconsoleonallsites = false;
+        public bool lastpingpositiv = true;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
         private List<Buttonfader> timecoloredbuttons = new List<Buttonfader>();
@@ -80,27 +78,28 @@ namespace Spa_Interaction_Screen
         public Network? net = null;
         public EnttecCom? enttec = null;
         public SerialPort? serialPort1 = null;
-        public Logger Log;
 
         private Task state = null;
         private Task windows = null;
         private Task pinggastro = null;
+        private Task pingzentrale = null;
+        private Task<PingReply>[] ping = new Task<PingReply>[2];
 
         private bool exitProgramm = false;
         public bool HandleCreate = false;
 
         public MainForm()
         {
-            Log = new Logger();
             this.FormClosed += OnFormClosed;
             mainscreen = Screen.PrimaryScreen;
+            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             loadscreen = new Loading(this, mainscreen);
             loadscreen.Show();
             loadscreen.Activate();
             loadscreen.updateProgress(10);
             while ((config == null || !config.allread) && !exitProgramm)
             {
-                config = new Config(null, Log);
+                config = new Config(null);
                 loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !config.allread);
                 loadscreen.exitp(!config.allread);
             }
@@ -108,7 +107,7 @@ namespace Spa_Interaction_Screen
             InitializeComponent();
             if (mainscreen == null)
             {
-                Log.Print("Could not detect main screen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                Logger.Print("Could not detect main screen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                 return;
             }
             Constants.recalcsizes(mainscreen.Bounds.Size.Width, mainscreen.Bounds.Size.Height);
@@ -152,7 +151,19 @@ namespace Spa_Interaction_Screen
 
         public void OnFormClosed(object sender, EventArgs e)
         {
-            RunTask = false;
+            UIControl.SelectedIndex = 0;
+            SendCurrentSceneOverCom();
+            exitProgramm = true;
+            RunTask = false; 
+            if (net != null && net.tcpClients != null)
+            {
+                foreach (TcpClient tcp in net.tcpClients)
+                {
+                    tcp.Close();
+                }
+            }
+            Logger.closeStreams();
+            OpenDMX.done = true;
         }
 
         public async void Main_Load(object sender, EventArgs e)
@@ -214,6 +225,10 @@ namespace Spa_Interaction_Screen
             {
                 pinggastro.Wait();
             }
+            if (pingzentrale != null)
+            {
+                pingzentrale.Wait();
+            }
             if (state != null)
             {
                 state.Wait();
@@ -221,9 +236,124 @@ namespace Spa_Interaction_Screen
             RunTask = true;
             windows = Task.Run(async () => ScreenManagerTaskMethod(this));
             pinggastro = Task.Run(async () => GastroPing(this));
+            pingzentrale = Task.Run(async () => ZentralePing(this));
             if (config.StateSendInterval > 0)
             {
                 state = Task.Run(async () => sendState(this));
+            }
+        }
+
+        private async Task ZentralePing(MainForm form)
+        {
+            int index = 0;
+            while (form.RunTask && !Constants.noNet)
+            {
+                Ping pinger = null;
+                byte[] ip = new byte[4];
+                try
+                {
+                    for (int i = 0; i < config.IPZentrale.Length; i++)
+                    {
+                        ip[i] = Byte.Parse(config.IPZentrale[i]);
+                    }
+                }
+                catch (FormatException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                }
+                IPAddress ZentralIP = new IPAddress(ip);
+                try
+                {
+                    pinger = new Ping();
+                    ping[index] = pinger.SendPingAsync(ZentralIP);
+                }
+                catch (PingException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.Extern, Logger.MessageSubType.Error);
+                }
+               
+                if (lastpingpositiv)
+                {
+                    await Task.Delay(5000);
+                }
+                else
+                {
+                    await Task.Delay(2500);
+                }
+
+                index++;
+                index %= ping.Length;
+                if (ping != null && ping[index] != null)
+                {
+                    PingReply reply = await ping[index];
+                    lastpingpositiv = reply.Status == IPStatus.Success;
+                    if (!lastpingpositiv)
+                    {
+                        Logger.Print($"Zentralen Ping Status:{reply.Status}", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
+                    }
+                }
+                bool zisclient = false;
+                if (form.net.tcpClients.Count > 0)
+                {
+                    zisclient = true;
+                }
+                if (!lastpingpositiv && zisclient)
+                {
+                    Logger.Print("Die Zentrale ist nicht erreichbar. Es hat sich jedoch jemand Registriert.", Logger.MessageType.Intern, Logger.MessageSubType.Notice);
+                }
+                if (lastpingpositiv && !zisclient)
+                {
+                    Logger.Print("Die Zentrale ist erreichbar, hat sich allerdings noch nicht Registriert.", Logger.MessageType.Extern, Logger.MessageSubType.Notice);
+                }
+                if (!lastpingpositiv && !zisclient)
+                {
+                    Logger.Print("Die Zentrale ist nicht erreichbar und hat sich nicht Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
+                }
+                if (zisclient)
+                {
+                    bool zentral = false;
+                    foreach (TcpClient tcp in form.net.tcpClients)
+                    {
+                        zentral |= net.isClientZentrale(tcp);
+                    }
+                    if (!lastpingpositiv && zentral)
+                    {
+                        Logger.Print("Die Zentrale ist nicht erreichbar, hat sich allerdings Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
+                    }
+                    if (lastpingpositiv && zentral)
+                    {
+                        Logger.Print("Die Zentrale ist erreichbar und hat sich Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Information);
+                    }
+                }
+                zisclient &= lastpingpositiv;
+                object[] delegateArray = new object[1];
+                delegateArray[0] = zisclient;
+                if (HandleCreate)
+                {
+                    try
+                    {
+                        this.Invoke(new Myswitchgastro(delegateswitchzentralenotreachable), delegateArray);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                        delegateswitchzentralenotreachable(zisclient);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        delegateswitchzentralenotreachable(zisclient);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                        this.Invoke(new Myswitchgastro(delegateswitchzentralenotreachable), delegateArray);
+                    }
+                }
             }
         }
 
@@ -243,17 +373,17 @@ namespace Spa_Interaction_Screen
                 }
                 catch (WebException wex)
                 {
-                    Log.Print(wex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    Logger.Print(wex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                     //set flag if there was a timeout or some other issues
                 }
                 catch (Exception ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                 }
                 if (response == null)
                 {
-                    Log.Print("No Connection", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    Logger.Print("No Connection", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
                 if ((int)response.StatusCode > 100 && (int)response.StatusCode < 400)
@@ -262,17 +392,17 @@ namespace Spa_Interaction_Screen
                 }
                 else if ((int)response.StatusCode > 400 && (int)response.StatusCode < 500)
                 {
-                    Log.Print("Client Error received, but ignoring it for now", Logger.MessageType.Gastro, Logger.MessageSubType.Notice);
+                    Logger.Print("Client Error received, but ignoring it for now", Logger.MessageType.Gastro, Logger.MessageSubType.Notice);
                     connectionok = true;
                 }
                 else if ((int)response.StatusCode > 500 && (int)response.StatusCode < 600)
                 {
-                    Log.Print("Server Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    Logger.Print("Server Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
                 else
                 {
-                    Log.Print("unknown Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    Logger.Print("unknown Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
                 object[] delegateArray = new object[1];
@@ -285,8 +415,8 @@ namespace Spa_Interaction_Screen
                     }
                     catch (InvalidOperationException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                        Log.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                         delegateswitchgastronotreachable(connectionok);
                     }
                 }
@@ -298,12 +428,19 @@ namespace Spa_Interaction_Screen
                     }
                     catch (InvalidOperationException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                        Log.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                         this.Invoke(new Myswitchgastro(delegateswitchgastronotreachable), delegateArray);
                     }
                 }
-                await Task.Delay(10000);
+                if (connectionok)
+                {
+                    await Task.Delay(5000);
+                }
+                else
+                {
+                    await Task.Delay(1000);
+                }
             }
         }
 
@@ -320,13 +457,53 @@ namespace Spa_Interaction_Screen
                 request.Raum = config.Room;
                 if (net.SendTCPMessage(request, null))
                 {
-                    Log.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                }
+                if(Programmstate != null)
+                {
+                    Programmstate.Text = $"Programmstatus: {form.currentState}";
                 }
                 await Task.Delay(config.StateSendInterval * 1000);
             }
         }
 
         public delegate void Myswitchgastro(bool reachable);
+
+
+        public void delegateswitchzentralenotreachable(bool reachable)
+        {
+            foreach (Constants.ServicesSetting ss in config.ServicesSettings)
+            {
+                Button b = ss.ButtonElement;
+                if (b == null)
+                {
+                    continue;
+                }
+                removefadingbutton(b);
+                if ((reachable || ss.hassecondary) && !Servicelocked)
+                {
+                    b.Enabled = true;
+                    b.BackColor = Constants.Button_color;
+                    b.Click += Service_Request_Handle;
+                }
+                else
+                {
+
+                    b.Click -= Service_Request_Handle;
+                    b.Enabled = false;
+                    b.BackColor = Constants.alternative_color;
+                }
+            }
+            if (reachable)
+            {
+                ZentraleNotReachable.Hide();
+            }
+            else
+            {
+                ZentraleNotReachable.Show();
+            }
+        }
+
         public void delegateswitchgastronotreachable(bool reachable)
         {
             if (reachable)
@@ -353,8 +530,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateshowthis();
                 }
             }
@@ -364,10 +541,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegateshowthis();
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegateshowthis));
                 }
             }
@@ -391,8 +568,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegatehidethis();
                 }
             }
@@ -402,10 +579,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegatehidethis();
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegatehidethis));
                 }
             }
@@ -424,7 +601,7 @@ namespace Spa_Interaction_Screen
                 switch (SystemInformation.MonitorCount)
                 {
                     case 0:
-                        Log.Print("No Screen detected", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print("No Screen detected", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                         form.hidethis(); 
                         if (vlc != null)
                         {
@@ -439,7 +616,7 @@ namespace Spa_Interaction_Screen
                         EnterFullscreen(form, Screen.PrimaryScreen, HandleCreate); 
                         if (vlc != null)
                         {
-                            Log.Print("No secind Screen detected", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                            Logger.Print("No secind Screen detected", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                             vlc.hidethis();
                         }
                         break;
@@ -469,8 +646,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateSetupEmbedvlcScreen(form);
                 }
             }
@@ -480,10 +657,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegateSetupEmbedvlcScreen(form);
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.Invoke(new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), delegateArray);
                 }
             }
@@ -520,12 +697,12 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Log.Print("Different Variables for the same thing Stated different Results.\n Therefore second Monitor couldn't be initialized.", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("Different Variables for the same thing Stated different Results.\n Therefore second Monitor couldn't be initialized.", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                 }
                 if (TV == null)
                 {
                     //Could be Timing Issue, when TV not yet Registered as  monitor
-                    Log.Print("Second Monitor not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("Second Monitor not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     currentState = 1;
                     if (vlc != null)
                     {
@@ -604,7 +781,7 @@ namespace Spa_Interaction_Screen
             {
                 tabs++;
             }
-            if (consoleshown)
+            if (Logger.consoleshown)
             {
                 tabs++;
             }
@@ -676,7 +853,7 @@ namespace Spa_Interaction_Screen
                 else
                 {
                     double z = 2.3;
-                    if (config.password == null || config.password.Length <= 0)
+                    if (config.Wifipassword == null || config.Wifipassword.Length <= 0)
                     {
                         z = 1;
                     }
@@ -923,7 +1100,7 @@ namespace Spa_Interaction_Screen
             }
             if (SessionEndbool)
             {
-                if (e.TabPageIndex != UIControl.TabCount - 1 || !(e.TabPageIndex == UIControl.TabCount - 2 && consoleshown))
+                if (e.TabPageIndex != UIControl.TabCount - 1 || !(e.TabPageIndex == UIControl.TabCount - 2 && Logger.consoleshown))
                 {
                     e.Cancel = true;
                     if (sessionEndVLC != null)
@@ -937,7 +1114,7 @@ namespace Spa_Interaction_Screen
 #if !DEBUG
             logout();
 #endif
-            if (consoleshown && !showconsoleonallsites)
+            if (Logger.consoleshown && !showconsoleonallsites)
             {
                 vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabCount - 1);
             }
@@ -986,8 +1163,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateEnterFullscreen(f, screen);
                 }
             }
@@ -997,10 +1174,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegateEnterFullscreen(f,screen);
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     f.Invoke(new MyFullscreen(delegateEnterFullscreen), delegateArray);
                 }
             }
@@ -1030,7 +1207,7 @@ namespace Spa_Interaction_Screen
         }
         public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user, bool keepMedia)
         {
-            if (scenelocked)
+            if (Scenelocked)
             {
                 return;
             }
@@ -1048,7 +1225,7 @@ namespace Spa_Interaction_Screen
             {
                 helper.setActiveDMXScene(index, force);
             }
-            //Log.Print($"{vlc != null},{scene.ContentPath != null},{scene.ContentPath.Length > 2},{!streaming},{!vlcclosed}");
+            //Logger.Print($"{vlc != null},{scene.ContentPath != null},{scene.ContentPath.Length > 2},{!streaming},{!vlcclosed}");
             if (vlc != null && !keepMedia)
             {
                 if (scene.ContentPath != null && scene.ContentPath.Length > 2 && !streaming && !vlcclosed)
@@ -1083,7 +1260,7 @@ namespace Spa_Interaction_Screen
                 {
                     if (!enttec.connect())
                     {
-                        Log.Print("Error when trying to Communicate with Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                        Logger.Print("Error when trying to Communicate with Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
                         currentState = 1;
                     }
                     else
@@ -1097,7 +1274,7 @@ namespace Spa_Interaction_Screen
                 noserial = false;
             }
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
-            if (!scenelocked)
+            if (!Scenelocked)
             {
                 if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
                 {
@@ -1124,7 +1301,7 @@ namespace Spa_Interaction_Screen
             }
             tempchannelvalues[0] = 255;
             byte[] fade = new byte[tempchannelvalues.Length];
-            //Log.Print($"Time:{DateTime.Now}-{config.lastchangetime}={(DateTime.Now - config.lastchangetime).TotalMilliseconds}");
+            //Logger.Print($"Time:{DateTime.Now}-{config.lastchangetime}={(DateTime.Now - config.lastchangetime).TotalMilliseconds}");
             double millis = (DateTime.Now - config.lastchangetime).TotalMilliseconds;
             if (millis <= config.FadeTime && config.currentvalues != null)
             {
@@ -1142,8 +1319,15 @@ namespace Spa_Interaction_Screen
             {
                 fade = tempchannelvalues;
             }
-            config.currentvalues = fade;
-            //Log.Print($"Trying to send the following DMX Data:0,{fade[0]},{fade[1]},{fade[2]},{fade[3]},{fade[4]},{fade[5]},{fade[6]},{fade[7]},{fade[8]},{fade[9]},{fade[10]},{fade[11]},{fade[12]},{fade[13]},{fade[14]}");
+            if (config.currentvalues.Length <= fade.Length)
+            {
+                config.currentvalues = fade;
+            }
+            else
+            {
+                Buffer.BlockCopy(fade, 0, config.currentvalues, 0, fade.Length);
+            }
+            //Logger.Print($"Trying to send the following DMX Data:0,{fade[0]},{fade[1]},{fade[2]},{fade[3]},{fade[4]},{fade[5]},{fade[6]},{fade[7]},{fade[8]},{fade[9]},{fade[10]},{fade[11]},{fade[12]},{fade[13]},{fade[14]}");
             if (con != null)
             {
                 con.Wait();
@@ -1155,7 +1339,7 @@ namespace Spa_Interaction_Screen
             else
             {
                 currentState = 1;
-                Log.Print("unable to open Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                Logger.Print("unable to open Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
             }
         }
 
@@ -1273,7 +1457,7 @@ namespace Spa_Interaction_Screen
             request.values = new String[] { ((Constants.SystemSetting)((Button)(sender)).Tag).value };
             if (net.SendTCPMessage(request, null))
             {
-                Log.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             }
             ((Button)sender).BackColor = Constants.alternative_color;
             ((Button)sender).Click -= Wartung_Request_Handle;
@@ -1301,13 +1485,20 @@ namespace Spa_Interaction_Screen
 
         public void Service_Request_Handle(object sender, EventArgs e)
         {
+            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).Click -= Service_Request_Handle;
+            addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Service_Request_Handle);
             Constants.ServicesSetting s = (Constants.ServicesSetting)((Button)(sender)).Tag;
             if (s != null && s.hassecondary)
             {
                 Constants.ServicesSettingfunction sf = (Constants.ServicesSettingfunction)((Button)(sender)).Tag;
-                if (sf.functionclass != null && sf.function != null && sf.functionclass.IsSubclassOf(typeof(Constants.configclasses)))
+                if (sf.functionclass != null && sf.secondary != null && sf.functionclass.IsSubclassOf(typeof(Constants.configclasses)))
                 {
-                    performsecondary(sf);
+                    Task.Run(async () => performsecondary(sf));
+                }
+                if(sf.canceling)
+                {
+                    return;
                 }
             }
             if (Constants.noNet)
@@ -1323,16 +1514,51 @@ namespace Spa_Interaction_Screen
             request.label = s.JsonText;
             if (net.SendTCPMessage(request, null))
             {
-                Log.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             }
-            ((Button)sender).BackColor = Constants.alternative_color;
-            ((Button)sender).Click -= Service_Request_Handle;
-            addcolortimedButton(((Button)sender), 1000, Constants.Button_color, Service_Request_Handle);
         }
 
+        public delegate void Myperformsecondary(Constants.ServicesSettingfunction ssf);
         private void performsecondary(Constants.ServicesSettingfunction ssf)
         {
-            if(ssf == null || ssf.functionclass == null || ssf.function == null || !ssf.functionclass.Equals(ssf.function.GetType()))
+            Task wait = Task.Delay(ssf.delay);
+            object[] delegateArray = new object[1];
+            delegateArray[0] = ssf;
+            if (HandleCreate)
+            {
+                try
+                {
+                    wait.Wait();
+                    this.BeginInvoke(new Myperformsecondary(delegateperformsecondary), delegateArray);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    wait.Wait();
+                    delegateperformsecondary(ssf);
+                }
+            }
+            else
+            {
+                try
+                {
+                    wait.Wait();
+                    delegateperformsecondary(ssf);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    wait.Wait();
+                    this.BeginInvoke(new Myperformsecondary(delegateperformsecondary), delegateArray);
+                }
+            }
+        }
+
+        private void delegateperformsecondary(Constants.ServicesSettingfunction ssf)
+        {
+            if (ssf == null || ssf.functionclass == null || ssf.secondary == null)
             {
                 return;
             }
@@ -1350,33 +1576,60 @@ namespace Spa_Interaction_Screen
             }
             else if (ssf.functionclass.Equals(new Constants.ServicesSetting().GetType()))
             {
-                //TODO
+                if (ssf.enable)
+                {
+                    if (ssf.secondary.ButtonElement != null)
+                    {
+                        ssf.secondary.ButtonElement.PerformClick();
+                    }
+                    if (ssf.block)
+                    {
+                        setservicelocked(ssf.enable, Constants.scenelockedinfo, Constants.Warning_color);
+                    }
+                    else
+                    {
+                        setservicelocked(!ssf.enable, Constants.scenelockedinfo, Constants.Warning_color);
+                    }
+                }
+                if (ssf.toggle)
+                {
+                    ssf.block = !ssf.block;
+                    ssf.enable = !ssf.enable;
+                }
             }
             else if (ssf.functionclass.Equals(new Constants.DMXScene().GetType()))
             {
                 if (ssf.enable)
                 {
-                    Ambiente_Change(((Constants.DMXScene)(ssf.function)), true, true, false);
+                    Ambiente_Change(((Constants.DMXScene)(ssf.secondary)), true, true, false);
                     if (ssf.block)
                     {
-                        setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
+                        setscenelocked(ssf.enable, Constants.scenelockedinfo, Constants.Warning_color);
                     }
                 }
                 else
                 {
                     if (ssf.block)
                     {
-
-                        setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                        setscenelocked(!ssf.enable, Constants.scenelockedinfo, Constants.Warning_color);
                     }
                     Ambiente_Change(config.DMXScenes[0], true, true, false);
                 }
-               
+                if (ssf.toggle)
+                {
+                    ssf.block = !ssf.block;
+                    ssf.enable = !ssf.enable;
+                }
             }
             else
             {
-                //TODO
+                Logger.Print("Json Type of secondary Service Button function could not be realted to a Json Type.", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
             }
+        }
+
+        public void temp(object sender, EventArgs e)
+        {
+            object hi = sender;
         }
 
         public void closePlayer_Handler(object sender, EventArgs e)
@@ -1474,10 +1727,10 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     return;
                 }
-                if (scenelocked)
+                if (Scenelocked)
                 {
 
                     ((ColorSlider.ColorSlider)(sender)).ValueChanged -= Dimmer_Change;
@@ -1485,9 +1738,9 @@ namespace Spa_Interaction_Screen
                     {
                         ((ColorSlider.ColorSlider)(sender)).Value = (int)((float)((float)(config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[index]]) / (float)255.0) *100);
                     }
-                    catch(Exception ex)
+                    catch(ArgumentOutOfRangeException ex)
                     {
-                        Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     }
                     ((ColorSlider.ColorSlider)(sender)).ValueChanged += Dimmer_Change;
                     return;
@@ -1506,7 +1759,7 @@ namespace Spa_Interaction_Screen
         {
             if(sender.Equals(colorWheelElement))
             {
-                Log.Print("Equal", Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Information);
+                Logger.Print("Equal", Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Information);
                 if (((ColorSlider.ColorSlider)colorWheelElement.Tag).Value < 15)
                 {
                     ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value = 20;
@@ -1562,8 +1815,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegatereset();
                 }
             }
@@ -1573,10 +1826,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegatereset();
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.BeginInvoke(new MyNoArgument(delegatereset));
                 }
             }
@@ -1584,7 +1837,7 @@ namespace Spa_Interaction_Screen
 
         public void delegatereset()
         {
-            Log.Print("Performing Reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+            Logger.Print("Performing Reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             if (SessionTimer != null)
             {
                 SessionTimer.Stop();
@@ -1597,7 +1850,7 @@ namespace Spa_Interaction_Screen
             loadscreen.Show();
             loadscreen.updateProgress(20);
             logout();
-            Config c = new Config(config, Log);
+            Config c = new Config(config);
             loadscreen.updateProgress(40);
             config = c;
             if (!Constants.noNet)
@@ -1605,14 +1858,14 @@ namespace Spa_Interaction_Screen
                 net.changeconfig(c);
             }
             SessionendNet = false;
-            scenelocked = false;
+            Scenelocked = false;
             timeleftnet = int.MaxValue;
             TimeSessionEnd = null;
             blocknonstreamingmedia = false;
             SessionEndbool = false;
             sessionEndVLC = null;
             switchedtotimepage = false;
-            consoleshown = false;
+            Logger.consoleshown = false;
             helper.setConfig(c);
             AmbientVolume(config.Volume, 3, null);
             loadscreen.updateProgress(50);
@@ -1626,7 +1879,7 @@ namespace Spa_Interaction_Screen
             }
             loadscreen.Hide();
             loadscreen.Close();
-            Log.Print("Reset finisched", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+            Logger.Print("Reset finisched", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
         }
 
         public String ArraytoString(String[] array, int until)
@@ -1644,7 +1897,7 @@ namespace Spa_Interaction_Screen
         }
         public bool generateQRCode(PictureBox p, int pixelsize, bool quietzone, int size, bool inv)
         {
-            if (config.password == null || config.password.Length <= 0)
+            if (config.Wifipassword == null || config.Wifipassword.Length <= 0)
             {
                 p.Image = null;
                 p.Hide();
@@ -1655,7 +1908,7 @@ namespace Spa_Interaction_Screen
                 p.Show();
             }
             QRCodeGenerator qrCodegen = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{config.password};;", QRCodeGenerator.ECCLevel.H, true);
+            QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{config.Wifipassword};;", QRCodeGenerator.ECCLevel.H, true);
             QRCode qrCode = new QRCode(qrCodeData);
             Bitmap qrCodeImage = null;
             Color a = Color.White;
@@ -1857,7 +2110,7 @@ namespace Spa_Interaction_Screen
 
         public void setscenelocked(bool x, String txt, Color c)
         {
-            scenelocked = x;
+            Scenelocked = x;
             foreach (Label l in helper.globalinformationlabels)
             {
                 l.Text = txt;
@@ -1872,6 +2125,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
+                    resetscenelockbutton.Hide();
                     l.Hide();
                     helper.SetEdgePosition(l, 3);
                     l.Location = new Point((Constants.windowwidth / 2) - (l.Size.Width / 2), l.Location.Y);
@@ -1879,10 +2133,41 @@ namespace Spa_Interaction_Screen
             }
             foreach (Button b in helper.AmbientePageButtons)
             {
-                b.Enabled = false;
+                removefadingbutton(b);
+                b.Enabled = !x;
+                if (x)
+                {
+                    b.BackColor = Constants.alternative_color;
+                }
+                else
+                {
+                    b.BackColor = Constants.Button_color;
+                }
             }
-            colorWheelElement.Enabled = false;
-            ((ColorSlider.ColorSlider)colorWheelElement.Tag).Enabled = false;
+            colorWheelElement.Enabled = !x;
+            ((ColorSlider.ColorSlider)colorWheelElement.Tag).Enabled = !x;
+        }
+
+        public void setservicelocked(bool x, String txt, Color c)
+        {
+            Servicelocked = x;
+            Servicelockedlabel.ForeColor = c;
+            if (x)
+            {
+                Servicelockedlabel.Show();
+                helper.SetEdgePosition(Servicelockedlabel, 3);
+                Servicelockedlabel.Location = new Point((Constants.windowwidth / 2) - (Servicelockedlabel.Size.Width / 2), Servicelockedlabel.Location.Y);
+                Servicelockedlabel.BringToFront();
+                resetServicelockbutton.Show();
+            }
+            else
+            {
+                resetServicelockbutton.Hide();
+                Servicelockedlabel.Hide();
+                helper.SetEdgePosition(Servicelockedlabel, 3);
+                Servicelockedlabel.Location = new Point((Constants.windowwidth / 2) - (Servicelockedlabel.Size.Width / 2), Servicelockedlabel.Location.Y);
+            }
+            delegateswitchzentralenotreachable(lastpingpositiv);
         }
 
         public void resetscenelock_Handler(object sender, EventArgs e)
@@ -1892,15 +2177,17 @@ namespace Spa_Interaction_Screen
 
         public void resetscenelock()
         {
-            resetscenelockbutton.Hide();
             setscenelocked(false, "", Constants.Text_color);
+        }
 
-            foreach (Button b in helper.AmbientePageButtons)
-            {
-                b.Enabled = true;
-            }
-            colorWheelElement.Enabled = true;
-            ((ColorSlider.ColorSlider)colorWheelElement.Tag).Enabled = true;
+        public void resetServicelock_Handler(object sender, EventArgs e)
+        {
+            resetServicelock();
+        }
+
+        public void resetServicelock()
+        {
+            setservicelocked(false, "", Constants.Text_color);
         }
 
         public void SessionEnded(EmbedVLC evlc, bool fromevent)
@@ -1911,7 +2198,7 @@ namespace Spa_Interaction_Screen
             {
                 UIControl.SelectTab(UIControl.TabCount - 1);
             }
-            scenelocked = false;
+            Scenelocked = false;
             Ambiente_Change(config.DMXScenes[0], true, true, false);
             this.hidethis();
         }
@@ -1951,7 +2238,7 @@ namespace Spa_Interaction_Screen
 
         public void ShowConsole(object sender, EventArgs e)
         {
-            Log.setCurrentlyshowing(Byte.MaxValue, this);
+            Logger.setCurrentlyshowing(Byte.MaxValue);
             helper.createConsolePage();
             if (showconsoleonallsites)
             {
@@ -2006,31 +2293,31 @@ namespace Spa_Interaction_Screen
         {
             if(line != null && line.Length > 0)
             {
-                if (vlc != null && vlc.ConsoleBox != null)
+                if (vlc != null && Logger.ConsoleBox != null)
                 {
                     bool scroll = true;
-                    if (vlc.ConsoleBox.SelectionStart == vlc.ConsoleBox.Text.Length)
+                    if (Logger.ConsoleBox.SelectionStart == Logger.ConsoleBox.Text.Length)
                     {
                         scroll = false;
                     }
-                    vlc.ConsoleBox.Text += line;
-                    vlc.ConsoleBox.Text += "\n\r";
+                    Logger.ConsoleBox.Text += line;
+                    Logger.ConsoleBox.Text += "\n\r";
                     if (scroll)
                     {
-                        vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
-                        ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
-                        vlc.ConsoleBox.ScrollToCaret();
+                        Logger.ConsoleBox.SelectionStart = Logger.ConsoleBox.Text.Length;
+                        Logger.ConsoleTextscroll.Value = Logger.ConsoleBox.SelectionStart * -1 + Logger.ConsoleTextscroll.Maximum;
+                        Logger.ConsoleBox.ScrollToCaret();
                     }
-                    if (TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
+                    if (TextRenderer.MeasureText(Logger.ConsoleBox.Text, Logger.ConsoleBox.Font).Height > Logger.ConsoleBox.Size.Height)
                     {
-                        ConsoleTextscroll.Maximum = vlc.ConsoleBox.Text.Length;
-                        ConsoleTextscroll.Show();
+                        Logger.ConsoleTextscroll.Maximum = Logger.ConsoleBox.Text.Length;
+                        Logger.ConsoleTextscroll.Show();
                     }
                     else
                     {
-                        ConsoleTextscroll.Hide();
+                        Logger.ConsoleTextscroll.Hide();
                     }
-                    return vlc.ConsoleBox.Text;
+                    return Logger.ConsoleBox.Text;
                 }
                 return line;
             }
@@ -2041,21 +2328,25 @@ namespace Spa_Interaction_Screen
         {
             if (Text != null && Text.Length > 0)
             {
-                if (vlc != null && vlc.ConsoleBox != null)
+                if (Logger.ConsoleBox != null)
                 {
-                    vlc.ConsoleBox.Clear();
-                    vlc.ConsoleBox.Text = Text;
-                    vlc.ConsoleBox.SelectionStart = vlc.ConsoleBox.Text.Length;
-                    vlc.ConsoleBox.ScrollToCaret();
-                    if (TextRenderer.MeasureText(vlc.ConsoleBox.Text, vlc.ConsoleBox.Font).Height > vlc.ConsoleBox.Size.Height)
+                    Logger.ConsoleBox.Clear();
+                    Logger.ConsoleBox.Text = Text;
+                    Logger.ConsoleBox.SelectionStart = Logger.ConsoleBox.Text.Length;
+                    Logger.ConsoleBox.ScrollToCaret();
+                    if (TextRenderer.MeasureText(Logger.ConsoleBox.Text, Logger.ConsoleBox.Font).Height > Logger.ConsoleBox.Size.Height)
                     {
-                        ConsoleTextscroll.Maximum = vlc.ConsoleBox.Text.Length;
-                        ConsoleTextscroll.Value = vlc.ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
-                        ConsoleTextscroll.Show();
+                        Logger.ConsoleTextscroll.Maximum = Logger.ConsoleBox.Text.Length;
+                        Logger.ConsoleTextscroll.Value = Logger.ConsoleBox.SelectionStart * -1 + Logger.ConsoleTextscroll.Maximum;
+                        Logger.ConsoleTextscroll.Show();
                     }
                     else
                     {
-                        ConsoleTextscroll.Hide();
+#if DEBUG
+                        Logger.ConsoleTextscroll.Show();
+#else
+                        Logger.ConsoleTextscroll.Hide();
+#endif
                     }
                 }
             }
@@ -2063,20 +2354,58 @@ namespace Spa_Interaction_Screen
 
         public void ClearConsole()
         {
-            if(vlc != null && vlc.ConsoleBox != null)
+            if(vlc != null && Logger.ConsoleBox != null)
             {
-                vlc.ConsoleBox.Text = "";
-                vlc.ConsoleBox.Clear();
+                Logger.ConsoleBox.Text = "";
+                Logger.ConsoleBox.Clear();
             }
         }
 
         public void comboconsoleItemchanged(object sender, EventArgs e)
         {
-            int Index = ((Constants.ComboItem)((ComboBox)sender).SelectedItem).ID;
+            if(Logger.consoletype == null)
+            {
+                return;
+            }
+            int? Index = 0;
+            if ((Constants.ComboItem)Logger.consoletype.SelectedItem == null)
+            {
+                return;
+            }
+            else
+            {
+                Index = ((Constants.ComboItem)Logger.consoletype.SelectedItem).ID;
+            }
+            int? SubIndex = null;
+            if (Logger.consolesubtype == null)
+            {
+                return;
+            }
+            else
+            {
+                if((Constants.ComboItem)Logger.consolesubtype.SelectedItem == null)
+                {
+                    SubIndex = null;
+                }
+                else
+                {
+                    SubIndex = ((Constants.ComboItem)Logger.consolesubtype.SelectedItem).ID;
+                }
+            }
             ClearConsole();
-            SetConsoleText(Log.GetConsoleText((Logger.MessageType)Index, null));
+            if(Logger.consoletype != null)
+            {
+                if(SubIndex != null)
+                {
+                    SetConsoleText(Logger.GetConsoleText((Logger.MessageType)Index, (Logger.MessageSubType)SubIndex));
+                }
+                else
+                {
+                    SetConsoleText(Logger.GetConsoleText((Logger.MessageType)Index));
+                }
+            }
             
-            Log.setCurrentlyshowing((byte)Index, this);
+            Logger.setCurrentlyshowing((byte)Index);
         }
 
 
@@ -2095,8 +2424,8 @@ namespace Spa_Interaction_Screen
 
         public void consolescroll(object sender, EventArgs e)
         {
-            vlc.ConsoleBox.SelectionStart = (((int)((ColorSlider.ColorSlider)(sender)).Value) - (int)((ColorSlider.ColorSlider)(sender)).Maximum) * -1;
-            vlc.ConsoleBox.ScrollToCaret();
+            Logger.ConsoleBox.SelectionStart = (((int)((ColorSlider.ColorSlider)(sender)).Value) - (int)((ColorSlider.ColorSlider)(sender)).Maximum) * -1;
+            Logger.ConsoleBox.ScrollToCaret();
         }
 
         public void TCPMessage_Change_handler(object sender, EventArgs e)
@@ -2106,7 +2435,7 @@ namespace Spa_Interaction_Screen
                 return;
             }
             int posx, posy = 0;
-            helper.GetDynamicPosition(3, ((Point)Messagepreview.Tag).X, out posx, out posy, 0, ((Point)Messagepreview.Tag).Y, false);
+            helper.GetDynamicPosition(4, ((Point)Messagepreview.Tag).X, out posx, out posy, 0, ((Point)Messagepreview.Tag).Y, false);
             Messagepreview.Text = CreateMessagString();
             Messagepreview.Location = new Point((posx + Constants.Element_width / 2) - (Messagepreview.Size.Width / 2), posy);
         }
@@ -2147,7 +2476,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                 }
             }
             if (id >= 0)

@@ -4,6 +4,7 @@ ContentPath%C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interacti
 UDPReceivePort%50100
 ConfigSeperator%;
 ConfigComment%#
+ConfigEmpty%!
 maxscenes%12
 maxhelps%12
 maxhelps%5
@@ -12,6 +13,7 @@ YButtonCount%5
 InlineuntilXButtons%5
 noCom%false
 noNet%false
+showdirectlypotentiallyfalsewificreds%false
 EdgeItemposxdist%60
 EdgeItemposydist%60
 Logoxsize%200

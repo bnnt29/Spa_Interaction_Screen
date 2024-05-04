@@ -1,41 +1,46 @@
-﻿using Microsoft.VisualBasic.Logging;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Diagnostics;
 
 namespace Spa_Interaction_Screen
 {
-    public class Logger
+    public static class Logger
     {
-        private List<Log_Element>[] log_Elements = new List<Log_Element>[Byte.MaxValue];
-        private byte currentlyshowing = Byte.MaxValue;
-        private MainForm mainForm;
+        private static List<Log_Element>[] log_Elements = null;
+        private static byte currentlyshowing = Byte.MaxValue;
+        private static FileStream BackupLOG = null;
+        private static FileStream LOG = null;
+        public static RichTextBox ConsoleBox;
+        public static ComboBox consoletype;
+        public static ComboBox consolesubtype;
+        public static ColorSlider.ColorSlider ConsoleTextscroll;
+        public static bool consoleshown = false;
 
-        public Logger() 
+        public static List<Log_Element> getList(int index)
         {
-            for(int i = 0; i < byte.MaxValue; i++)
+            if(log_Elements != null && log_Elements.Length> index && log_Elements[index] == null || log_Elements[index].Count <= 0)
             {
-                log_Elements[i]=new List<Log_Element>();
+                return null;
             }
-            Log_Element start = new Log_Element();
-            start.type = [MTypetobyte<MessageType>(MessageType.LoggerInfo)];
-            start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
-            start.time = DateTime.Now;
-            start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
+            return log_Elements[index];
         }
 
-        public List<Log_Element> getList(int index)
+        public static void closeStreams()
         {
-            return log_Elements[index];
+            if (BackupLOG != null)
+            {
+                BackupLOG.Close();
+                BackupLOG.Dispose();
+                BackupLOG = null;
+            }
+            if (LOG != null)
+            {
+                LOG.Close();
+                LOG.Dispose();
+                LOG = null;
+            }
         }
 
         public class Log_Element
         {
-            public Logger? Log;
             public byte? SubType;
             public String Message;
             public DateTime time;
@@ -44,7 +49,7 @@ namespace Spa_Interaction_Screen
             public override string ToString()
             {
                 String p = "";
-                p += TimeToString(DateTime.Now, Log);
+                p += TimeToString(DateTime.Now);
                 p += " : "; 
                 if (type != null && type.Length > 0)
                 {
@@ -79,42 +84,41 @@ namespace Spa_Interaction_Screen
                 p += Message;
                 return p;
             }
-
-            private string TimeToString(DateTime time, Logger Log)
-            {
-                string[] times;
-                times = time.GetDateTimeFormats();
-                if (times.Length <= 0)
-                {
-                    Log.Print("No DateTimeFormats found for current Time", [MessageType.LoggerInfo], MessageSubType.Error, true);
-                    return "";
-                }
-                string p = "";
-                p += '[';
-                if (Constants.DateTimeFormat < times.Length)
-                {
-                    p += times[Constants.DateTimeFormat];
-                }
-                else
-                {
-                    Log.Print($"Datetime Format {Constants.DateTimeFormat} not available (try smaller number). Using different Method.", [MessageType.LoggerInfo], MessageSubType.Notice, true);
-                    p += time.Year;
-                    p += '.';
-                    p += time.Month;
-                    p += '.';
-                    p += time.Day;
-                    p += ';';
-                    p += time.Hour;
-                    p += ":";
-                    p += time.Minute;
-                    p += ":";
-                    p += time.Second;
-                }
-                p += ']';
-                return p;
-            }
+            
         }
-
+        public static string TimeToString(DateTime Time)
+        {
+            string[] times;
+            times = Time.GetDateTimeFormats();
+            if (times.Length <= 0)
+            {
+                Logger.Print("No DateTimeFormats found for current Time", [MessageType.Logger], MessageSubType.Error, true);
+                return "";
+            }
+            string p = "";
+            p += '[';
+            if (Constants.DateTimeFormat < times.Length)
+            {
+                p += times[Constants.DateTimeFormat];
+            }
+            else
+            {
+                Logger.Print($"Datetime Format {Constants.DateTimeFormat} not available (try smaller number). Using different Method.", [MessageType.Logger], MessageSubType.Notice, true);
+                p += Time.Year;
+                p += '.';
+                p += Time.Month;
+                p += '.';
+                p += Time.Day;
+                p += ';';
+                p += Time.Hour;
+                p += ":";
+                p += Time.Minute;
+                p += ":";
+                p += Time.Second;
+            }
+            p += ']';
+            return p;
+        }
 
         public enum MessageType : byte
         {
@@ -130,7 +134,7 @@ namespace Spa_Interaction_Screen
             Intern = 9,
             Extern = 10,
             Konfig = 11,
-            LoggerInfo = 12
+            Logger = 12
         }
 
         public enum MessageSubType : byte
@@ -141,7 +145,7 @@ namespace Spa_Interaction_Screen
             Information = 3,
         }
 
-        public void Print(String Message, MessageType? Type, MessageSubType? Subtype)
+        public static void Print(String Message, MessageType? Type, MessageSubType? Subtype)
         {
             if (Type == null)
             {
@@ -154,13 +158,13 @@ namespace Spa_Interaction_Screen
         }
 
 
-        public void Print(String Message, MessageType?[] Type, MessageSubType? Subtype)
+        public static void Print(String Message, MessageType?[] Type, MessageSubType? Subtype)
         {
             Print(Message, Type, Subtype, false);
         }
 
 
-        public void Print(String Message, MessageType?[] Type, MessageSubType? Subtype, bool ShowfullMessageLater)
+        public static void Print(String Message, MessageType?[] Type, MessageSubType? Subtype, bool ShowfullMessageLater)
         {
             IEnumerable<MessageType?> CleanType = Type.Where(x => x != null);
             if (CleanType.Count() > 0)
@@ -180,48 +184,118 @@ namespace Spa_Interaction_Screen
                 log.time = DateTime.Now;
                 log.SubType = MTypetobyte(Subtype);
                 log.Message = Message;
-                log.Log = this;
                 if (valid > 0)
                 {
-                    for (int i = 0; i < log.type.Length; i++)
-                    {
-                        if (mainForm != null && mainForm.consoletype != null)
-                        {
-                            if (log_Elements[log.type[i]].Count <= 0)
-                            {
-                                mainForm.consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)log.type[i]).ToString(), ID = log.type[i] });
-                            }
-                        }
-                        if (mainForm != null && mainForm.consoleshown && currentlyshowing == log.type[i])
-                        {
-                            if (ShowfullMessageLater)
-                            {
-                                mainForm.AddConsoleLine(log.Message);
-                            }
-                            else
-                            {
-                                mainForm.AddConsoleLine(log.ToString());
-                            }
-                        }
-                        log_Elements[log.type[i]].Add(log);
-                        if (!ShowfullMessageLater && mainForm != null && log.type[i] == currentlyshowing)
-                        {
-                            mainForm.AddConsoleLine(log.ToString());
-                        }
-                    }
+                    addElement(log, ShowfullMessageLater);
                 }
                 if (ShowfullMessageLater)
                 {
-                    Debug.Print(log.Message);
+                    Debug.Print(log.Message); 
+                    if (FOpen(BackupLOG))
+                    {
+                        StreamWriter sw = new StreamWriter(BackupLOG);
+                        sw.WriteLine(log.Message + "\n");
+                        sw.Flush();
+                    }
+                    if (FOpen(LOG))
+                    {
+                        StreamWriter sw = new StreamWriter(LOG);
+                        sw.WriteLine(log.Message + "\n");
+                        sw.Flush();
+                    }
                 }
                 else
                 {
                     Debug.Print(log.ToString());
+                    if (FOpen(BackupLOG))
+                    {
+                        StreamWriter sw = new StreamWriter(BackupLOG);
+                        sw.WriteLine(log.ToString());
+                        sw.Flush();
+                    }
+                    if (FOpen(LOG))
+                    {
+                        StreamWriter sw = new StreamWriter(LOG);
+                        sw.WriteLine(log.ToString());
+                        sw.Flush();
+                    }
                 }
             }
         }
 
-        public byte MTypetobyte<T>(T? type) where T : struct, IConvertible
+        public static int addElement(Log_Element LE, bool ShowfullMessageLater)
+        {
+            if (log_Elements == null || log_Elements.Length <= 0 || BackupLOG == null)
+            {
+                log_Elements = new List<Log_Element>[Byte.MaxValue];
+                Log_Element start = new Log_Element();
+                start.type = [MTypetobyte<MessageType>(MessageType.Logger)];
+                start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
+                start.time = DateTime.Now;
+                start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
+                if (BackupLOG == null)
+                {
+                    File.Create(Constants.BackupLOGPath).Close();
+                    BackupLOG = CreateLOGHandle(Constants.BackupLOGPath);
+                    initLog(BackupLOG);
+                }
+                addElement(start, true);
+            }
+            int i;
+            for (i = 0; i < LE.type.Length; i++)
+            {
+                if (consoletype != null)
+                {
+                    if(log_Elements[LE.type[i]] == null || log_Elements[LE.type[i]].Count <= 0)
+                    {
+                        log_Elements[LE.type[i]] = new List<Log_Element>();
+                    }
+                    if (log_Elements[LE.type[i]].Count <= 0)
+                    {
+                        consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
+                    }
+                }
+                if (consoleshown && currentlyshowing == LE.type[i])
+                {
+                    if (ShowfullMessageLater)
+                    {
+                        AddConsoleLine(LE.Message);
+                    }
+                    else
+                    {
+                        AddConsoleLine(LE.ToString());
+                    }
+                }
+                if (log_Elements[LE.type[i]] == null || log_Elements[LE.type[i]].Count <= 0)
+                {
+                    log_Elements[LE.type[i]] = new List<Log_Element>();
+                }
+                log_Elements[LE.type[i]].Add(LE);
+                if (!ShowfullMessageLater  && LE.type[i] == currentlyshowing)
+                {
+                    AddConsoleLine(LE.ToString());
+                }
+            }
+            return i;
+        }
+
+        public static void initLog(FileStream x)
+        {
+            if(x == null)
+            {
+                Logger.Print("FileStream for Log File init is null", MessageType.Logger, MessageSubType.Error);
+            }
+            StreamWriter z = new StreamWriter(x);
+            z.WriteLine($"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n[{Logger.TimeToString(DateTime.Now)}]"); 
+            z.Flush();
+        }
+
+        public static bool FOpen(FileStream file)
+        {
+            return file != null && file.CanWrite;
+        }
+
+        public static byte MTypetobyte<T>(T? type) where T : struct, IConvertible
         {
             if(type == null)
             {
@@ -231,7 +305,12 @@ namespace Spa_Interaction_Screen
             return (byte)t;
         }
 
-        public String GetConsoleText(MessageType type, MessageSubType? subtype)
+        public static String GetConsoleText(MessageType type)
+        {
+            return GetConsoleText(type, null);
+        }
+
+        public static String GetConsoleText(MessageType type, MessageSubType? subtype)
         {
             String c = "";
             foreach(Log_Element log in log_Elements[MTypetobyte<MessageType>(type)])
@@ -253,10 +332,84 @@ namespace Spa_Interaction_Screen
             return c;
         }
 
-        public void setCurrentlyshowing(byte show, MainForm? form)
+        public static void setCurrentlyshowing(byte show)
         {
             currentlyshowing = show;
-            mainForm = form;
+        }
+
+        public static void InitLogfromBackup(Config c)
+        {
+            if (BackupLOG == null)
+            {
+                File.Create(Constants.BackupLOGPath).Close();
+                BackupLOG = CreateLOGHandle(Constants.BackupLOGPath);
+                initLog(BackupLOG);
+            }
+            if(c.LogPath == null)
+            {
+                Debug.Print($"mainForm.config.LogoFilePath is null");
+            }
+            File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+            LOG = CreateLOGHandle(c.LogPath);
+        }
+
+        private static FileStream CreateLOGHandle(String path)
+        {
+            FileStream tmp = null;
+            if (!File.Exists(path))
+            {
+                File.Create(path).Close();
+            }
+            if (File.Exists(path))
+            {
+                File.SetAttributes(path, FileAttributes.Normal);
+                tmp = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read);
+            }
+            else
+            {
+                Print("Could not create Log File", MessageType.Logger, MessageSubType.Error);
+            }
+            if(tmp != null)
+            if (!FOpen(tmp))
+            {
+                tmp = null;
+            }
+            return tmp;
+        }
+
+        public static String AddConsoleLine(String line)
+        {
+            if (line != null && line.Length > 0)
+            {
+                if (ConsoleBox != null)
+                {
+                    bool scroll = true;
+                    if (ConsoleBox.SelectionStart == ConsoleBox.Text.Length)
+                    {
+                        scroll = false;
+                    }
+                    ConsoleBox.Text += line;
+                    ConsoleBox.Text += "\n\r";
+                    if (scroll)
+                    {
+                        ConsoleBox.SelectionStart = ConsoleBox.Text.Length;
+                        ConsoleTextscroll.Value = ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
+                        ConsoleBox.ScrollToCaret();
+                    }
+                    if (TextRenderer.MeasureText(ConsoleBox.Text, ConsoleBox.Font).Height > ConsoleBox.Size.Height)
+                    {
+                        ConsoleTextscroll.Maximum = ConsoleBox.Text.Length;
+                        ConsoleTextscroll.Show();
+                    }
+                    else
+                    {
+                        ConsoleTextscroll.Hide();
+                    }
+                    return ConsoleBox.Text;
+                }
+                return line;
+            }
+            return "";
         }
     }
 }

@@ -5,12 +5,13 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using static System.Windows.Forms.AxHost;
 using System.Management;
+using Microsoft.VisualBasic;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Spa_Interaction_Screen
 {
     public class UIHelper
     {
-        private Logger Log = null;
         private MainForm form = null;
         private Config config = null;
 
@@ -39,15 +40,12 @@ namespace Spa_Interaction_Screen
 
         public List<Control> ConsoleElements = new List<Control>();
 
-        private const string USB = "USB";
-        private bool checkforUSBKeyboard = true;
         private const double Restrictedyoffset = 0.5;
-        private int Restrictedycoord = (Constants.Element_height + Constants.Element_y_padding) + (int)((Constants.Element_height + Constants.Element_y_padding) * Restrictedyoffset);
+        private int Restrictedycoord =(int) (((Constants.Element_height + Constants.Element_y_padding) + (int)((Constants.Element_height + Constants.Element_y_padding) * Restrictedyoffset))/1.5);
         private int Restrictedstarty = (Constants.Element_height + Constants.Element_y_padding);
 
         public UIHelper(MainForm f, Config c)
         {
-            Log = f.Log;
             form = f;
 
             form.BackColor = Constants.alternative_color;
@@ -91,7 +89,7 @@ namespace Spa_Interaction_Screen
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
             ColorSlider.ColorSlider slide = new ColorSlider.ColorSlider();
-            slide.BackColor = Constants.Background_color;
+            slide.BackColor = Color.Transparent;
             slide.ElapsedInnerColor = Color.Green;
             slide.ElapsedPenColorBottom = Color.Green;
             slide.ElapsedPenColorTop = Color.Green;
@@ -217,6 +215,7 @@ namespace Spa_Interaction_Screen
             //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[0]];
             FormColorSlides.Add(newslider);
             form.Dimmer1ColorSliderDescribtion = new Label();
+            form.Dimmer1ColorSliderDescribtion.BackColor = Color.Transparent;
             form.Dimmer1ColorSliderDescribtion.AutoSize = true;
             form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
@@ -233,6 +232,7 @@ namespace Spa_Interaction_Screen
             //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[1]];
             FormColorSlides.Add(newslider);
             form.Dimmer2ColorSliderDescribtion = new Label();
+            form.Dimmer2ColorSliderDescribtion.BackColor = Color.Transparent;
             form.Dimmer2ColorSliderDescribtion.AutoSize = true;
             form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
@@ -257,6 +257,7 @@ namespace Spa_Interaction_Screen
             // 
 
             form.AmbientelautstärkeColorSliderDescribtion = new Label();
+            form.AmbientelautstärkeColorSliderDescribtion.BackColor = Color.Transparent;
             form.AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
             form.AmbientelautstärkeColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderDescribtion);
@@ -268,6 +269,7 @@ namespace Spa_Interaction_Screen
             int Posx, Posy;
             GetDynamicPosition(1, 0, out Posx, out Posy, 0, 0, false);
             Label label = new Label();
+            label.BackColor = Color.Transparent;
             label.AutoSize = true;
             label.ForeColor = Constants.Text_color;
             label.Text = "Ambientebeleuchtungsfarbe";
@@ -303,6 +305,7 @@ namespace Spa_Interaction_Screen
             form.GastroEx.Hide();
 
             form.GastroExDescription = new Label();
+            form.GastroExDescription.BackColor = Color.Transparent;
             form.GastroExDescription.AutoSize = true;
             form.GastroExDescription.ForeColor = Constants.Text_color;
             form.GastroExDescription.Text = "Leider ist die Bestellseite zur Zeit nicht verfügbar.\nBitte melden Sie sich bei dem Service Personal,\nfalls Sie etwas bestellen möchten.";
@@ -317,6 +320,7 @@ namespace Spa_Interaction_Screen
 
             GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0.5, 1, false);
             form.WiFiQRCodePicturebox.Location = new Point(Pos_x, Pos_y);
+            form.WiFiQRCodePicturebox.Hide();
 
             form.WiFiSSIDTitle.Text = "Wlan Name:";
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.5, false);
@@ -383,19 +387,19 @@ namespace Spa_Interaction_Screen
             int Pos_x, Pos_y = 0;
             int sizex = Constants.Element_width * 2; 
             int sizey = (int)(Constants.Element_height * 0.75);
-            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 0.8, false, sizex, sizey);
+            GetDynamicPosition(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 0.8, false, sizex, sizey);
             form.TVSettingsAmbienteButton = Constants.createButton(sizex, sizey, Pos_x, Pos_y, MediaPageButtons, "Ambiente Video", true, form.MediaPage, form, form.Content_Change_Handler);
             selectButton(form.TVSettingsAmbienteButton, true, Constants.selected_color);
             form.TVSettingsAmbienteButton.Name = "AmbientVideo";
 
-            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 1.8, false, sizex, sizey);
+            GetDynamicPosition(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 1.8, false, sizex, sizey);
             form.TVSettingsStreamingButton = Constants.createButton(sizex, sizey, Pos_x, Pos_y, MediaPageButtons, "Streaming Video", false, form.MediaPage, form, form.Content_Change_Handler);
             form.TVSettingsStreamingButton.Name = "StreamingVideo";
 
             SetupLabelofButton(form.TVSettingsAmbienteButton, form.TVSettingsTitle, "Video Einstellungen:");
 
             form.MediaPageAmbientVolumeSlider = null;
-            GetDynamicPositionsize(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 2.8, false, sizex, sizey);
+            GetDynamicPosition(Elementsinwidth, Elementsinwidth - 1, out Pos_x, out Pos_y, widthelements, 2.8, false, sizex, sizey);
             form.MediaPageAmbientVolumeSlider = createColorSlide(100);
             form.MediaPageAmbientVolumeSlider.Location = new Point(Pos_x, Pos_y);
             form.MediaPageAmbientVolumeSlider.Size = new Size(sizex, sizey);
@@ -409,6 +413,7 @@ namespace Spa_Interaction_Screen
             }*/
 
             form.TVSettingsVolumeColorSliderDescribtion = new Label();
+            form.TVSettingsVolumeColorSliderDescribtion.BackColor = Color.Transparent;
             form.TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
             form.TVSettingsVolumeColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderDescribtion);
@@ -431,43 +436,18 @@ namespace Spa_Interaction_Screen
             //form.clock.Text = "00:00";
             form.TimePage.Controls.Add(form.clock);
             form.clock.Location = new Point((Constants.windowwidth / 2) - (form.clock.Size.Width / 2), Pos_y);
-            /*
-            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 2, true);
-            Label label = new Label();
-            label.AutoSize = true;
-            label.Font = new Font("Segoe UI", 40F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label.ForeColor = SystemColors.ControlLightLight;
-            label.Name = "TimerDescribtion";
-            //label.Text = "Verbleibende Zeit:";
-            label.TabIndex = 2;
-            label.BackColor = Color.Transparent;
-            form.TimePage.Controls.Add(label);
-            label.Location = new Point((int)((Constants.windowwidth / 2) - (label.Size.Width/2)), Pos_y);
-            */
+
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 2, true);
             form.timer = new Label();
             form.timer.AutoSize = true;
             form.timer.Font = Constants.Standart_font;
             form.timer.ForeColor = Constants.Text_color;
             form.timer.Name = "Timer";
-            //form.clock.Text = "00";
             form.timer.TabIndex = 3;
             form.timer.BackColor = Color.Transparent;
             form.TimePage.Controls.Add(form.timer);
             form.timer.Location = new Point((Constants.windowwidth / 2) - (form.timer.Size.Width / 2), Pos_y);
-            /*
-            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 4.5, true);
-            form.sessionEnd = new Label();
-            form.sessionEnd.AutoSize = true;
-            form.sessionEnd.Font = new Font("Segoe UI", 25F, FontStyle.Italic, GraphicsUnit.Point, 0);
-            form.sessionEnd.ForeColor = SystemColors.ControlLightLight;
-            form.sessionEnd.Name = "TimerEnd";
-            form.sessionEnd.TabIndex = 4;
-            form.sessionEnd.BackColor = Color.Transparent;
-            form.clock.Text = "00:00";
-            form.TimePage.Controls.Add(form.sessionEnd);
-            form.sessionEnd.Location = new Point((Constants.windowwidth / 2) - (form.sessionEnd.Size.Width / 2), Pos_y);
-            */
+
         }
 
         public void createServicePageElements()
@@ -476,6 +456,27 @@ namespace Spa_Interaction_Screen
             //form.HowCanIHelpYouDescribtion.Text = config.ServiceStrings[0][0];
             GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, 3, false);
             form.HowCanIHelpYouDescribtion.Location = new Point(Pos_x, Pos_y - Constants.Element_y_padding - form.HowCanIHelpYouDescribtion.Size.Height);
+            
+            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0.5, 4, false);
+            form.ZentraleNotReachable = new Label();
+            form.ZentraleNotReachable.BackColor = Color.Transparent;
+            form.ZentraleNotReachable.AutoSize = true;
+            form.ZentraleNotReachable.TabStop = false;
+            form.ZentraleNotReachable.Text = Constants.ServiceNotReachableText;
+            form.ZentraleNotReachable.ForeColor = Constants.Warning_color;
+            form.ZentraleNotReachable.Font = Constants.Standart_font;
+            form.ServicePage.Controls.Add(form.ZentraleNotReachable);
+            form.ZentraleNotReachable.Show();
+            form.ZentraleNotReachable.Location = new Point(Pos_x - (form.ZentraleNotReachable.Size.Width/2), Pos_y);
+
+            form.Servicelockedlabel = new Label();
+            form.Servicelockedlabel.BackColor = Color.Transparent;
+            form.Servicelockedlabel.AutoSize = true;
+            form.Servicelockedlabel.TabStop = false;
+            form.Servicelockedlabel.Text = "Die Service Auswahl wurde deaktiviert. Bitten sie einen Mitarbeiter diese wieder freizushalten.";
+            form.Servicelockedlabel.Font = Constants.Standart_font;
+            form.ServicePage.Controls.Add(form.Servicelockedlabel);
+            form.Servicelockedlabel.Hide();
         }
 
         public void createWartungPageElements()
@@ -527,15 +528,18 @@ namespace Spa_Interaction_Screen
 
         public void createRestrictedPageElements()
         {
+            int width = Constants.Element_width;
+            int height = (int)(Constants.Element_height);
+
             int Pos_x, Pos_y = 0;
             form.RestrictedAreaTitle.Text = "Zugriff nur für Mitarbeiter";
-            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, -0.1, false);
+            GetDynamicPosition(1, 0, out Pos_x, out Pos_y, 0, -0.3, false, width, height);
             form.RestrictedAreaTitle.Location = new Point(Constants.windowwidth / 2 - form.RestrictedAreaTitle.Size.Width / 2, Pos_y);
             form.RestrictedAreaTitle.Show();
 
-            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Szenen Auswahl freischlten", null, form.WartungPage, form, form.resetscenelock_Handler, out form.resetscenelockbutton);
-            if (form.scenelocked)
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            form.resetscenelockbutton = Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Szenen Auswahl freischalten", null, form.WartungPage, form, form.resetscenelock_Handler);
+            if (form.Scenelocked)
             {
                 form.resetscenelockbutton.Show();
             }
@@ -544,58 +548,108 @@ namespace Spa_Interaction_Screen
                 form.resetscenelockbutton.Hide();
             }
 
-            int wartungs = Math.Min(config.TCPSettings.Count, Constants.maxtcpws);
-            for (int i = 0; i < wartungs; i++)
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            form.resetServicelockbutton = Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Service Auswahl freischalten", null, form.WartungPage, form, form.resetServicelock_Handler);
+            if (form.Servicelocked)
             {
-                GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-                Button but = null;
-                Constants.createButton(Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle, out but);
-                config.TCPSettings[i].ButtonElement = but;
-            }
-
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
-
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
-
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
-
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            if (form.vlcclosed)
-            {
-                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Öffne den Player", "VLCClose", form.WartungPage, form, form.OpenPlayer_Handler);
+                form.resetServicelockbutton.Show();
             }
             else
             {
-                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
+                form.resetServicelockbutton.Hide();
             }
 
-            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
-            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            form.resetSessionlockbutton = Constants.createButton(width, height, Pos_x, Restrictedstarty + 3 * Restrictedycoord, RestrictedPageButtons, "Szenen Auswahl freischalten", null, form.WartungPage, form, form.resetscenelock_Handler);
+            if (form.Sessionlocked)
+            {
+                form.resetSessionlockbutton.Show();
+            }
+            else
+            {
+                form.resetSessionlockbutton.Hide();
+            }
+            
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Starte eine neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
+
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Beende die aktuelle Session", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
+
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
+
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            if (form.vlcclosed)
+            {
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Öffne den Player", "VLCClose", form.WartungPage, form, form.OpenPlayer_Handler);
+            }
+            else
+            {
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
+            }
+
+            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
+            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
             Button bu = null;
             if (form.showconsoleonallsites)
             {
-                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Zeige Konsole nicht immer", "ConsoleEverywhere", form.WartungPage, form, form.ShowConsoleNotOnallSites, out bu);
+                bu = Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Zeige Konsole nicht immer", "ConsoleEverywhere", form.WartungPage, form, form.ShowConsoleNotOnallSites);
             }
             else
             {
-                Constants.createButton(Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Zeige Konsole immer", "ConsoleEverywhere", form.WartungPage, form, form.ShowConsoleOnallSites, out bu);
+                bu = Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Zeige Konsole immer", "ConsoleEverywhere", form.WartungPage, form, form.ShowConsoleOnallSites);
             }
-            if (form.consoleshown)
+            if (Logger.consoleshown)
             {
-                Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Schließe Konsole", bu, form.WartungPage, form, form.CloseConsole);
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Schließe Konsole", bu, form.WartungPage, form, form.CloseConsole);
             }
             else
             {
-                Constants.createButton(Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Öffne Konsole", bu, form.WartungPage, form, form.ShowConsole);
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Öffne Konsole", bu, form.WartungPage, form, form.ShowConsole);
                 bu.Hide();
             }
-            setConfigRestricted(config);
+
+            if (config == null)
+            {
+                return;
+            }
+
+            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Button b = null;
+            b = Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[1].JsonText, config.DMXScenes[1], form.WartungPage, form, form.Ambiente_Change_Handler);
+            config.DMXScenes[1].ButtonElement = b;
+            selectButton(b, config.DMXSceneSetting == 1, Constants.selected_color);
+            int wartungs = config.TCPSettings.Count;
+            foreach (Constants.DMXScene sc in config.DMXScenes)
+            {
+                if (sc.ShowText == null || sc.ShowText.Length <= 0)
+                {
+                    wartungs--;
+                }
+            }
+            if (wartungs > Constants.maxscenes)
+            {
+                Logger.Print("Es wurden zu viele TCPSettings eingelesen.", Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
+            }
+            wartungs = Math.Min(wartungs, Constants.maxtcpws);
+            for (int i = 0; i < config.TCPSettings.Count; i++)
+            {
+                if (config.TCPSettings[i].ShowText == null || config.TCPSettings[i].ShowText.Length <= 0)
+                {
+                    Constants.createButton<Button>(null, null, null, "", config.TCPSettings[i], null, form, null, out bu);
+                    bu.Hide();
+                    config.TCPSettings[i].ButtonElement = bu;
+                    continue;
+                }
+                GetDynamicPosition(5, 1, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+                Button but = null;
+                but = Constants.createButton(width, height, Pos_x, Restrictedstarty + i * Restrictedycoord, RestrictedPageButtons, config.TCPSettings[i].ShowText, config.TCPSettings[i], form.WartungPage, form, form.Wartung_Request_Handle);
+                config.TCPSettings[i].ButtonElement = but;
+            }
         }
 
         public void removeRestrictedPageElements()
@@ -622,13 +676,18 @@ namespace Spa_Interaction_Screen
 
         public void GetDynamicPosition(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow)
         {
-            GetDynamicPositionsize(TotalButtonCount, CurrentButtonIndex, out pos_X,out pos_Y,widthOffsetinButtons, heightOffsetinButtons, useDoubleRow, Constants.Element_width, Constants.Element_height);
+            GetDynamicPosition(TotalButtonCount, CurrentButtonIndex, out pos_X,out pos_Y,widthOffsetinButtons, heightOffsetinButtons, useDoubleRow, Constants.Element_width, Constants.Element_height);
         }
 
-        public void GetDynamicPositionsize(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow, int width, int height)
+        public void GetDynamicPosition(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow, int width, int height)
         {
-            int xpadding = (int)((double)Constants.windowwidth / (Constants.XButtonCount + 1)) - Constants.Element_width;
-            int ypadding = (int)((double)Constants.tabheight / (Constants.YButtonCount + 1)) - Constants.Element_height;
+            int xpadding = (int)(((double)Constants.windowwidth / (Constants.XButtonCount + 1)) - width)/2;
+            int ypadding = (int)(((double)Constants.tabheight / (Constants.YButtonCount + 1)) - height)/2;
+            GetDynamicPosition(TotalButtonCount, CurrentButtonIndex, out pos_X, out pos_Y, widthOffsetinButtons, heightOffsetinButtons, useDoubleRow, width, height, xpadding, ypadding);
+        }
+
+        public void GetDynamicPosition(int TotalButtonCount, int CurrentButtonIndex, out int pos_X, out int pos_Y, double widthOffsetinButtons, double heightOffsetinButtons, bool useDoubleRow, int width, int height, int xpadding, int ypadding)
+        {
             int mod1, mod2 = pos_X = 0;
 
             if (TotalButtonCount > Constants.InlineUntilXButtons)
@@ -735,9 +794,13 @@ namespace Spa_Interaction_Screen
                 {
                     channel = config.Dimmerchannel[Int32.Parse(slider.Name)];
                 }
-                catch (Exception ex)
+                catch (FormatException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                    Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                    continue;
+                }catch (ArgumentOutOfRangeException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }
                 int old_value = 0;
@@ -890,13 +953,32 @@ namespace Spa_Interaction_Screen
             }
             form.HowCanIHelpYouDescribtion.Text = config.ServicesSettings[0].ShowText;
             form.HowCanIHelpYouDescribtion.Location = new Point((Constants.windowwidth / 2) - (form.HowCanIHelpYouDescribtion.Size.Width / 2), form.HowCanIHelpYouDescribtion.Location.Y);
-
-            int Numhelps = Math.Min(config.ServicesSettings.Count, Constants.maxhelps);
-            for (int i = 1; i < Numhelps; i++)
+            int Numhelps = config.DMXScenes.Count;
+            foreach (Constants.DMXScene sc in config.DMXScenes)
             {
-                GetDynamicPosition(Numhelps - 1, i - 1, out Pos_x, out Pos_y, 0, 3, false);
+                if (sc.ShowText == null || sc.ShowText.Length <= 0)
+                {
+                    Numhelps--;
+                }
+            }
+            if (Numhelps > Constants.maxscenes)
+            {
+                Logger.Print("Es wurden zu viele Service Einstellungen eingelesen.", Logger.MessageType.Ohne_Kategorie, Logger.MessageSubType.Notice);
+            }
+            Numhelps = Math.Min(config.ServicesSettings.Count, Constants.maxhelps);
+            for (int i = 1; i < config.ServicesSettings.Count; i++)
+            {
                 Button bu = null;
+                if (config.ServicesSettings[i].ShowText == null || config.ServicesSettings[i].ShowText.Length <= 0)
+                {
+                    Constants.createButton<Button>(null, null, null, "", config.ServicesSettings[i], null, form, null, out bu);
+                    bu.Hide();
+                    config.ServicesSettings[i].ButtonElement = bu;
+                    continue;
+                }
+                GetDynamicPosition(Numhelps - 1, i - 1, out Pos_x, out Pos_y, 0, 3, false);
                 Constants.createButton(Pos_x, Pos_y, ServicePageButtons, config.ServicesSettings[i].ShowText, config.ServicesSettings[i], form.ServicePage, form, form.Service_Request_Handle, out bu);
+                bu.BackColor = Constants.alternative_color;
                 config.ServicesSettings[i].ButtonElement = bu;
             }
         }
@@ -913,33 +995,34 @@ namespace Spa_Interaction_Screen
                 AmbientePageButtons.Remove(but);
                 but.Dispose();
             }
-            int notshowenscenes = 2;
-            int Numscenes = config.DMXScenes.Count - notshowenscenes;
+            int Numscenes = config.DMXScenes.Count;
+            foreach(Constants.DMXScene sc in config.DMXScenes)
+            {
+                if (sc.ShowText == null||sc.ShowText.Length<=0)
+                {
+                    Numscenes--;
+                }
+            }
+            if(Numscenes > Constants.maxscenes)
+            {
+                Logger.Print("Es wurden zu viele DMX Szenen eingelesen. Die überschüssigen können nur über TCP angefragt werden.", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
+            }
             Numscenes = Math.Min(Numscenes, Constants.maxscenes);
-            for (int i = notshowenscenes; i < config.DMXScenes.Count && i <= Constants.maxscenes; i++)
+            for (int i = 0; i < config.DMXScenes.Count && i <= Constants.maxscenes; i++)
             {
                 Constants.DMXScene scene = config.DMXScenes[i];
-                if (scene != null)
+                Button bu = null;
+                if (config.DMXScenes[i].ShowText == null || config.DMXScenes[i].ShowText.Length <= 0)
                 {
-                    if (i == notshowenscenes)
-                    {
-                        int x = 0;
-                        foreach (int j in scene.Channelvalues)
-                        {
-                            x += j;
-                        }
-                        if (x <= 0)
-                        {
-                            Numscenes++;
-                            continue;
-                        }
-                    }
-                    GetDynamicPosition(Numscenes, i - notshowenscenes, out Pos_x, out Pos_y, 0, 0, true);
-                    Button bu = null;
-                    Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, scene.ShowText, scene, form.AmbientePage, form, form.Ambiente_Change_Handler, out bu);
+                    Constants.createButton<Button>(null, null, null, "", scene, null, form, null, out bu);
+                    bu.Hide();
                     scene.ButtonElement = bu;
-                    AmbientePagedynamicButtons.Add(bu);
+                    continue;
                 }
+                GetDynamicPosition(Numscenes, i, out Pos_x, out Pos_y, 0, 0, true);
+                Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, scene.ShowText, scene, form.AmbientePage, form, form.Ambiente_Change_Handler, out bu);
+                scene.ButtonElement = bu;
+                AmbientePagedynamicButtons.Add(bu);
             }
         }
 
@@ -966,7 +1049,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (IOException e)
                     {
-                        Log.Print(e.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                        Logger.Print(e.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     }
                     Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
                     SetEdgePosition(Logoview, config.Logoposition);
@@ -998,6 +1081,7 @@ namespace Spa_Interaction_Screen
                     SetEdgePosition(Labeltimeview, config.edgetimePosition);
                     Labeltimeview.AutoSize = true;
                     Labeltimeview.TabStop = false;
+                    Labeltimeview.BackColor = Color.Transparent;
                     Labeltimeview.Font = Constants.Standart_font;
                     globaltimelabels.Add(Labeltimeview);
                     tabs[i].Controls.Add(Labeltimeview);
@@ -1017,7 +1101,6 @@ namespace Spa_Interaction_Screen
             globalinformationlabels = new List<Label>();
             posx = Constants.windowwidth / 2;
 
-
             globalinformationlabels.Add(createLabelforpage(posx, 0));
             globalinformationlabels.Add(createLabelforpage(posx, 1));
             globalinformationlabels.Add(createLabelforpage(posx, 4));
@@ -1032,6 +1115,7 @@ namespace Spa_Interaction_Screen
             Labelview.Font = Constants.Standart_font;
             Labelview.TabStop = false;
             Labelview.AutoSize = true;
+            Labelview.BackColor = Color.Transparent;
             tabs[page].Controls.Add(Labelview);
             Labelview.Hide();
             Labelview.BringToFront();
@@ -1070,8 +1154,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateGenNewPassword();
                 }
             }
@@ -1081,10 +1165,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegateGenNewPassword();
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     form.BeginInvoke(new MyNoArgument(delegateGenNewPassword));
                 }
             }
@@ -1092,7 +1176,7 @@ namespace Spa_Interaction_Screen
 
         private async void delegateGenNewPassword()
         {
-            config.password = "";
+            config.Wifipassword = "";
             Task router = null;
             if (form != null && form.net != null && !Constants.noNet)
             {
@@ -1105,6 +1189,13 @@ namespace Spa_Interaction_Screen
                     ta = Task.Run(() => form.net.wakeup(form));
                     ta.Wait();
                 });
+            }
+            if (config.WiFiSSID == null || config.WiFiSSID.Length <= 0 || config.Wifipassword == null || config.Wifipassword.Length <= 0)
+            {
+                if (Constants.showdirectlypotentiallyfalsewificreds)
+                {
+                    config.UseoldWiFicreds();
+                }
             }
             if (form.loadscreen != null)
             {
@@ -1135,8 +1226,8 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegatesetnewPassword();
                 }
             }
@@ -1146,10 +1237,10 @@ namespace Spa_Interaction_Screen
                 {
                     delegatesetnewPassword();
                 }
-                catch (Exception ex)
+                catch (InvalidOperationException ex)
                 {
-                    Log.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Log.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                    Logger.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     form.Invoke(new MyNoArgument(delegatesetnewPassword));
                 }
             }
@@ -1157,9 +1248,11 @@ namespace Spa_Interaction_Screen
 
         private void delegatesetnewPassword()
         {
-            if (form != null)
+            if (form != null && config != null)
             {
-                if (config.password != null && config.password.Length > 0)
+                form.WiFiSSIDLabel.Text = config.WiFiSSID;
+                form.WiFiPasswortLabel.Text = config.Wifipassword;
+                if (config.Wifipassword != null && config.Wifipassword.Length > 0 && config.WiFiSSID != null && config.WiFiSSID.Length > 0)
                 {
                     CreateMediaControllingElemets(2.3);
                     form.WiFiSSIDLabel.Show();
@@ -1171,7 +1264,6 @@ namespace Spa_Interaction_Screen
                     {
                         form.vlc.newsession();
                     }
-
                 }
                 else
                 {
@@ -1182,26 +1274,11 @@ namespace Spa_Interaction_Screen
                     form.WiFiPasswortLabel.Hide();
                 }
             }
-            form.WiFiPasswortLabel.Text = config.password;
-        }
-
-
-        private void setConfigRestricted(Config config)
-        {
-            if (config == null)
+            if(config != null)
             {
-                return;
+                config.updateWificreds();
             }
-            int Pos_x, Pos_y;
-
-            GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false);
-            Button b = null;
-            Constants.createButton(Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, config.DMXScenes[1].ShowText, config.DMXScenes[1], form.WartungPage, form, form.Ambiente_Change_Handler, out b);
-            config.DMXScenes[1].ButtonElement = b;
-            selectButton(b, config.DMXSceneSetting == 1, Constants.selected_color);
         }
-
-        
 
         public void createConsolePage()
         {
@@ -1215,25 +1292,9 @@ namespace Spa_Interaction_Screen
             }
             int posx, posy = 0;
             form.UIControl.Controls.Add(form.ConsolePage);
-            form.consoleshown = true;
+            Logger.consoleshown = true;
 
-            GetDynamicPosition(3, 1, out posx, out posy, 0, 1, false);
-            form.consoletype = new ComboBox();
-            Array types = Enum.GetValues(typeof(Logger.MessageType));
-            foreach (Logger.MessageType mt in types)
-            {
-                if (Log.getList(Log.MTypetobyte<Logger.MessageType>(mt)).Count > 0)
-                {
-                    form.consoletype.Items.Add(new Constants.ComboItem { Text = mt.ToString(), ID = Log.MTypetobyte<Logger.MessageType>(mt) });
-                }
-            }
-            form.consoletype.Location = new Point(posx, posy);
-            form.consoletype.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.consoletype.SelectedIndexChanged += form.comboconsoleItemchanged;
-            ConsoleElements.Add(form.consoletype);
-            form.ConsolePage.Controls.Add(form.consoletype);
-
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 0, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 0, false);
             Label lab = new Label();
             lab.AutoSize = true;
             lab.Text = "TCP Message";
@@ -1243,7 +1304,7 @@ namespace Spa_Interaction_Screen
             form.ConsolePage.Controls.Add(lab);
             ConsoleElements.Add(lab);
 
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 0.5, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 0.5, false);
             Label la = new Label();
             la.AutoSize = true;
             la.Text = $"Room: {config.Room}";
@@ -1253,7 +1314,7 @@ namespace Spa_Interaction_Screen
             form.ConsolePage.Controls.Add(la);
             ConsoleElements.Add(la);
 
-            GetDynamicPosition(3, 1, out posx, out posy, 0, 0, false);
+            GetDynamicPosition(4, 1, out posx, out posy, 0, 0, false);
             Label l = new Label();
             l.AutoSize = true;
             l.Text = "Console";
@@ -1263,14 +1324,7 @@ namespace Spa_Interaction_Screen
             form.ConsolePage.Controls.Add(l);
             ConsoleElements.Add(l);
 
-            /*
-                public ComboBox tcptype;
-                public TextBox CommandboxLabel;
-                public NumericUpDown Commandboxid;
-                public TextBox Commandboxvalues;
-            */
-
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 1, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 1, false);
             form.tcptype = new ComboBox();
             for (int i = 0; i<config.Typenames.Length;i++)
             {
@@ -1282,7 +1336,7 @@ namespace Spa_Interaction_Screen
             ConsoleElements.Add(form.tcptype);
             form.ConsolePage.Controls.Add(form.tcptype);
 
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 1.5, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 1.5, false);
             form.CommandboxLabel = new TextBox();
             form.CommandboxLabel.PlaceholderText = "Label";
             form.CommandboxLabel.Size = new Size(Constants.Element_width, Constants.Element_height);
@@ -1291,7 +1345,7 @@ namespace Spa_Interaction_Screen
             ConsoleElements.Add(form.CommandboxLabel);
             form.ConsolePage.Controls.Add(form.CommandboxLabel);
 
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 2, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 2, false);
             form.Commandboxid = new TextBox();
             form.Commandboxid.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.Commandboxid.Location = new Point(posx, posy);
@@ -1300,7 +1354,7 @@ namespace Spa_Interaction_Screen
             ConsoleElements.Add(form.Commandboxid);
             form.ConsolePage.Controls.Add(form.Commandboxid);
 
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 2.5, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 2.5, false);
             form.Commandboxvalues = new TextBox();
             form.Commandboxvalues.PlaceholderText = "values (komma seperated)";
             form.Commandboxvalues.Size = new Size(Constants.Element_width, Constants.Element_height);
@@ -1308,22 +1362,13 @@ namespace Spa_Interaction_Screen
             ConsoleElements.Add(form.Commandboxvalues);
             form.ConsolePage.Controls.Add(form.Commandboxvalues);
 
-            GetDynamicPosition(3, 0, out posx, out posy, 0, 3, false);
+            GetDynamicPosition(4, 0, out posx, out posy, 0, 3, false);
             Button bu = null; 
             Constants.createButton(posx, posy, (List<Button>)null, "Send Message", "sendtcp", form.ConsolePage, form, form.sendTCPfromconsole,out bu);
             ConsoleElements.Add(bu);
 
-            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
-            form.Textscroll = createColorSlide(0);
-            form.Textscroll.Orientation = Orientation.Vertical;
-            form.Textscroll.Location = new Point(posx, posy);
-            form.Textscroll.Size = new Size(form.Textscroll.Size.Width, (Constants.Element_height+Constants.Element_y_padding)*3);
-            form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
-            ConsoleElements.Add(form.Textscroll);
-            form.ConsolePage.Controls.Add(form.Textscroll);
-
             Point lp = new Point(0, 4);
-            GetDynamicPosition(3, lp.X, out posx, out posy, 0, lp.Y, false);
+            GetDynamicPosition(4, lp.X, out posx, out posy, 0, lp.Y, false);
             form.Messagepreview = new Label();
             form.Messagepreview.AutoSize = true;
             form.Messagepreview.Text = "";
@@ -1334,17 +1379,71 @@ namespace Spa_Interaction_Screen
             form.ConsolePage.Controls.Add(form.Messagepreview);
             ConsoleElements.Add(form.Messagepreview);
 
-            GetDynamicPosition(3, 2, out posx, out posy, 0, 1, false);
-            form.ConsoleTextscroll = createColorSlide(0);
-            form.ConsoleTextscroll.ShowDivisionsText = false;
-            form.ConsoleTextscroll.ShowSmallScale = false;
-            form.ConsoleTextscroll.Orientation = Orientation.Vertical;
-            form.ConsoleTextscroll.Location = new Point(posx, posy);
-            form.ConsoleTextscroll.Size = new Size(form.ConsoleTextscroll.Size.Width, (Constants.Element_height + Constants.Element_y_padding) * 3);
-            form.ConsoleTextscroll.Hide();
-            form.ConsoleTextscroll.ValueChanged += form.consolescroll;
-            ConsoleElements.Add(form.ConsoleTextscroll);
-            form.ConsolePage.Controls.Add(form.ConsoleTextscroll);
+            GetDynamicPosition(4, 2, out posx, out posy, 0, 1, false);
+            Logger.ConsoleTextscroll = createColorSlide(0);
+            Logger.ConsoleTextscroll.ShowDivisionsText = false;
+            Logger.ConsoleTextscroll.ShowSmallScale = false;
+            Logger.ConsoleTextscroll.Orientation = Orientation.Vertical;
+            Logger.ConsoleTextscroll.Location = new Point(posx, posy);
+            Logger.ConsoleTextscroll.Size = new Size(Logger.ConsoleTextscroll.Size.Width, (Constants.Element_height + Constants.Element_y_padding) * 3);
+            Logger.ConsoleTextscroll.Hide();
+            Logger.ConsoleTextscroll.ValueChanged += form.consolescroll;
+            ConsoleElements.Add(Logger.ConsoleTextscroll);
+            form.ConsolePage.Controls.Add(Logger.ConsoleTextscroll);
+
+            GetDynamicPosition(4, 3, out posx, out posy, 0, 0, false);
+            form.Programmstate = new Label();
+            form.Programmstate.AutoSize = true;
+            form.Programmstate.Text = $"Programmstatus: {form.currentState}";
+            form.Programmstate.ForeColor = Constants.Text_color;
+            form.Programmstate.Location = new Point(posx, posy);
+            form.Programmstate.Font = new Font("Segoe UI", 23F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            form.ConsolePage.Controls.Add(form.Programmstate);
+            ConsoleElements.Add(form.Programmstate);
+
+            GetDynamicPosition(4, 3, out posx, out posy, 0, 1, false);
+            Label state = new Label();
+            state.AutoSize = true;
+            state.Text = "0: Something wrong\r\n1: All right\r\n2: No TCP connection\r\n3: No Second Monitor\r\n4: Error when communicating with router\r\n5: Error when communicating with ambient Light\r\n6: Config Error\r\n";
+            state.ForeColor = Constants.Text_color;
+            state.Location = new Point(posx, posy);
+            state.Font = Constants.Standart_font;
+            form.ConsolePage.Controls.Add(state);
+            ConsoleElements.Add(state);
+
+
+            GetDynamicPosition(4, 1, out posx, out posy, 0, 1, false);
+            Logger.consoletype = new ComboBox();
+            Array types = Enum.GetValues(typeof(Logger.MessageType));
+            foreach (Logger.MessageType mt in types)
+            {
+                List<Logger.Log_Element> lle = Logger.getList(Logger.MTypetobyte<Logger.MessageType>(mt));
+                if (lle != null && lle.Count > 0)
+                {
+                    Logger.consoletype.Items.Add(new Constants.ComboItem { Text = mt.ToString(), ID = Logger.MTypetobyte<Logger.MessageType>(mt) });
+                }
+            }
+            Logger.consoletype.Location = new Point(posx, posy);
+            Logger.consoletype.Size = new Size(Constants.Element_width, Constants.Element_height);
+            Logger.consoletype.SelectedIndexChanged += form.comboconsoleItemchanged;
+            Logger.consoletype.SelectedIndex = 0;
+            ConsoleElements.Add(Logger.consoletype);
+            form.ConsolePage.Controls.Add(Logger.consoletype);
+
+            GetDynamicPosition(4, 1, out posx, out posy, 0, 1.5, false);
+            Logger.consolesubtype = new ComboBox();
+            Logger.consolesubtype.Items.Add(new Constants.ComboItem { Text = "Alle", ID = null });
+            types = Enum.GetValues(typeof(Logger.MessageSubType));
+            foreach (Logger.MessageSubType mt in types)
+            {
+                Logger.consolesubtype.Items.Add(new Constants.ComboItem { Text = mt.ToString(), ID = Logger.MTypetobyte<Logger.MessageSubType>(mt) });
+            }
+            Logger.consolesubtype.Location = new Point(posx, posy);
+            Logger.consolesubtype.Size = new Size(Constants.Element_width, Constants.Element_height);
+            Logger.consolesubtype.SelectedIndexChanged += form.comboconsoleItemchanged;
+            Logger.consolesubtype.SelectedIndex = 0;
+            ConsoleElements.Add(Logger.consolesubtype);
+            form.ConsolePage.Controls.Add(Logger.consolesubtype);
 
             form.resizeUIControlItems();
         }
@@ -1352,43 +1451,16 @@ namespace Spa_Interaction_Screen
         public void removeConsolePage()
         {
             form.UIControl.Controls.Remove(form.ConsolePage);
-            form.consoleshown = false;
+            Logger.consoleshown = false;
             form.vlc.toggleConsoleBox(false);
-            Debug.Print(form.vlc.GetConsoleText());
             form.resizeUIControlItems();
             while (ConsoleElements.Count > 0)
             {
-                Control rem = WartungPageButtons[0];
+                Control rem = ConsoleElements[0];
                 rem.Tag = -1;
                 rem.Hide();
                 form.UIControl.Controls.Remove(rem);
                 ConsoleElements.Remove(rem);
-            }
-        }
-
-        public void checkforKeyboard()
-        {
-            while (true)
-            {
-                bool keyboardPresent = false;
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher("Select * from Win32_Keyboard");
-
-                foreach (ManagementObject keyboard in searcher.Get())
-                {
-                    foreach (PropertyData prop in keyboard.Properties)
-                    {
-                        if (Convert.ToString(prop.Value).Contains(USB))
-                        {
-                            keyboardPresent = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (keyboardPresent)
-                {
-
-                }
             }
         }
     }
