@@ -4,22 +4,24 @@ Examples (Under "Data To Interaction_Screen" and "Data from Interaction_Screen")
 
 ----- General Message Structure ----- 
 Data types:	
-	(mandatory)(String)	"room":		Specifies the room (could be unnecesarry, because it is identifiable through the IP, but just for veryfication it is checked)
-	(mandatory)(String)	"type": 	Specifies the type of message 
+	(mandatory)(int)		"room":		Specifies the room (could be unnecesarry, because it is identifiable through the IP, but just for veryfication it is checked)
+	(mandatory)(int/String)		"type": 	Specifies the type of message 
 	
 	One the following two is mandatory (either "label" or "id")
-	(Optional)(String)	"label": 	Specifies the subtype or intention of the message (if label is "?" then all information from that type are sent back (the individual Messages are in a list then))
-	(Optional)(int)		"id":		like label for enumerated Elements (See ids in ConfigFile.csv)
+	(Optional)(String)		"label": 	Specifies the subtype or intention of the message (if label is "?" then all information from that type are sent back (the individual Messages are in a list then))
+	(Optional)(int)			"id":		like label for enumerated Elements (See ids in ConfigFile.csv), but can sometimes also be used for singly int values
 	
-	(Optional)(int[])	"values":	Specifies 1 or more values for the given subtype
+	(Optional)(int[]/String[])	"values":	Specifies 1 or more values for the given subtype
 
 State ids:
   0: Something wrong
   1: All right
-  2: No TCP connection  
-  3: No Second Monitor
-  4: Error when communicating with router
+  2: TCP (connection itself or commands send / received)
+  3: Monitors
+  4: Error when communicating with router or gastro
   5: Error when communicating with ambient Light
+  6: Config Error
+  7: Other Error (Investigate LOG or BLOG)
 
 ----- Data To Interaction_Screen -----
 
@@ -29,6 +31,15 @@ System:
   "type":"System",
   "label":"Volume",
   "id":30
+}
+
+System:
+{  
+  "room":1,
+  "type":"System",
+  "label":"block",
+  "id":0, //0 = Release, 1 = Block
+  "values":["DMXScenes", "3"] //Releases DMXScene and Session block
 }
 
 Session:

@@ -22,7 +22,7 @@ namespace Spa_Interaction_Screen
     {
         private MainForm form;
         private Config config;
-        public List<TcpClient> tcpClients = new List<TcpClient>();
+        public List<Socket> tcpSockets = new List<Socket>();
         private Task connectClients = null;
         public List<Task> ListeningClients = new List<Task>();
         private TcpClient routerclient = null;
@@ -79,6 +79,7 @@ namespace Spa_Interaction_Screen
             s += "}";
             return s;
         }
+
         private static String assembleQuestionJsonString(RequestJson req)
         {
             String s = "[";
@@ -105,10 +106,10 @@ namespace Spa_Interaction_Screen
             return s;
         }
 
-        private TcpClient getbestclient(string? dest, int? port)
+        private Socket getbestclient(string? dest, int? port)
         {
-            TcpClient? cl = tcpClients[0];
-            if (tcpClients.Count > 1)
+            Socket? cl = tcpSockets[0];
+            if (tcpSockets.Count > 1)
             {
                 byte[] ip = new byte[4];
                 try
@@ -131,17 +132,18 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
                     return null;
                 }
 
-                List<TcpClient> possibilities = new List<TcpClient>();
+                List<Socket> possibilities = new List<Socket>();
                 IPAddress specifiedIP = new IPAddress(ip);
-                foreach (TcpClient client in tcpClients)
+                foreach (Socket client in tcpSockets)
                 {
                     if (client != null)
                     {
-                        IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+                        IPEndPoint endpoint = client.RemoteEndPoint as IPEndPoint;
                         if (endpoint.Address.Equals(specifiedIP))
                         {
                             possibilities.Add(client);
@@ -160,7 +162,7 @@ namespace Spa_Interaction_Screen
                         {
                             possibilities[i].Close();
                             possibilities.RemoveAt(i);
-                            tcpClients.Remove(possibilities[i]);
+                            tcpSockets.Remove(possibilities[i]);
                             i--;
                         }
                     }
@@ -168,22 +170,22 @@ namespace Spa_Interaction_Screen
                 else
                 {
                     int i = 0;
-                    while (i < tcpClients.Count && !tcpClients[i].Connected)
+                    while (i < tcpSockets.Count && !tcpSockets[i].Connected)
                     {
                         i++;
                     }
-                    if (i >= tcpClients.Count)
+                    if (i >= tcpSockets.Count)
                     {
                         return null;
                     }
-                    return tcpClients[i];
+                    return tcpSockets[i];
                 }
                 cl = possibilities[0];
             }
             return cl;
         }
 
-        public bool isClientZentrale(TcpClient client)
+        public bool isClientZentrale(Socket client)
         {
             if (config != null && config.IPZentrale != null && client != null && client.Connected)
             {
@@ -195,14 +197,13 @@ namespace Spa_Interaction_Screen
                 ip[i] = Byte.Parse(config.IPZentrale[i]);
             }
             IPAddress specifiedIP = new IPAddress(ip);
-            IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+            IPEndPoint endpoint = client.RemoteEndPoint as IPEndPoint;
             if (!endpoint.Address.Equals(specifiedIP))
             {
                 return false;
             }
             return true;
         }
-
 
         //UDP
         /*
@@ -261,9 +262,10 @@ namespace Spa_Interaction_Screen
         */
 
         //TCP
-        public bool SendTCPMessage(RequestJson json, TcpClient? cl)
+
+        public bool SendTCPMessage(RequestJson json, Socket? cl)
         {
-            if (tcpClients == null || tcpClients.Count <= 0)
+            if (tcpSockets == null || tcpSockets.Count <= 0)
             {
                 return false;
             }
@@ -276,7 +278,7 @@ namespace Spa_Interaction_Screen
                 Logger.Print("No connected Clients",Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
                 return false;
             }
-            NetworkStream stream = cl.GetStream();
+            NetworkStream stream = new NetworkStream(cl);
             string text = assembleJsonString(json);
             byte[] send_buffer = Encoding.Default.GetBytes(text);
             try
@@ -291,6 +293,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
                         break;
                 }
@@ -310,25 +313,34 @@ namespace Spa_Interaction_Screen
         {
             while (net.form.RunTask)   //we wait for a connection
             {
-                TcpClient client = server.AcceptTcpClient();  //if a connection exists, the server will accept it
-                net.tcpClients.Add(client);
-                net.ListeningClients.Add(Task.Run(() => listenTCPConnection(client, net, false, ListeningClients.Count)));
-                IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+                Socket client = server.AcceptSocket();  //if a connection exists, the server will accept it
+                client.DontFragment = true;
+                client.SetIPProtectionLevel(IPProtectionLevel.Unrestricted);
+                net.tcpSockets.Add(client);
+                net.ListeningClients.Add(Task.Run(async() => listenTCPConnection(client, net, false, ListeningClients.Count)));
+                IPEndPoint endpoint = client.RemoteEndPoint as IPEndPoint;
                 Logger.Print($"Client with IP:{endpoint.Address} connected", [Logger.MessageType.TCPReceive, Logger.MessageType.TCPSend], Logger.MessageSubType.Information);
             }
         }
 
-        private void listenTCPConnection(TcpClient cl, Network net, bool isTelnet, int index)
+        private async void listenTCPConnection(Socket cl, Network net, bool isTelnet, int index)
         {
-            NetworkStream ns = cl.GetStream();
             Logger.Print("ListeningTCP", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
-            while (cl.Connected && net.form.RunTask)  //while the client is connected, we look for incoming messages
+            int b_read = 0;
+            Task<int> receivetask = null;
+            //while the client is connected, we look for incoming messages
+            do
             {
                 byte[] msg = new byte[1024];     //the messages arrive as byte array
-                int b_read = 0;
                 try
                 {
-                    b_read = ns.Read(msg, 0, msg.Length);   //the same networkstream reads the message sent by the client
+                    receivetask = cl.ReceiveAsync(msg, SocketFlags.None);   //the same networkstream reads the message sent by the client
+                    b_read = await receivetask;
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    cl.Close();
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -338,19 +350,19 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
+                            MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             break;
                     }
                 }
                 Array.Resize(ref msg, b_read);
                 net.receivedMessage(msg, cl, isTelnet, net, index);
-            }
-            net.tcpClients.Remove(cl);
+            } while (cl != null && cl.Connected && b_read > 0 && net.form.RunTask);
+            net.tcpSockets.Remove(cl);
             cl.Dispose();
         }
 
         //Telnet
-        
         public bool SendTelnetASKPass()
         {
             if (routerclient == null || !routerclient.Connected)
@@ -373,6 +385,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -404,6 +417,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -428,6 +442,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
+                            MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
@@ -470,6 +485,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -494,6 +510,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
+                            MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
@@ -535,6 +552,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -559,6 +577,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
+                            MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
@@ -597,6 +616,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
+                            MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
@@ -679,6 +699,7 @@ namespace Spa_Interaction_Screen
             Logger.Print($"Neues Passwort: {npw}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             f.helper.setnewPassword();
         }
+
         public void setuprouterssid(MainForm f)
         {
             if (!connectrouter(f))
@@ -780,6 +801,7 @@ namespace Spa_Interaction_Screen
             }
             catch (Exception e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                 Logger.Print($"Failed while connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 routerclient = null;
@@ -842,57 +864,86 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            if (!(Json.ContainsKey("type") && Json["type"] != null))
+            if (!(jsonpartvalid(Json, "type")))
             {
-                Logger.Print("Invalid Json received: missing \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print("Invalid Json received: missing or wrong \"type\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
-            if(!(Json.ContainsKey("room") && Json["room"] != null) || (Int64)Json["room"] != config.Room)
+            if(!(jsonpartvalid(Json, "room")))
             {
                 Logger.Print("Invalid Json received: missing or wrong \"room\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                if (Constants.NetRoomSpecMandatory)
+                {
+                    return;
+                }
             }
+            if (!(jsonpartvalid(Json, "id") || jsonpartvalid(Json, "label")))
+            {
+                Logger.Print("Invalid Json received: missing or wrong \"id\" or \"label\" argument", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                return;
+            }
+
             bool processedjson = false;
             int x = -1;
-            if (int.TryParse(((String)Json["type"]).Trim().ToLower(), out x))
+            if (Json["type"].GetType().Equals(typeof(Int64)))
             {
-                processedjson = indexsjsontypewitch(Json, x);
+                processedjson = indexsjsontypewitch(Json, (Int32)(Int64)(Json["type"]));
             }
-            else
+            else if (Json["type"].GetType().Equals(typeof(String)))
             {
-                switch (((String)Json["type"]).Trim().ToLower())
+                if (int.TryParse(((String)Json["type"]).Trim().ToLower(), out x))
                 {
-                    case "status":
-                        Logger.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
-                        processedjson = true;
-                        break;
-                    default:
-                        for (int i = 0; i < config.Typenames.Length && !processedjson; i++)
-                        {
-                            if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
+                    processedjson = indexsjsontypewitch(Json, x);
+                }
+                else
+                {
+                    switch (((String)Json["type"]).Trim().ToLower())
+                    {
+                        case "status":
+                            Logger.Print("This Paket type does not belog here (Paket: Status). Ignoring it", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                            processedjson = true;
+                            break;
+                        default:
+                            for (int i = 0; i < config.Typenames.Length && !processedjson; i++)
                             {
-                                processedjson = indexsjsontypewitch(Json, i);
+                                if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
+                                {
+                                    processedjson = indexsjsontypewitch(Json, i);
+                                }
                             }
-                        }
-                        break;
+                            break;
+                    }
                 }
             }
             if (!processedjson)
             {
-                Logger.Print("Json could be related to a given \"type\".", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                Logger.Print($"Json could not be related to a given \"type\": {((string)(Json["type"]))}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
         }
 
         private void SystemPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
             int index = -1;
-            for (int i = 0; i < c.SystemSettings.Count; i++)
+            bool usedidforindex = false;
+            if (jsonpartvalid(json, "label"))
             {
-                Constants.SystemSetting ss = c.SystemSettings[i];
-                if (ss.JsonText.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+                for (int i = 0; i < c.SystemSettings.Count; i++)
                 {
-                    index = i; 
-                    break;
+                    Constants.SystemSetting ss = c.SystemSettings[i];
+                    if (ss.JsonText.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+                    {
+                        index = i;
+                        break;
+                    }
                 }
+            }
+            else if(jsonpartvalid(json, "id") && jsonpartvalid(json, "values"))
+            {
+                index = (Int32)(Int64)json["id"];
+            }
+            else
+            {
+                Logger.Print("Invalid \"label\", \"id\" or \"values\" for a System Packet", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
             if(index <=0 && c.DMXSceneSettingJson.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
@@ -933,38 +984,31 @@ namespace Spa_Interaction_Screen
                     break;
                 case 4:
                     int sceneindex = -1;
-                    if (json.ContainsKey("id") && json["id"] != null)
+                    if (jsonpartvalid(json, "id") && !usedidforindex)
                     {
                         sceneindex = (Int32)(Int64)json["id"];
                     }
-                    else if (json.ContainsKey("values") && json["values"] != null)
+                    else if (jsonpartvalid(json, "values"))
                     {
-                       if (((string[])json["values"])[0] != null && ((string[])json["values"])[0].Length >= 0)
+                        try
                         {
-                            try
+                            sceneindex = Int32.Parse(((JArray)json["values"]).ToObject<String[]>()[0]);
+                        }
+                        catch (FormatException ex)
+                        {
+                            Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                        }
+                        if (sceneindex <= 0)
+                        {
+                            String name = ((JArray)json["values"]).ToObject<String[]>()[0];
+                            for (int i = 0; i < c.DMXScenes.Count; i++)
                             {
-                                sceneindex = Int32.Parse(((string[])json["values"])[0]);
-                            }
-                            catch (FormatException ex)
-                            {
-                                Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                            }
-                            if (sceneindex <= 0)
-                            {
-                                String name = ((string[])json["values"])[0];
-                                for (int i = 0; i < c.DMXScenes.Count; i++)
+                                if (name.Trim().ToLower().Equals(c.DMXScenes[i].JsonText.Trim().ToLower()))
                                 {
-                                    if (name.Trim().ToLower().Equals(c.DMXScenes[i].JsonText.Trim().ToLower()))
-                                    {
-                                        sceneindex = i;
-                                        break;
-                                    }
+                                    sceneindex = i;
+                                    break;
                                 }
                             }
-                        }
-                        else
-                        {
-                            Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to). Values has to be an Array with Scene id or name in first index", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
@@ -980,17 +1024,17 @@ namespace Spa_Interaction_Screen
                     break;
                 case 5:
                     int volumevalue = -1;
-                    if (json.ContainsKey("id") && json["id"] != null)
+                    if (jsonpartvalid(json, "id") && !usedidforindex)
                     {
                         volumevalue = (int)json["id"];
                     }
-                    else if (json.ContainsKey("values") && json["values"] != null)
+                    else if (jsonpartvalid(json, "values"))
                     {
-                        if (((string[])json["values"])[0] != null && ((string[])json["values"])[0].Length >= 0)
+                        if (((JArray)json["values"])[0] != null && ((JArray)json["values"]).ToObject<String[]>()[0].Length >= 0)
                         {
                             try
                             {
-                                sceneindex = Int32.Parse(((string[])json["values"])[0]);
+                                sceneindex = Int32.Parse(((JArray)json["values"]).ToObject<String[]>()[0]);
                             }
                             catch (FormatException ex)
                             {
@@ -1014,40 +1058,155 @@ namespace Spa_Interaction_Screen
                     f.AmbientVolume(volumevalue, null, null);
                         break;
                     case 6:
-                    if (json.ContainsKey("id") && json["id"] != null)
+                    if (jsonpartvalid(json, "values"))
                     {
-                        if ((int)json["id"] == 0)
+                        if (((JArray)(json["values"])).Count >= 1 && jsonpartvalid(json, "id"))
                         {
-                            f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                            bool b = (((Int32)(Int64)(json["id"])) % 2 == 0) ? false : true;
+                            int[] dex = new int[((JArray)(json["values"])).Count];
+                            for(int x =0;x< ((JArray)(json["values"])).Count;x++)
+                            {
+                                String s = ((JArray)(json["values"])).ToObject<String[]>()[x];
+                                dex[x] = -1;
+                                if (int.TryParse(s, out dex[x]));
+                                if (dex[x] < 0)
+                                {
+                                    for (int i = config.Typenames.Length-3; i < 3; i++)
+                                    {
+                                        if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                        {
+                                            dex[x] = i;
+                                            break;
+                                        }
+                                    }
+                                }
+                            } 
+                            for(int i = 0; i< dex.Length;i++)
+                            {
+                                int x = dex[i];
+                                switch(x)
+                                {
+                                    case 2:
+                                        form.setsessionlocked(b);
+                                        break;
+                                    case 3:
+                                        form.setservicelocked(b, Constants.Warning_color);
+                                        break;
+                                    case 4:
+                                        form.setscenelocked(b, "", Constants.Warning_color);
+                                        break;
+                                    default:
+                                        Logger.Print($"Couldn't match given Arguments to a Block function (Only Supported for the last 3 JsonTypes) for Argmument: {((JArray)(json["values"])).ToObject<String[]>()[i]}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                                        break;
+                                }
+                            }
+                        }
+                        else if (((JArray)(json["values"])).Count >= 2)
+                        {
+                            try
+                            {
+                                bool p = Boolean.Parse(((JArray)json["values"]).ToObject<String[]>()[0]);
+                                if (!p)
+                                {
+                                    f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
+                                }
+                                else
+                                {
+                                    f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
+                                }
+                                int[] dex = new int[((JArray)(json["values"])).Count];
+                                for (int x = 0; x < ((JArray)(json["values"])).Count; x++)
+                                {
+                                    String s = ((JArray)(json["values"])).ToObject<String[]>()[x];
+                                    dex[x] = -1;
+                                    if (int.TryParse(s, out dex[x])) ;
+                                    if (dex[x] < 0)
+                                    {
+                                        for (int i = config.Typenames.Length - 3; i < 3; i++)
+                                        {
+                                            if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                            {
+                                                dex[x] = i;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                for (int i = 0; i < dex.Length; i++)
+                                {
+                                    int x = dex[i];
+                                    switch (x)
+                                    {
+                                        case 2:
+                                            form.setsessionlocked(p);
+                                            break;
+                                        case 3:
+                                            form.setservicelocked(p, Constants.Warning_color);
+                                            break;
+                                        case 4:
+                                            form.setscenelocked(p, "", Constants.Warning_color);
+                                            break;
+                                        default:
+                                            Logger.Print($"Couldn't match given Arguments to a Block function (Only Supported for the last 3 JsonTypes) for Argmument: {((JArray)(json["values"])).ToObject<String[]>()[i]}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                                            break;
+                                    }
+                                }
+                            }
+                            catch (FormatException ex)
+                            {
+                                Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                                bool value = false;
+                                try
+                                {
+                                    value = (Int32.Parse(((JArray)json["values"]).ToObject<String[]>()[0]) % 2 == 0) ? false : true;
+                                }
+                                catch (FormatException fex)
+                                {
+                                    MainForm.currentState = 2;
+                                    Logger.Print(fex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                                }
+                                int[] dex = new int[((JArray)(json["values"])).Count];
+                                for (int x = 0; x < ((JArray)(json["values"])).Count; x++)
+                                {
+                                    String s = ((JArray)(json["values"])).ToObject<String[]>()[x];
+                                    dex[x] = -1;
+                                    if (int.TryParse(s, out dex[x])) ;
+                                    if (dex[x] < 0)
+                                    {
+                                        for (int i = config.Typenames.Length - 3; i < 3; i++)
+                                        {
+                                            if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                            {
+                                                dex[x] = i;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                for (int i = 0; i < dex.Length; i++)
+                                {
+                                    int x = dex[i];
+                                    switch (x)
+                                    {
+                                        case 2:
+                                            form.setsessionlocked(value);
+                                            break;
+                                        case 3:
+                                            form.setservicelocked(value, Constants.Warning_color);
+                                            break;
+                                        case 4:
+                                            form.setscenelocked(value, "", Constants.Warning_color);
+                                            break;
+                                        default:
+                                            Logger.Print($"Couldn't match given Arguments to a Block function (Only Supported for the last 3 JsonTypes) for Argmument: {((JArray)(json["values"])).ToObject<String[]>()[i]}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                                            break;
+                                    }
+                                }
+                            }
                         }
                         else
                         {
-                            f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
-                        }
-                    }else if (json.ContainsKey("values") && json["values"] != null)
-                    {
-                        try
-                        {
-                            bool p = Boolean.Parse(((string[])json["values"])[0]);
-                            if (!p)
-                            {
-                                f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
-                            }
-                            else
-                            {
-                                f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
-                            }
-                        }
-                        catch(FormatException ex){
-                            Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                            if (((int[])json["values"])[0] == 0)
-                            {
-                                f.setscenelocked(false, Constants.scenelockedinfo, Constants.Warning_color);
-                            }
-                            else
-                            {
-                                f.setscenelocked(true, Constants.scenelockedinfo, Constants.Warning_color);
-                            }
+                            Logger.Print("Couldn't match System (block) Packet to given Formats", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         }
                     }
                     else
@@ -1056,14 +1215,15 @@ namespace Spa_Interaction_Screen
                     }
                     break;
                     case 7:
-                    if (json["values"].GetType() == typeof(string[]))
+                    if (jsonpartvalid(json, "values"))
                     {
-                        String Path = ((string[])json["values"])[1];
+                        String Path = ((JArray)json["values"]).ToObject<String[]>()[0];
                         c.finalizePaths(out Path, Path);
                         if (File.Exists(Path))
                         {
                             if (f.vlc != null)
                             {
+                                f.Content_Change(false);
                                 f.vlc.changeMedia(Path, false);
                                 Logger.Print($"Projecting Path {Path}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                             }
@@ -1075,7 +1235,7 @@ namespace Spa_Interaction_Screen
                     }
                     else
                     {
-                        Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print("Missing necesarry Json key (\"values\", to change Media", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
                     break;
                 case 8:
@@ -1083,6 +1243,8 @@ namespace Spa_Interaction_Screen
                     foreach(Constants.SystemSetting ss in c.SystemSettings)
                     {
                         RequestJson j = new RequestJson();
+                        j.type = config.Typenames[0].Trim().ToLower();
+                        j.Raum = config.Room;
                         j.id = ss.id;
                         j.label = ss.JsonText;
                         String[] t = new string[1];
@@ -1108,9 +1270,18 @@ namespace Spa_Interaction_Screen
                     break;
             }
         }
+
         private void TCPPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && json["label"] != null)
+            int currenttcpws = 0;
+            foreach(TCPSetting tcp in c.TCPSettings)
+            {
+                if(tcp.ShowText != null &&  tcp.ShowText.Length > 0)
+                {
+                    currenttcpws++;
+                }
+            }
+            if (jsonpartvalid(json, "label"))
             {
                 if (((string)json["label"]).Equals("?"))
                 {
@@ -1118,6 +1289,8 @@ namespace Spa_Interaction_Screen
                     foreach (Constants.TCPSetting ss in c.TCPSettings)
                     {
                         RequestJson j = new RequestJson();
+                        j.type = config.Typenames[1].Trim().ToLower();
+                        j.Raum = config.Room;
                         j.id = ss.id;
                         j.label = ss.JsonText;
                         String[] t = new string[1];
@@ -1139,7 +1312,7 @@ namespace Spa_Interaction_Screen
                     SendTCPMessage(r, null);
                     return;
                 }
-                if (((string[])json["values"]).Length > 2)
+                if (jsonpartvalid(json, "values") && ((JArray)json["values"]).Count > 2)
                 {
                     foreach (Constants.TCPSetting tcp in c.TCPSettings)
                     {
@@ -1151,9 +1324,9 @@ namespace Spa_Interaction_Screen
                     Logger.Print("Not enough Arguments provided to edit existing TCP Button (3-4 required)", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 }
                 return;
-            }else if(c.TCPSettings.Count <= Constants.maxtcpws)
+            }else if(currenttcpws <= Constants.maxtcpws)
             {
-                if (((string[])json["values"]).Length > 2)
+                if (jsonpartvalid(json, "values") && ((JArray)json["values"]).Count > 2)
                 {
                     Constants.TCPSetting tcp = new Constants.TCPSetting();
                     edittcpwithjsonvalusarraydata(json, f, c, tcp);
@@ -1171,12 +1344,14 @@ namespace Spa_Interaction_Screen
 
         private void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
+            if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.SessionSetting ss in c.SessionSettings)
                 {
                     RequestJson j = new RequestJson();
+                    j.type = config.Typenames[2].Trim().ToLower();
+                    j.Raum = config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[3];
@@ -1195,14 +1370,14 @@ namespace Spa_Interaction_Screen
                 SendTCPMessage(r, null);
                 return;
             }
-            if (json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length>=0)
+            if (jsonpartvalid(json, "values"))
             {
-                if (((string[])(json["values"])).Length==1)
+                if (((JArray)(json["values"])).Count==1)
                 {
                     int time = 0;
                     try
                     {
-                        time = Int32.Parse(((string[])(json["values"]))[0]);
+                        time = Int32.Parse(((JArray)(json["values"])).ToObject<String[]>()[0]);
                     }
                     catch(FormatException ex)
                     {
@@ -1214,7 +1389,7 @@ namespace Spa_Interaction_Screen
                         f.switchedtotimepage = false;
                     }
                 }
-                else if(((string[])(json["values"])).Length > 1 && ((json.ContainsKey("id") && json["id"] != null) || (json.ContainsKey("label") && json["label"] != null)))
+                else if(((JArray)(json["values"])).Count >= 1)
                 {
                     Constants.SessionSetting session = new Constants.SessionSetting();
                     session.id = c.SessionSettings.Count;
@@ -1229,22 +1404,22 @@ namespace Spa_Interaction_Screen
                         }
                     }
                     int i = 0;
-                    if(((string[])(json["values"])).Length > 2)
+                    if(((JArray)(json["values"])).Count > 2)
                     {
                         i++;
                     }
                     try
                     {
-                        session.should_reset = Boolean.Parse(((string[])json["values"])[i++]);
+                        session.should_reset = Boolean.Parse(((JArray)json["values"]).ToObject<String[]>()[i++]);
                     }catch(FormatException ex)
                     {
                         Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                         Logger.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         return;
                     }
-                    if (((string[])(json["values"])).Length > 2)
+                    if (((JArray)(json["values"])).Count > 2)
                     {
-                        session.JsonText = ((string[])json["values"])[0];
+                        session.JsonText = ((JArray)json["values"]).ToObject<String[]>()[0];
                     }
                     else if(neueSession)
                     {
@@ -1257,38 +1432,8 @@ namespace Spa_Interaction_Screen
                             session.JsonText = ((string)json["label"]);
                         }
                     }
-                    session.ShowText = ((string[])json["values"])[i++];
+                    session.ShowText = ((JArray)json["values"]).ToObject<String[]>()[i++];
                     c.SessionSettings.Add(session); if (!c.SessionSettings.Contains(session))
-                    {
-                        c.SessionSettings.Add(session);
-                    }
-                }
-                else if (((string[])(json["values"])).Length > 2)
-                {
-
-                    Constants.SessionSetting session = new Constants.SessionSetting();
-                    session.id = c.SessionSettings.Count;
-                    foreach (Constants.SessionSetting ss in c.SessionSettings)
-                    {
-                        if (ss.JsonText.Equals(((string[])json["values"])[0]))
-                        {
-                            session = ss;
-                            break;
-                        }
-                    }
-                    try
-                    {
-                        session.should_reset = Boolean.Parse(((string[])json["values"])[0]);
-                    }
-                    catch (FormatException ex)
-                    {
-                        Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
-                        Logger.Print("First \"values\" argument should be the reset boolean. Aborting creation or edit.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
-                        return;
-                    }
-                    session.JsonText = (string)json["id"];
-                    session.ShowText = ((string[])json["values"])[1];
-                    if (!c.SessionSettings.Contains(session))
                     {
                         c.SessionSettings.Add(session);
                     }
@@ -1316,14 +1461,17 @@ namespace Spa_Interaction_Screen
             }
             
         }
+
         private void ServicePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
+            if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.ServicesSetting ss in c.ServicesSettings)
                 {
                     RequestJson j = new RequestJson();
+                    j.type = config.Typenames[3].Trim().ToLower();
+                    j.Raum = config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[3];
@@ -1341,12 +1489,12 @@ namespace Spa_Interaction_Screen
                 SendTCPMessage(r, null);
                 return;
             }
-            if (((json.ContainsKey("id") && json["id"] != null) || (json.ContainsKey("label") && json["label"] != null && ((string)(json["label"])).Length > 0)) && json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length>1)
+            if ((jsonpartvalid(json, "id") || jsonpartvalid(json, "label")) && jsonpartvalid(json, "values") && ((JArray)(json["values"])).Count > 0)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
                 ss.id = c.SessionSettings.Count;
                 int x = -1;
-                if (json.ContainsKey("id") && json["id"] != null && ((int)json["id"])>=0 && ((int)json["id"]) < c.ServicesSettings.Count)
+                if (jsonpartvalid(json, "id") && ((int)json["id"]) < c.ServicesSettings.Count)
                 {
                     x = ((int)json["id"]);
                 }
@@ -1375,7 +1523,7 @@ namespace Spa_Interaction_Screen
                 {
                     ss = (ServicesSettingfunction)c.ServicesSettings[x];
                 }
-                if((json.ContainsKey("label") && json["label"] != null && ((string)(json["label"])).Length > 0))
+                if(jsonpartvalid(json, "label") && ((string)(json["label"])).Length > 0)
                 {
                     ss.JsonText = ((string)(json["label"]));
                 }
@@ -1383,9 +1531,9 @@ namespace Spa_Interaction_Screen
                 {
                     ss.JsonText = ((string)(json["id"]));
                 }
-                ss.ShowText = ((string[])(json["values"]))[0];
+                ss.ShowText = ((JArray)(json["values"])).ToObject<String[]>()[0];
                 Constants.rawfunctiontext fun = new Constants.rawfunctiontext();
-                fun.functionText = ((string[])(json["values"]))[1];
+                fun.functionText = ((JArray)(json["values"])).ToObject<String[]>()[1];
                 ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
                 ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
@@ -1395,14 +1543,14 @@ namespace Spa_Interaction_Screen
                     f.helper.GendynamicServiceButtons();
                 }
             }
-            else if(json.ContainsKey("values") && json["values"] != null && ((string[])(json["values"])).Length > 2)
+            else if(jsonpartvalid(json, "values") && ((JArray)(json["values"])).Count > 2)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
                 ss.id = c.SessionSettings.Count;
                 int x = -1;
                 try
                 {
-                    x = Int32.Parse(((string[])json["values"])[0]);
+                    x = Int32.Parse(((JArray)json["values"]).ToObject<String[]>()[0]);
                 }
                 catch (FormatException ex)
                 {
@@ -1423,10 +1571,10 @@ namespace Spa_Interaction_Screen
                 {
                     ss = (ServicesSettingfunction)c.ServicesSettings[x];
                 }
-                ss.ShowText = ((string[])(json["values"]))[0];
+                ss.ShowText = ((JArray)(json["values"])).ToObject<String[]>()[0];
                 Constants.rawfunctiontext fun = new Constants.rawfunctiontext();
-                fun.functionText = ((string[])(json["values"]))[1];
-                ss.JsonText = ((string[])(json["values"]))[2];
+                fun.functionText = ((JArray)(json["values"])).ToObject<String[]>()[1];
+                ss.JsonText = ((JArray)(json["values"])).ToObject<String[]>()[2];
                 ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
                 ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
@@ -1444,12 +1592,14 @@ namespace Spa_Interaction_Screen
 
         private void DMXScenePacket(Dictionary<String, Object> json, MainForm f, Config c)
         {
-            if (json.ContainsKey("label") && json["label"] != null && ((string)json["label"]).Equals("?"))
+            if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
                 foreach (Constants.DMXScene ss in c.DMXScenes)
                 {
                     RequestJson j = new RequestJson();
+                    j.type = config.Typenames[4].Trim().ToLower();
+                    j.Raum = config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[2+ss.Channelvalues.Length];
@@ -1472,11 +1622,11 @@ namespace Spa_Interaction_Screen
                 return;
             }
             int index = -1;
-            if (json.ContainsKey("id") && json["id"] != null)
+            if (jsonpartvalid(json, "id"))
             {
-                index = (int)json["id"];
+                index = (Int32)(Int64)json["id"];
             }
-            else if (json.ContainsKey("label") && json["label"] != null && ((String)(json["label"])).Length >= 0)
+            else if (jsonpartvalid(json, "label"))
             {
                 for (int i = 0; i < c.DMXScenes.Count; i++)
                 {
@@ -1496,40 +1646,24 @@ namespace Spa_Interaction_Screen
                 Logger.Print("DMXScene Paket doesn't contain necesarry Keys (\"id\" or \"label\") to identify the scene to be edited", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
-            if (json.ContainsKey("values") && json["values"] != null)
+            if (jsonpartvalid(json, "values"))
             {
                 if (c.DMXScenes.Count > index && index >= 0)
                 {
-                    if (json["values"].GetType() == typeof(byte[]))
+                    c.DMXScenes[index].ShowText = ((JArray)json["values"]).ToObject<String[]>()[0];
+                    String Path = ((JArray)json["values"]).ToObject<String[]>()[1];
+                    c.finalizePaths(out Path, Path);
+                    if (File.Exists(Path))
                     {
-                        for (int i = 0; i < ((int[])json["values"]).Length; i++)
-                        {
-                            int x = ((int[])json["values"])[i];
-                            x = Math.Min(255, x);
-                            x = Math.Max(0, x);
-                            c.DMXScenes[index].Channelvalues[i] = (byte)x;
-                        }
-                    }
-                    else if (json["values"].GetType() == typeof(string[]))
-                    {
-                        c.DMXScenes[index].ShowText = ((string[])json["values"])[0];
-                        String Path = ((string[])json["values"])[1];
-                        c.finalizePaths(out Path, Path);
-                        if (File.Exists(Path))
-                        {
-                            c.DMXScenes[index].ContentPath = Path;
-                            f.helper.GendynamicAmbientButtons();
-                            Logger.Print($"Name and Path of Scene {c.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
-                        }
-                        else
-                        {
-                            Logger.Print($"Only Name of Scene {c.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
-                        }
+                        c.DMXScenes[index].ContentPath = Path;
+                        f.helper.GendynamicAmbientButtons();
+                        Logger.Print($"Name and Path of Scene {c.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                     }
                     else
                     {
-                        Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[] or string[])", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print($"Only Name of Scene {c.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
+
                 }
                 else
                 {
@@ -1537,29 +1671,48 @@ namespace Spa_Interaction_Screen
                     Constants.DMXScene scene = new Constants.DMXScene();
                     scene.id = c.DMXScenes.Count;
                     scene.JsonText = (string)json["type"];
+                    bool sucess = false;
                     if (json["values"].GetType() == typeof(byte[]))
                     {
-                        for (int i = 0; i < ((int[])json["values"]).Length; i++)
+                        try
                         {
-                            int x = ((int[])json["values"])[i];
-                            x = Math.Min(255, x);
-                            x = Math.Max(0, x);
-                            scene.Channelvalues[i] = (byte)x;
+                            for (int i = 0; i < ((JArray)json["values"]).Count; i++)
+                            {
+                                int x = Int32.Parse(((JArray)json["values"]).ToObject<String[]>()[i]);
+                                x = Math.Min(255, x);
+                                x = Math.Max(0, x);
+                                scene.Channelvalues[i] = (byte)x;
+                                if (i == ((JArray)json["values"]).Count - 1)
+                                {
+                                    sucess = true;
+                                }
+                            }
+                        }
+                        catch (FormatException fex)
+                        {
+                            sucess = false;
+                            Logger.Print(fex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                         }
                     }
                     else
                     {
                         Logger.Print("DMXScene Paket has wrong Type for key \"values\" (needed: byte[]), aborting creation.", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
-                    c.DMXScenes.Add(scene);
-                    Logger.Print($"Added DMXScene with Json label: {scene.JsonText}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    if (sucess)
+                    {
+                        c.DMXScenes.Add(scene);
+                        Logger.Print($"Added DMXScene with Json label: {scene.JsonText}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    }
+                    else
+                    {
+                        Logger.Print($"Could not Add DMXScene with, because of an error, while Parsing \"values\" Array", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                    }
                 }
             }
             else
             {
                 if (index >= 0 && index < c.DMXScenes.Count)
                 {
-                    //TODO: Implement Update Method to update UI correctly and send data
                     f.Ambiente_Change(c.DMXScenes[index], true, true, false);
                 }
                 else
@@ -1569,7 +1722,6 @@ namespace Spa_Interaction_Screen
             }
             f.SendCurrentSceneOverCom();
         }
-
 
         private bool indexsjsontypewitch(Dictionary<string, object>? Json, int i)
         {
@@ -1595,11 +1747,11 @@ namespace Spa_Interaction_Screen
             }
         }
 
-
         private void edittcpwithjsonvalusarraydata(Dictionary<string, object> json, MainForm f, Config c, Constants.TCPSetting tcp)
         {
-            tcp.ShowText = ((string[])json["values"])[0];
-            tcp.JsonText = ((string[])json["values"])[1];
+            String[] jsonvalues = ((JArray)json["values"]).ToObject<String[]>();
+            tcp.ShowText = jsonvalues[0];
+            tcp.JsonText = jsonvalues[1];
             try
             {
                 tcp.id = Int32.Parse(((string[])json["values"])[2]);
@@ -1610,9 +1762,9 @@ namespace Spa_Interaction_Screen
                 Logger.Print("Aborted new TCP creation, because of invalid \"id\"", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                 return;
             }
-            if (((string[])json["values"]).Length > 3)
+            if (jsonvalues.Length > 3)
             {
-                tcp.value = ((string[])json["values"])[3];
+                tcp.value = jsonvalues[3];
             }
             c.TCPSettings.Add(tcp);
             f.logout();
@@ -1634,7 +1786,7 @@ namespace Spa_Interaction_Screen
             return resString;
         }
 
-        public void receivedMessage(byte[] bytes, TcpClient cl, bool isTelnet, Network net, int index)
+        public void receivedMessage(byte[] bytes, Socket cl, bool isTelnet, Network net, int index)
         {
             if (parse(bytes) == null)
             {
@@ -1647,8 +1799,21 @@ namespace Spa_Interaction_Screen
         public void Messageafterparse(String m)
         {
             m = m.Trim().ToLower();
+            if(m.Length <= 0 || !m.Contains('{') || !m.Contains('}'))
+            {
+                return;
+            }
             Logger.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
-            Dictionary<String, Object> keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
+            Dictionary<String, Object> keyValuePairs;
+            try
+            {
+                keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
+            }catch(Newtonsoft.Json.JsonReaderException jex)
+            {
+                MainForm.currentState = 2;
+                Logger.Print(jex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                return;
+            }
             handleReceivedNet(keyValuePairs);
         }
 
@@ -1719,6 +1884,30 @@ namespace Spa_Interaction_Screen
             }
             s += '}';
             return s;
+        }
+
+        public bool jsonpartvalid(Dictionary<string, object> json, string s)
+        {
+            if(!(json.ContainsKey(s) && json[s] != null))
+            {
+                return false;
+            }
+            switch (s)
+            {
+                case "type":
+                    return (json[s].GetType().Equals(typeof(Int64)) || (json[s].GetType().Equals(typeof(String)) && ((string)(json[s])).Length > 0));
+                case "room":
+                    return json[s].GetType().Equals(typeof(Int64)) && ((Int64)(json[s])) >= 0;
+                case "id":
+                    return json[s].GetType().Equals(typeof(Int64));
+                case "label":
+                    return json[s].GetType().Equals(typeof(String)) && ((string)(json[s])).Length > 0;
+                case "values":
+                    return json[s].GetType().Equals(typeof(JArray)) && ((JArray)(json[s])).Count > 0;
+                default:
+                    return false;
+                    break;
+            }
         }
     }
 }

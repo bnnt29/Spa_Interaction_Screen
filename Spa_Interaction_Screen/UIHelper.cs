@@ -44,6 +44,8 @@ namespace Spa_Interaction_Screen
         private int Restrictedycoord =(int) (((Constants.Element_height + Constants.Element_y_padding) + (int)((Constants.Element_height + Constants.Element_y_padding) * Restrictedyoffset))/1.5);
         private int Restrictedstarty = (Constants.Element_height + Constants.Element_y_padding);
 
+        private delegate void MyNoArgument();
+
         public UIHelper(MainForm f, Config c)
         {
             form = f;
@@ -83,8 +85,6 @@ namespace Spa_Interaction_Screen
 
             createWartungPageElements();
         }
-
-
 
         private ColorSlider.ColorSlider createColorSlide(int max)
         {
@@ -205,38 +205,40 @@ namespace Spa_Interaction_Screen
 
             ColorSlider.ColorSlider newslider = null;
             GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(100);
-            form.AmbientePage.Controls.Add(newslider);
-            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.Tag = 1;
-            newslider.Name = "0";
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
+            form.Dimmer1ColorSlider = createColorSlide(100);
+            form.AmbientePage.Controls.Add(form.Dimmer1ColorSlider);
+            form.Dimmer1ColorSlider.Size = new Size(Constants.Element_width, Constants.Element_height);
+            form.Dimmer1ColorSlider.Location = new Point(Pos_x, Pos_y);
+            form.Dimmer1ColorSlider.Tag = 1;
+            form.Dimmer1ColorSlider.Name = "0";
+            form.Dimmer1ColorSlider.TabIndex = AmbientePageButtons.Count + 1;
             //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[0]];
-            FormColorSlides.Add(newslider);
+            form.Dimmer1ColorSlider.ValueChanged += form.Dimmer_Change;
+            FormColorSlides.Add(form.Dimmer1ColorSlider);
+
             form.Dimmer1ColorSliderDescribtion = new Label();
             form.Dimmer1ColorSliderDescribtion.BackColor = Color.Transparent;
             form.Dimmer1ColorSliderDescribtion.AutoSize = true;
             form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
-            newslider.ValueChanged += form.Dimmer_Change;
 
             GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 2, false);
-            newslider = createColorSlide(100);
-            form.AmbientePage.Controls.Add(newslider);
-            newslider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.Tag = 2;
-            newslider.Name = "1";
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
+            form.Dimmer2ColorSlider = createColorSlide(100);
+            form.AmbientePage.Controls.Add(form.Dimmer2ColorSlider);
+            form.Dimmer2ColorSlider.Size = new Size(Constants.Element_width, Constants.Element_height);
+            form.Dimmer2ColorSlider.Location = new Point(Pos_x, Pos_y);
+            form.Dimmer2ColorSlider.Tag = 2;
+            form.Dimmer2ColorSlider.Name = "1";
+            form.Dimmer2ColorSlider.TabIndex = AmbientePageButtons.Count + 1;
             //newslider.Value = config.DMXScenes[config.DMXSceneSetting].Channelvalues[config.Dimmerchannel[1]];
-            FormColorSlides.Add(newslider);
+            FormColorSlides.Add(form.Dimmer2ColorSlider);
+            form.Dimmer2ColorSlider.ValueChanged += form.Dimmer_Change;
+
             form.Dimmer2ColorSliderDescribtion = new Label();
             form.Dimmer2ColorSliderDescribtion.BackColor = Color.Transparent;
             form.Dimmer2ColorSliderDescribtion.AutoSize = true;
             form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text_color;
             form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
-            newslider.ValueChanged += form.Dimmer_Change;
 
             GetDynamicPosition(2, 0, out Pos_x, out Pos_y, 0, 3, false);
             newslider = createColorSlide(100);
@@ -276,26 +278,41 @@ namespace Spa_Interaction_Screen
             form.ColorPage.Controls.Add(label);
             label.Location = new Point((Constants.windowwidth / 2) - (label.Size.Width / 2), Posy - 15);
             ColorSlider.ColorSlider newslider = null;
-            newslider = createColorSlide(100);
+            if (form.colorWheelElement != null && form.colorWheelElement.Tag == null)
+            {
+                newslider = createColorSlide(100);
+                newslider.Orientation = Orientation.Vertical;
+                newslider.Value = 100;
+                form.ColorPage.Controls.Add(newslider);
+                newslider.ValueChanged += form.ColorChanged_Handler;
+            }
+            else if(form.colorWheelElement != null && form.colorWheelElement.Tag != null)
+            {
+                newslider=((ColorSlider.ColorSlider)(form.colorWheelElement.Tag));
+            }
 
-            form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
-            form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3));
-            form.ColorPage.Controls.Add(form.colorWheelElement);
-            form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
-            form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
-            form.colorWheelElement.Tag = (ColorSlider.ColorSlider)newslider;
-            form.ColorPage.BackColor = Constants.Background_color;
+            if (form.colorWheelElement == null)
+            {
+                newslider = createColorSlide(100);
+                newslider.Orientation = Orientation.Vertical;
+                newslider.Value = 100;
+                form.ColorPage.Controls.Add(newslider);
+                newslider.ValueChanged += form.ColorChanged_Handler;
 
+                form.colorWheelElement = new Cyotek.Windows.Forms.ColorWheel();
+                form.colorWheelElement.Size = new Size((int)(Constants.windowwidth / 3), (int)(Constants.windowwidth / 3));
+                form.ColorPage.Controls.Add(form.colorWheelElement);
+                form.colorWheelElement.Location = new Point((Constants.windowwidth / 2) - (form.colorWheelElement.Size.Width / 2), ((Constants.tabheight - (label.Location.Y + label.Size.Height)) / 2) - (form.colorWheelElement.Size.Height / 2) + (label.Location.Y + label.Size.Height) - 15);
+                form.colorWheelElement.ColorChanged += form.ColorChanged_Handler;
+                form.colorWheelElement.Tag = (ColorSlider.ColorSlider)newslider;
+                form.ColorPage.BackColor = Constants.Background_color;
+            }
 
-            newslider.Size = new Size(Constants.Element_width * 2, (int)(form.colorWheelElement.Size.Height * 0.75));
+            newslider.Size = new Size(Constants.Element_width * 2, (int)(form.colorWheelElement.Size.Height * 0.75)); 
             newslider.Location = new Point(form.colorWheelElement.Size.Width + form.colorWheelElement.Location.X, (Constants.tabheight / 2) - (newslider.Size.Height / 2));
-            newslider.Orientation = Orientation.Vertical;
-            newslider.Value = 100;
-            form.ColorPage.Controls.Add(newslider);
-            newslider.ValueChanged += form.ColorChanged_Handler;
 
             GetDynamicPosition(5, 0, out Posx, out Posy, 0, 0, false);
-            Constants.createButton<Button>(Constants.Element_width, Constants.Element_height, Posx, (Constants.tabheight / 2) - (Constants.Element_height / 2), null, "Zurrücksetzen", null, form.ColorPage, form, form.resetcolorwheel);
+            form.resetcolorbutton = Constants.createButton<Button>(Constants.Element_width, Constants.Element_height, Posx, (Constants.tabheight / 2) - (Constants.Element_height / 2), null, "Zurrücksetzen", null, form.ColorPage, form, form.resetcolorwheel);
         }
 
         public void createGastroPageElements()
@@ -560,7 +577,7 @@ namespace Spa_Interaction_Screen
             }
 
             GetDynamicPosition(5, 0, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
-            form.resetSessionlockbutton = Constants.createButton(width, height, Pos_x, Restrictedstarty + 3 * Restrictedycoord, RestrictedPageButtons, "Szenen Auswahl freischalten", null, form.WartungPage, form, form.resetscenelock_Handler);
+            form.resetSessionlockbutton = Constants.createButton(width, height, Pos_x, Restrictedstarty + 3 * Restrictedycoord, RestrictedPageButtons, "Session Timer freischalten", null, form.WartungPage, form, form.resettimelock_Handler);
             if (form.Sessionlocked)
             {
                 form.resetSessionlockbutton.Show();
@@ -590,7 +607,6 @@ namespace Spa_Interaction_Screen
             {
                 Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
             }
-
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
             Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
@@ -751,6 +767,7 @@ namespace Spa_Interaction_Screen
             int posy = b.Location.Y + b.Size.Height;
             l.Location = new Point(posx, posy);
         }
+
         public void SetupLabelofButton(Button b, Label l, String Text)
         {
             l.Name = Text;
@@ -796,10 +813,12 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }catch (ArgumentOutOfRangeException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }
@@ -978,7 +997,6 @@ namespace Spa_Interaction_Screen
                 }
                 GetDynamicPosition(Numhelps - 1, i - 1, out Pos_x, out Pos_y, 0, 3, false);
                 Constants.createButton(Pos_x, Pos_y, ServicePageButtons, config.ServicesSettings[i].ShowText, config.ServicesSettings[i], form.ServicePage, form, form.Service_Request_Handle, out bu);
-                bu.BackColor = Constants.alternative_color;
                 config.ServicesSettings[i].ButtonElement = bu;
             }
         }
@@ -1049,6 +1067,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (IOException e)
                     {
+                        MainForm.currentState = 7;
                         Logger.Print(e.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     }
                     Logoview.Size = new Size(Constants.Logoxsize, Constants.Logoysize);
@@ -1104,7 +1123,6 @@ namespace Spa_Interaction_Screen
             globalinformationlabels.Add(createLabelforpage(posx, 0));
             globalinformationlabels.Add(createLabelforpage(posx, 1));
             globalinformationlabels.Add(createLabelforpage(posx, 4));
-            globalinformationlabels.Add(createLabelforpage(posx, tabs.Count - 1));
         }
 
         private Label createLabelforpage(int posx, int page)
@@ -1154,6 +1172,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateGenNewPassword();
@@ -1167,6 +1186,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("GenNewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     form.BeginInvoke(new MyNoArgument(delegateGenNewPassword));
@@ -1202,20 +1222,9 @@ namespace Spa_Interaction_Screen
                 form.loadscreen.Debugtext($"Setting up Wifi Router", false);
             }
 
-            int Pos_x, Pos_y;
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
-            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
-            form.WiFiSSIDLabel.Hide();
-
-            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
-            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
-            form.WiFiPasswortLabel.Hide();
-
             setnewPassword();
-            form.loadscreen.Debugtext($"", false);
         }
 
-        public delegate void MyNoArgument();
         public void setnewPassword()
         {
             if (form.HandleCreate)
@@ -1226,6 +1235,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegatesetnewPassword();
@@ -1239,6 +1249,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("setnewPassword", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     form.Invoke(new MyNoArgument(delegatesetnewPassword));
@@ -1248,6 +1259,14 @@ namespace Spa_Interaction_Screen
 
         private void delegatesetnewPassword()
         {
+            int Pos_x, Pos_y;
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 1.8, false);
+            form.WiFiSSIDLabel.Location = new Point(Pos_x, Pos_y);
+            form.WiFiSSIDLabel.Hide();
+
+            GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0.05, 2.8, false);
+            form.WiFiPasswortLabel.Location = new Point(Pos_x, Pos_y);
+            form.WiFiPasswortLabel.Hide();
             if (form != null && config != null)
             {
                 form.WiFiSSIDLabel.Text = config.WiFiSSID;
@@ -1278,6 +1297,8 @@ namespace Spa_Interaction_Screen
             {
                 config.updateWificreds();
             }
+
+            form.loadscreen.Debugtext($"", false);
         }
 
         public void createConsolePage()
@@ -1332,7 +1353,7 @@ namespace Spa_Interaction_Screen
             }
             form.tcptype.Location = new Point(posx, posy);
             form.tcptype.Size = new Size(Constants.Element_width, Constants.Element_height);
-            //form.tcptype.SelectedIndexChanged += form.comboTCPItemchanged;
+            form.tcptype.SelectedIndexChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.tcptype);
             form.ConsolePage.Controls.Add(form.tcptype);
 
@@ -1359,6 +1380,7 @@ namespace Spa_Interaction_Screen
             form.Commandboxvalues.PlaceholderText = "values (komma seperated)";
             form.Commandboxvalues.Size = new Size(Constants.Element_width, Constants.Element_height);
             form.Commandboxvalues.Location = new Point(posx, posy);
+            form.Commandboxvalues.TextChanged += form.TCPMessage_Change_handler;
             ConsoleElements.Add(form.Commandboxvalues);
             form.ConsolePage.Controls.Add(form.Commandboxvalues);
 
@@ -1394,7 +1416,7 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(4, 3, out posx, out posy, 0, 0, false);
             form.Programmstate = new Label();
             form.Programmstate.AutoSize = true;
-            form.Programmstate.Text = $"Programmstatus: {form.currentState}";
+            form.Programmstate.Text = $"Programmstatus: {MainForm.currentState}";
             form.Programmstate.ForeColor = Constants.Text_color;
             form.Programmstate.Location = new Point(posx, posy);
             form.Programmstate.Font = new Font("Segoe UI", 23F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -1404,7 +1426,7 @@ namespace Spa_Interaction_Screen
             GetDynamicPosition(4, 3, out posx, out posy, 0, 1, false);
             Label state = new Label();
             state.AutoSize = true;
-            state.Text = "0: Something wrong\r\n1: All right\r\n2: No TCP connection\r\n3: No Second Monitor\r\n4: Error when communicating with router\r\n5: Error when communicating with ambient Light\r\n6: Config Error\r\n";
+            state.Text = "0: Something wrong\r\n1: All right\r\n2: TCP\r\n3: Monitors\r\n4: Error when communicating with router or gastro\r\n5: Error when communicating with ambient Light\r\n6: Config Error\r\n7: Other Error (Investigate LOG or BLOG)\r\n";
             state.ForeColor = Constants.Text_color;
             state.Location = new Point(posx, posy);
             state.Font = Constants.Standart_font;

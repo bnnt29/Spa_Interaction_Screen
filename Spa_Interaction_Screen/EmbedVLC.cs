@@ -16,8 +16,6 @@ namespace Spa_Interaction_Screen
     {
         private LibVLC libvlc;
         private MainForm main = null;
-        private Task? keepVideoalive = null;
-        private bool runvideo = false;
         private LibVLCSharp.WinForms.VideoView TVvideoView;
         private PictureBox welcomeqr;
         private String currentlyshowing;
@@ -25,6 +23,10 @@ namespace Spa_Interaction_Screen
         private bool HandleCreate = false;
         private bool SessionEnd = false;
         private bool showingconsole = false;
+
+        private delegate void MyNoArgument();
+        private delegate void MyquitMedia(bool user);
+        private delegate void MychangeMedia(String link, bool user);
 
         public EmbedVLC(MainForm f, Screen screen, bool Sessionend)
         {
@@ -119,9 +121,6 @@ namespace Spa_Interaction_Screen
             main.showlogin();
         }
 
-        public delegate void MyNoArgument();
-        public delegate void MyquitMedia(bool user);
-        public delegate void MychangeMedia(String link, bool user);
         public void quitMedia(bool user)
         {
             object[] delegateArray = new object[1];
@@ -134,6 +133,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatequitMedia(user);
@@ -147,6 +147,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
@@ -156,7 +157,6 @@ namespace Spa_Interaction_Screen
 
         private void delegatequitMedia(bool user)
         {
-            runvideo = false;
             this.BackgroundImage = null;
             if (TVvideoView != null)
             {
@@ -180,6 +180,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegateshowthis();
@@ -193,6 +194,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegateshowthis));
@@ -218,6 +220,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatehidethis();
@@ -231,6 +234,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegatehidethis));
@@ -253,6 +257,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatenewsession();
@@ -266,6 +271,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.Invoke(new MyNoArgument(delegatenewsession));
@@ -289,6 +295,13 @@ namespace Spa_Interaction_Screen
 
         public void changeMedia(String link, bool user)
         {
+            if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
+            {
+                if (!user || welcomeqr == null)
+                {
+                    return;
+                }
+            }
             object[] delegateArray = new object[2];
             delegateArray[0] = link;
             delegateArray[1] = user;
@@ -300,6 +313,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     delegatechangeMedia(link, user);
@@ -313,6 +327,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
                     Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
                     this.BeginInvoke(new MychangeMedia(delegatechangeMedia), delegateArray);
@@ -402,21 +417,6 @@ namespace Spa_Interaction_Screen
             currentlyshowing = link;
 
             TVvideoView.Show();
-
-            runvideo = true;
-            /*
-            keepVideoalive = new Task(async() =>
-            {
-                while (true)
-                {
-                    if (!TVvideoView.MediaPlayer.IsPlaying && runvideo)
-                    {
-                        TVvideoView.MediaPlayer.Play();
-                    }
-                }
-            });
-            */
-            //keepVideoalive.Start();
             if (user && welcomeqr != null)
             {
                 welcomeqr.BringToFront();

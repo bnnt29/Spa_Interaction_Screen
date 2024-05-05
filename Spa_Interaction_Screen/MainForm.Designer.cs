@@ -394,10 +394,13 @@ namespace Spa_Interaction_Screen
         //AmbientePage
         public Label Dimmer1ColorSliderDescribtion;
         public Label Dimmer2ColorSliderDescribtion;
+        public ColorSlider.ColorSlider Dimmer1ColorSlider; 
+        public ColorSlider.ColorSlider Dimmer2ColorSlider;
         public Label AmbientelautstärkeColorSliderDescribtion;
 
         //ColorPage
         public ColorWheel colorWheelElement;
+        public Button resetcolorbutton;
 
         //GastronomiePage
         public Microsoft.Web.WebView2.WinForms.WebView2 GastronomieWebview;

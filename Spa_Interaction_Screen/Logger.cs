@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.VisualBasic.ApplicationServices;
+using System.Diagnostics;
+using static Spa_Interaction_Screen.EmbedVLC;
 
 namespace Spa_Interaction_Screen
 {
@@ -13,6 +15,8 @@ namespace Spa_Interaction_Screen
         public static ComboBox consolesubtype;
         public static ColorSlider.ColorSlider ConsoleTextscroll;
         public static bool consoleshown = false;
+        public static MainForm form;
+        private delegate String MyAddConsoleLine(String line);
 
         public static List<Log_Element> getList(int index)
         {
@@ -157,12 +161,10 @@ namespace Spa_Interaction_Screen
             }
         }
 
-
         public static void Print(String Message, MessageType?[] Type, MessageSubType? Subtype)
         {
             Print(Message, Type, Subtype, false);
         }
-
 
         public static void Print(String Message, MessageType?[] Type, MessageSubType? Subtype, bool ShowfullMessageLater)
         {
@@ -190,7 +192,7 @@ namespace Spa_Interaction_Screen
                 }
                 if (ShowfullMessageLater)
                 {
-                    Debug.Print(log.Message); 
+                    Debug.WriteLine(log.Message); 
                     if (FOpen(BackupLOG))
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
@@ -206,7 +208,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Debug.Print(log.ToString());
+                    Debug.WriteLine(log.ToString());
                     if (FOpen(BackupLOG))
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
@@ -320,13 +322,11 @@ namespace Spa_Interaction_Screen
                     if(MTypetobyte<MessageSubType>(subtype) == log.SubType)
                     {
                         c += log.ToString();
-                        c += "\n";
                     }
                 }
                 else
                 {
                     c += log.ToString();
-                    c += "\n";
                 }
             }
             return c;
@@ -335,6 +335,11 @@ namespace Spa_Interaction_Screen
         public static void setCurrentlyshowing(byte show)
         {
             currentlyshowing = show;
+        }
+
+        public static byte getCurrentlyshowing()
+        {
+            return currentlyshowing;
         }
 
         public static void InitLogfromBackup(Config c)
@@ -349,7 +354,15 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print($"mainForm.config.LogoFilePath is null");
             }
-            File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+            //File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+            if(LOG!=null)
+            {
+                LOG.Flush();
+                LOG.Close();
+                LOG.Dispose();
+                LOG = null;
+            }
+            File.Create(c.LogPath).Close();
             LOG = CreateLOGHandle(c.LogPath);
         }
 
@@ -379,6 +392,40 @@ namespace Spa_Interaction_Screen
 
         public static String AddConsoleLine(String line)
         {
+            object[] delegateArray = new object[1];
+            delegateArray[0] = line;
+            if (form.HandleCreate)
+            {
+                try
+                {
+                    return (String) form.Invoke(new MyAddConsoleLine(delegateAddConsoleLine), delegateArray);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(ex.Message, [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Error, true);
+                    Logger.Print("QuitMedia", [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Notice, true);
+                    return delegateAddConsoleLine(line);
+                }
+            }
+            else
+            {
+                try
+                {
+                    return delegateAddConsoleLine(line);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(ex.Message, [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Error, true);
+                    Logger.Print("QuitMedia", [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Notice, true);
+                    return (String) form.Invoke(new MyAddConsoleLine(delegateAddConsoleLine), delegateArray);
+                }
+            }
+        }
+
+        public static String delegateAddConsoleLine(String line)
+        {
             if (line != null && line.Length > 0)
             {
                 if (ConsoleBox != null)
@@ -393,7 +440,10 @@ namespace Spa_Interaction_Screen
                     if (scroll)
                     {
                         ConsoleBox.SelectionStart = ConsoleBox.Text.Length;
-                        ConsoleTextscroll.Value = ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum;
+                        int x = ((int)(ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum));
+                        x = Math.Max(x, ((int)ConsoleTextscroll.Minimum));
+                        x = Math.Min(x, ((int)ConsoleTextscroll.Maximum));
+                        ConsoleTextscroll.Value = x;
                         ConsoleBox.ScrollToCaret();
                     }
                     if (TextRenderer.MeasureText(ConsoleBox.Text, ConsoleBox.Font).Height > ConsoleBox.Size.Height)

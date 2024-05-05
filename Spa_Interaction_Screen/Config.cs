@@ -79,6 +79,7 @@ namespace Spa_Interaction_Screen
         {
             if (!LoadPreConfig())
             {
+                MainForm.currentState = 6;
                 Logger.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
@@ -89,6 +90,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(Constants.PreConfigPath))
             {
+                MainForm.currentState = 6;
                 Logger.Print($"Could not find PreConfig: {Constants.PreConfigPath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
@@ -100,10 +102,12 @@ namespace Spa_Interaction_Screen
             }
             else
             {
+                MainForm.currentState = 6;
                 Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
             }
             if (fstream == null || stream == null)
             {
+                MainForm.currentState = 6;
                 Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
@@ -141,6 +145,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 stream.Close();
                 return false;
@@ -173,6 +178,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 stream.Close();
                 return false;
@@ -186,6 +192,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 stream.Close();
                 return false;
@@ -204,6 +211,7 @@ namespace Spa_Interaction_Screen
             }
             catch (IOException ex)
             {
+                MainForm.currentState = 6;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print($"Could not open File: {path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 if (fstream != null)
@@ -214,6 +222,7 @@ namespace Spa_Interaction_Screen
             }
             catch (UnauthorizedAccessException ex)
             {
+                MainForm.currentState = 6;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 if (fstream != null)
@@ -237,6 +246,7 @@ namespace Spa_Interaction_Screen
                 s = stream.ReadLine();
             }catch (IOException e)
             {
+                MainForm.currentState = 6;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             return (s!=null)?s:"";
@@ -249,6 +259,7 @@ namespace Spa_Interaction_Screen
             Logger.Print($"Using {FilePath} for the MainConfig Path", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!File.Exists(FilePath))
             {
+                MainForm.currentState = 6;
                 Logger.Print($"Could not find Config: {FilePath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
@@ -265,6 +276,7 @@ namespace Spa_Interaction_Screen
             }
             if (fstream == null || stream == null)
             {
+                MainForm.currentState = 6;
                 Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
@@ -313,6 +325,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             try
@@ -321,6 +334,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref showcolor, 0, false, read_all);
@@ -332,6 +346,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             showLogo = new bool[(sl.Length - 1 > 7) ? 7 : sl.Length - 1];
@@ -344,6 +359,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogoFilePath, 0, true, read_all);
@@ -363,6 +379,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             read_all = getcsvFields(stream, ref LogPath, 0, true, read_all);
@@ -399,6 +416,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
@@ -412,6 +430,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
@@ -425,6 +444,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException e)
             {
+                MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
@@ -444,6 +464,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
+                        MainForm.currentState = 7;
                         Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         Logger.Print("Die in der Konfig angegebene Zahl für die Colorwheelvalues ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }
@@ -505,6 +526,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException e)
                     {
+                        MainForm.currentState = 7;
                         Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         continue;
                     }
@@ -556,6 +578,7 @@ namespace Spa_Interaction_Screen
                             }
                             catch (FormatException ex)
                             {
+                                MainForm.currentState = 7;
                                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             if (ident >= 0)
@@ -600,6 +623,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
+                                    MainForm.currentState = 7;
                                     Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                     continue;
                                 }
@@ -611,6 +635,7 @@ namespace Spa_Interaction_Screen
                             catch (FormatException ex)
                             {
                                 parsed = false;
+                                MainForm.currentState = 7;
                                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                             }
                             si.should_reset = parsed;
@@ -677,6 +702,7 @@ namespace Spa_Interaction_Screen
                                 }
                                 catch (FormatException ex)
                                 {
+                                    MainForm.currentState = 7;
                                     Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                                 }
                                 save = Math.Min(255, save);
@@ -778,6 +804,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                     return null;
                 }
@@ -877,6 +904,7 @@ namespace Spa_Interaction_Screen
             }
             catch (FormatException ex)
             {
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
             if (functionspecs.Length > index)
@@ -941,6 +969,7 @@ namespace Spa_Interaction_Screen
                     return new List<configclasses>();
             }
         }
+
         public void finalizePaths(out String? sp, String s)
         {
             if (s != null)
@@ -984,6 +1013,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                     Logger.Print("Beim einlesen der Konfig konnte eine Einstellung nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 }
@@ -998,6 +1028,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (FormatException ex)
                     {
+                        MainForm.currentState = 7;
                         Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         Logger.Print("Beim einlesen der Konfig konnte eine Einstellungsmenge nicht in den benötigten Typen umgewandelt werden.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                     }

@@ -18,6 +18,9 @@ namespace Spa_Interaction_Screen
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
         public const String ServiceNotReachableText = "Anzeige Service Ruf nicht möglich";
+        public const int Buttonshortfadetime = 150;
+        public const int ButtonLongfadetime = 1000;
+        public const bool NetRoomSpecMandatory = false;
 
         //PreConfig
         public static String ContentPath = null;
@@ -58,7 +61,6 @@ namespace Spa_Interaction_Screen
         public static Color Warning_color = Color.Red;
         public static Font Standart_font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
         public static Font Time_font = new Font("Segoe UI", 28F, FontStyle.Regular, GraphicsUnit.Point, 0);
-
 
         //USB
         public const int waitfordmxanswer = 10;
@@ -115,10 +117,19 @@ namespace Spa_Interaction_Screen
             public override string ToString()
             {
                 String s = "[";
-                s += secondary.Typename;
-                s += ",";
-                s += secondary.JsonText;
-                s += ",";
+                if(hassecondary && secondary != null)
+                {
+                    if(secondary.Typename!= null && secondary.Typename.Length > 0)
+                    {
+                        s += secondary.Typename;
+                        s += ",";
+                    }
+                    if (secondary.JsonText != null && secondary.JsonText.Length > 0)
+                    {
+                        s += secondary.JsonText;
+                        s += ",";
+                    }
+                }
                 s += enable.ToString();
                 s += ",";
                 s += block.ToString();
@@ -189,7 +200,6 @@ namespace Spa_Interaction_Screen
             get { return delimiter; }
             set { delimiter = value; }
         }
-
 
         public static void recalcsizes(int Hight, int Width)
         {

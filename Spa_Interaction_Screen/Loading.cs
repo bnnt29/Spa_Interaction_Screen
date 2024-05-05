@@ -14,6 +14,7 @@ namespace Spa_Interaction_Screen
         private Button exit_b;
 
         private bool HandleCreate = false;
+        private delegate void MyDebugText(String Text, bool show);
 
         public Loading(MainForm f, Screen screen)
         {
@@ -42,7 +43,6 @@ namespace Spa_Interaction_Screen
             progressBar.Maximum = 100;
         }
 
-        public delegate void MyDebugText(String Text, bool show);
         public void Debugtext(String Text, bool show)
         {
             object[] delegateArray = new object[2];
@@ -56,6 +56,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     delegateDebugtext(Text, show);
@@ -69,6 +70,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                     Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
                     this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
@@ -91,6 +93,7 @@ namespace Spa_Interaction_Screen
             if (show)
             {
                 DebugText.Show();
+                MainForm.currentState = 0;
                 Logger.Print($"DebugText: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
             }
             else
