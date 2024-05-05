@@ -71,8 +71,7 @@
               "ViewState": "AQIAAAwCAAAAAAAAAAAswB4CAAAdAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-30T23:38:03.428Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -82,7 +81,7 @@
               "RelativeDocumentMoniker": "Spa_Interaction_Screen\\MainForm.cs",
               "ToolTip": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\MainForm.cs",
               "RelativeToolTip": "Spa_Interaction_Screen\\MainForm.cs",
-              "ViewState": "AQIAAD0FAAAAAAAAAAAuwFoFAAAtAAAA",
+              "ViewState": "AQIAADQFAAAAAAAAAAAAAEgFAAANAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-05-02T22:22:52.495Z",
               "IsPinned": true,
@@ -99,8 +98,7 @@
               "ViewState": "AQIAAB4AAAAAAAAAAAAQwIIAAAAVAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-30T23:46:22.221Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -162,8 +160,7 @@
               "RelativeToolTip": "Spa_Interaction_Screen\\EnttecCom.cs",
               "ViewState": "AQIAABEAAAAAAAAAAAAxwCYAAAAaAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-01T00:25:39.351Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-01T00:25:39.351Z"
             },
             {
               "$type": "Document",
@@ -211,8 +208,7 @@
               "RelativeToolTip": "Spa_Interaction_Screen\\OpenDMX.cs",
               "ViewState": "AQIAAFQAAAAAAAAAAAAawGYAAABDAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-01T00:26:27.956Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-01T00:26:27.956Z"
             }
           ]
         },
