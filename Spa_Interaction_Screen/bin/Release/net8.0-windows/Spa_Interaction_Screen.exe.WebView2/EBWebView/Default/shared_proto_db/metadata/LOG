@@ -1,2 +1,3 @@
-2024/05/05-15:04:53.784 6a9c Creating DB C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Release\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\shared_proto_db\metadata since it was missing.
-2024/05/05-15:04:53.866 6a9c Reusing MANIFEST C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Release\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\shared_proto_db\metadata/MANIFEST-000001
+2024/05/05-15:46:26.911 8f8c Reusing MANIFEST C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Release\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\shared_proto_db\metadata/MANIFEST-000001
+2024/05/05-15:46:26.911 8f8c Recovering log #3
+2024/05/05-15:46:26.911 8f8c Reusing old log C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Release\net8.0-windows\Spa_Interaction_Screen.exe.WebView2\EBWebView\Default\shared_proto_db\metadata/000003.log 

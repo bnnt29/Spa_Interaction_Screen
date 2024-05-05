@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Spa_Interaction_Screen")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+91143bc4c731ef0b0753d9fbfa7c35461b1339b4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9762a49a159e558bb311b7986b0fcd5855c4f540")]
 [assembly: System.Reflection.AssemblyProductAttribute("Spa_Interaction_Screen")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Spa_Interaction_Screen")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

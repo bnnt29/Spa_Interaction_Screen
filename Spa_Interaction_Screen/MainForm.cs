@@ -48,6 +48,8 @@ namespace Spa_Interaction_Screen
         public Loading loadscreen;
 
         System.Windows.Forms.Timer SessionTimer = null;
+        System.Windows.Forms.Timer fadingtimer = null;
+
         private byte[] changeddimmerchannels;
         private CoreAudioDevice defaultPlaybackDevice;
         private int currentPasswordindex = 0;
@@ -72,6 +74,7 @@ namespace Spa_Interaction_Screen
         public bool showconsoleonallsites = false;
         public bool lastpingpositiv = true;
         public bool lastZentralButtonstate = true;
+        public bool endFading = false;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
 
@@ -1284,6 +1287,11 @@ namespace Spa_Interaction_Screen
             SendCurrentSceneOverCom();
         }
 
+        public void SendCurrentSceneOverCom_Handle(object sender, EventArgs e) 
+        {
+            SendCurrentSceneOverCom();
+        }
+
         public async void SendCurrentSceneOverCom()
         {
             if (Constants.noCOM)
@@ -1331,7 +1339,6 @@ namespace Spa_Interaction_Screen
                 {
                     tempchannelvalues[config.HDMISwitchchannel] = (!streaming) ? (byte)255 : (byte)0;
                 }
-
             }
             for (int i = 0; i < tempchannelvalues.Length; i++)
             {
@@ -1353,9 +1360,24 @@ namespace Spa_Interaction_Screen
                     }
                     fade[i] = (byte)(config.currentvalues[i] + Math.Round((double)(tempchannelvalues[i] - config.currentvalues[i]) / fadesteps));
                 }
+                if (fadingtimer != null)
+                {
+                    fadingtimer.Start();
+                }
+                else
+                {
+                    fadingtimer = new System.Windows.Forms.Timer();
+                    fadingtimer.Tick += SendCurrentSceneOverCom_Handle;
+                    fadingtimer.Interval = 30;
+                    fadingtimer.Start();
+                }
             }
             else
             {
+                if (fadingtimer != null)
+                {
+                    fadingtimer.Stop();
+                }
                 fade = tempchannelvalues;
             }
             if (config.currentvalues.Length <= fade.Length)

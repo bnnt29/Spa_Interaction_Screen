@@ -42,7 +42,7 @@ namespace Spa_Interaction_Screen
                 OpenDMX.setDmxValue(i, temp[i]);
                 s += temp[i]+":";
             }
-            s = $"{temp[8]}:{temp[9]}:{temp[10]}:{temp[11]}:{temp[12]}";
+            s = $"{channels[8]}:{channels[9]}:{channels[10]}:{channels[11]}:{channels[12]}";
             Logger.Print($"{s}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
             Logger.Print($"Enttec written bytes: {OpenDMX.bytesWritten}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
         }
