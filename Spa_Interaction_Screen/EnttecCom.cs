@@ -36,11 +36,15 @@ namespace Spa_Interaction_Screen
             }
             byte[] temp = new byte[config.DMXScenes[0].Channelvalues.Length+1];
             Buffer.BlockCopy(channels, 0, temp, 0, channels.Length);
+            String s = "";
             for(int i = 0; i < temp.Length; i++) 
             {
                 OpenDMX.setDmxValue(i, temp[i]);
+                s += temp[i]+":";
             }
-            //Log.Print($"Enttec written bytes: {OpenDMX.bytesWritten}");
+            s = $"{temp[8]}:{temp[9]}:{temp[10]}:{temp[11]}:{temp[12]}";
+            Logger.Print($"{s}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
+            Logger.Print($"Enttec written bytes: {OpenDMX.bytesWritten}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
         }
 
         public bool isopen()

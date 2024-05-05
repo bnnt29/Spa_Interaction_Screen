@@ -58,11 +58,11 @@ Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Su
 #String;#3;Handtuch;frische Handtücher;Services,Notfall,true,true, false;#This is important when selecting a ServiceSetting as Secondary Function;;;;;;;;;;;;;;;
 #;#[More Serives can be added (max 12 mit Anzeige Text)];;;;;;;;;;;;;;;;;;;
 Json Type:5;DMXScenes;#Json Label;#Anzeige Text;#CH0;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
-#Order Importance;#0;default;!;;255;56;0;0;128;128;255;0;0;0;0;0;0;0;WerbeVideo.mp4;
-#Order Importance;#1;Putzlicht;!;0;255;200;128;255;255;255;255;0;0;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
-#Order Importance;#2;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)
-#;#3;Kamin;Kamin;0;255;0;0;0;0;0;0;0;0;0;0;0;0;0;Werbung.jpeg;
-#;#4;Wellen;Wellen;0;0;255;0;0;0;0;0;0;0;0;0;0;0;0;;
-#;#5;Wald;Wald;0;0;0;255;0;128;128;0;0;0;0;0;0;0;0;WerbeVideo.mp4;
+#Order Importance;#0;default;!;;255;56;0;0;128;128;255;255;0;0;0;0;0;0;WerbeVideo.mp4;
+#Order Importance;#1;Putzlicht;!;0;255;200;128;255;255;255;255;0;255;0;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
+#Order Importance;#2;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;255;0;0;0;0;;#(Wird nur angezeigt, wenn nicht 0) (Wird in der Laufzeit bearbeitet)
+#;#3;Kamin;Kamin;0;255;0;0;0;0;0;0;0;0;0;255;0;0;0;Werbung.jpeg;
+#;#4;Wellen;Wellen;0;0;255;0;0;0;0;0;255;255;0;0;0;0;0;;
+#;#5;Wald;Wald;0;0;0;255;0;128;128;0;0;255;255;0;0;0;0;WerbeVideo.mp4;
 #;#[More Scenes can be added (max 15 mit Anzeige Text)];;;;;;;;;;;;;;;;;;;
 #End of Data Placeholder;;;;;;;;;;;;;;;;;;;;

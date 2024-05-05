@@ -95,7 +95,7 @@ namespace Spa_Interaction_Screen
                 return false;
             }
             StreamReader stream = null;
-            FileStream fstream = CreateStream(Constants.PreConfigPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            FileStream fstream = Logger.CreateStream(Constants.PreConfigPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (fstream != null && fstream.CanRead)
             {
                 stream = new StreamReader(fstream);
@@ -201,39 +201,6 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
-        private static FileStream CreateStream(String path, FileMode fm, FileAccess fa,FileShare fs)
-        {
-            FileStream fstream = null;
-            try
-            {
-                File.SetAttributes(path, FileAttributes.Normal);
-                fstream = File.Open(path, fm, fa, fs);
-            }
-            catch (IOException ex)
-            {
-                MainForm.currentState = 6;
-                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Logger.Print($"Could not open File: {path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                if (fstream != null)
-                {
-                    fstream.Close();
-                }
-                return null;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                MainForm.currentState = 6;
-                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                if (fstream != null)
-                {
-                    fstream.Close();
-                }
-                return null;
-            }
-            return fstream;
-        }
-
         private String ReadPreConfig(StreamReader stream)
         {
             String s = "";
@@ -265,7 +232,7 @@ namespace Spa_Interaction_Screen
             }
 
             StreamReader stream = null;
-            FileStream fstream = CreateStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            FileStream fstream = Logger.CreateStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (fstream != null && fstream.CanRead)
             {
                 stream = new StreamReader(fstream);
@@ -1077,7 +1044,7 @@ namespace Spa_Interaction_Screen
             }
             StreamReader stream = null;
             File.SetAttributes(Constants.WifiCreds, FileAttributes.Normal);
-            FileStream fstream = CreateStream(Constants.WifiCreds, FileMode.Open, FileAccess.Read, FileShare.Read);
+            FileStream fstream = Logger.CreateStream(Constants.WifiCreds, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (fstream != null && fstream.CanRead)
             {
                 stream = new StreamReader(fstream);
@@ -1143,7 +1110,7 @@ namespace Spa_Interaction_Screen
             }
             File.SetAttributes(Constants.WifiCreds, FileAttributes.Normal);
             StreamWriter stream = null;
-            FileStream fstream = CreateStream(Constants.WifiCreds, FileMode.Append, FileAccess.Write, FileShare.Read);
+            FileStream fstream = Logger.CreateStream(Constants.WifiCreds, FileMode.Append, FileAccess.Write, FileShare.Read);
             if (fstream != null && fstream.CanWrite)
             {
                 stream = new StreamWriter(fstream);

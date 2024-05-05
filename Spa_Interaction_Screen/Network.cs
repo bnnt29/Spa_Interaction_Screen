@@ -1808,7 +1808,19 @@ namespace Spa_Interaction_Screen
             try
             {
                 keyValuePairs = JsonConvert.DeserializeObject<Dictionary<String, Object>>(m);
-            }catch(Newtonsoft.Json.JsonReaderException jex)
+            }catch(JsonReaderException jex)
+            {
+                MainForm.currentState = 2;
+                Logger.Print(jex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                return;
+            }
+            catch (JsonSerializationException jex)
+            {
+                MainForm.currentState = 2;
+                Logger.Print(jex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
+                return;
+            }
+            catch (JsonException jex)
             {
                 MainForm.currentState = 2;
                 Logger.Print(jex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);

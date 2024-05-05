@@ -38,7 +38,11 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Spa_Interaction_Screen
 {
-    public partial class MainForm : Form
+    public partial class CForm : Form
+    {
+        public bool HandleCreate = false;
+    }
+    public partial class MainForm : CForm
     {
         public EmbedVLC vlc;
         public Loading loadscreen;
@@ -84,11 +88,10 @@ namespace Spa_Interaction_Screen
         private Task<PingReply>[] ping = new Task<PingReply>[2];
 
         private bool exitProgramm = false;
-        public bool HandleCreate = false;
 
         private delegate void MyNoArgument(); 
         private delegate void MySetupEmbedvlcScreen(MainForm form);
-        private delegate void Myswitchgastro(bool reachable);
+        private delegate object Myswitchgastro(bool reachable);
         private delegate void MyContentchange(bool reachable);
         private delegate void Myperformsecondary(Constants.ServicesSettingfunction ssf);
         private delegate void MyFullscreen(Form f, Screen screen);
@@ -260,11 +263,6 @@ namespace Spa_Interaction_Screen
                 SessionTimer.Tick += timer_tick;
                 SessionTimer.Enabled = true;
             }
-
-
-#if !DEBUG
-            minutes_received = config.SessionSettings.Count - 1;
-#endif
         }
 
         private void setupThreads()
@@ -341,7 +339,16 @@ namespace Spa_Interaction_Screen
                             MainForm.currentState = 7;
                             Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
                             Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                            delegateswitchzentralenotreachable();
+                            try
+                            {
+                                delegateswitchzentralenotreachable();
+                            }
+                            catch (InvalidOperationException ex2)
+                            {
+                                MainForm.currentState = 7;
+                                Logger.Print(ex2.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                                Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                            }
                         }
                     }
                     else
@@ -352,10 +359,17 @@ namespace Spa_Interaction_Screen
                         }
                         catch (InvalidOperationException ex)
                         {
-                            MainForm.currentState = 7;
-                            Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                            Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                            this.Invoke(new MyNoArgument(delegateswitchzentralenotreachable));
+                            try
+                            {
+                                this.Invoke(new MyNoArgument(delegateswitchzentralenotreachable));
+                            }
+                            catch (InvalidOperationException ex2)
+                            {
+                                MainForm.currentState = 7;
+                                Logger.Print(ex2.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                                Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+                                
+                            }
                         }
                     }
                 }
@@ -599,7 +613,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public void delegateswitchgastronotreachable(bool reachable)
+        public object delegateswitchgastronotreachable(bool reachable)
         {
             if (reachable)
             {
@@ -613,6 +627,7 @@ namespace Spa_Interaction_Screen
                 GastroEx.Show();
                 GastroExDescription.Show();
             }
+            return null;
         }
 
         public void showthis()
@@ -2703,6 +2718,46 @@ namespace Spa_Interaction_Screen
             if (!(e.KeyChar == 8 || (e.KeyChar >= 48 && e.KeyChar <= 57) || e.KeyChar == 46))
             {
                 e.Handled = true;
+            }
+            InvokeDelegate<object>(null, delegateswitchgastronotreachable(true), new Myswitchgastro(delegateswitchgastronotreachable), this);
+        }
+
+        public static Type InvokeDelegate<Type>(object[]? args, Type eh, Delegate Mydelegate, CForm form)
+        {
+            if (form.GetType().GetProperty("HandleCreate") != null && form.GetType().GetProperty("HandleCreate").PropertyType.Equals(typeof(Boolean)))
+            {
+                if (form.HandleCreate)
+                {
+                    try
+                    {
+                        return (Type)form.Invoke(Mydelegate, args);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                        return eh;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        return eh;
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                        return (Type)form.Invoke(Mydelegate, args);
+                    }
+                }
+            }
+            else
+            {
+                return default(Type);
             }
         }
     }

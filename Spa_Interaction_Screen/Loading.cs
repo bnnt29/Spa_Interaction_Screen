@@ -5,7 +5,7 @@ using static System.Windows.Forms.LinkLabel;
 
 namespace Spa_Interaction_Screen
 {
-    public partial class Loading : Form
+    public partial class Loading : CForm
     {
         private MainForm form;
         private Label progress;
@@ -13,7 +13,6 @@ namespace Spa_Interaction_Screen
         private Label DebugText;
         private Button exit_b;
 
-        private bool HandleCreate = false;
         private delegate void MyDebugText(String Text, bool show);
 
         public Loading(MainForm f, Screen screen)

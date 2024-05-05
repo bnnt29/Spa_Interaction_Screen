@@ -12,7 +12,7 @@ using static System.Windows.Forms.LinkLabel;
 
 namespace Spa_Interaction_Screen
 {
-    public partial class EmbedVLC : Form
+    public partial class EmbedVLC : CForm
     {
         private LibVLC libvlc;
         private MainForm main = null;
@@ -20,7 +20,6 @@ namespace Spa_Interaction_Screen
         private PictureBox welcomeqr;
         private String currentlyshowing;
         private Screen scrn;
-        private bool HandleCreate = false;
         private bool SessionEnd = false;
         private bool showingconsole = false;
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualBasic.ApplicationServices;
 using System.Diagnostics;
+using System.IO;
 using static Spa_Interaction_Screen.EmbedVLC;
 
 namespace Spa_Interaction_Screen
@@ -197,13 +198,29 @@ namespace Spa_Interaction_Screen
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
                         sw.WriteLine(log.Message + "\n");
-                        sw.Flush();
+                        try
+                        {
+                            sw.Flush();
+                            sw.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                        }
                     }
                     if (FOpen(LOG))
                     {
                         StreamWriter sw = new StreamWriter(LOG);
                         sw.WriteLine(log.Message + "\n");
-                        sw.Flush();
+                        try
+                        {
+                            sw.Flush();
+                            sw.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                        }
                     }
                 }
                 else
@@ -213,13 +230,29 @@ namespace Spa_Interaction_Screen
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
                         sw.WriteLine(log.ToString());
-                        sw.Flush();
+                        try
+                        {
+                            sw.Flush();
+                            sw.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                        }
                     }
                     if (FOpen(LOG))
                     {
                         StreamWriter sw = new StreamWriter(LOG);
                         sw.WriteLine(log.ToString());
-                        sw.Flush();
+                        try
+                        {
+                            sw.Flush();
+                            sw.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                        }
                     }
                 }
             }
@@ -237,7 +270,26 @@ namespace Spa_Interaction_Screen
                 start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
                 if (BackupLOG == null)
                 {
+                    FileStream tmp = null;
                     File.Create(Constants.BackupLOGPath).Close();
+                    if (!File.Exists(Constants.BackupLOGPath))
+                    {
+                        try
+                        {
+                            tmp = File.Create(Constants.BackupLOGPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            MainForm.currentState = 6;
+                            Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                            Logger.Print($"Missing Permissions to Open File:{Constants.BackupLOGPath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        }
+                    }
+                    if (tmp != null)
+                    {
+                        tmp.Close();
+                        tmp = null;
+                    }
                     BackupLOG = CreateLOGHandle(Constants.BackupLOGPath);
                     initLog(BackupLOG);
                 }
@@ -288,8 +340,16 @@ namespace Spa_Interaction_Screen
                 Logger.Print("FileStream for Log File init is null", MessageType.Logger, MessageSubType.Error);
             }
             StreamWriter z = new StreamWriter(x);
-            z.WriteLine($"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n[{Logger.TimeToString(DateTime.Now)}]"); 
-            z.Flush();
+            z.WriteLine($"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n[{Logger.TimeToString(DateTime.Now)}]");
+            try
+            {
+                z.Flush();
+                z.Close();
+            }
+            catch (Exception ex)
+            {
+                Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+            }
         }
 
         public static bool FOpen(FileStream file)
@@ -371,12 +431,25 @@ namespace Spa_Interaction_Screen
             FileStream tmp = null;
             if (!File.Exists(path))
             {
-                File.Create(path).Close();
+                try
+                {
+                    tmp = File.Create(path);
+                }
+                catch (Exception ex)
+                {
+                    MainForm.currentState = 6;
+                    Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                }
+            }
+            if (tmp != null)
+            {
+                tmp.Close();
+                tmp = null;
             }
             if (File.Exists(path))
             {
-                File.SetAttributes(path, FileAttributes.Normal);
-                tmp = File.Open(path, FileMode.Append, FileAccess.Write, FileShare.Read);
+                tmp = CreateStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
             }
             else
             {
@@ -460,6 +533,49 @@ namespace Spa_Interaction_Screen
                 return line;
             }
             return "";
+        }
+
+        public static FileStream CreateStream(String path, FileMode fm, FileAccess fa, FileShare fs)
+        {
+            FileStream fstream = null;
+            try
+            {
+                File.SetAttributes(path, FileAttributes.Normal);
+                fstream = File.Open(path, fm, fa, fs);
+            }
+            catch (IOException ex)
+            {
+                MainForm.currentState = 6;
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Could not open File: {path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                if (fstream != null)
+                {
+                    fstream.Close();
+                }
+                return null;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                MainForm.currentState = 6;
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                if (fstream != null)
+                {
+                    fstream.Close();
+                }
+                return null;
+            }catch(Exception ex)
+            {
+                MainForm.currentState = 6;
+                Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                if (fstream != null)
+                {
+                    fstream.Close();
+                }
+                return null;
+            }
+            return fstream;
         }
     }
 }
