@@ -193,7 +193,7 @@ namespace Spa_Interaction_Screen
                 }
                 if (ShowfullMessageLater)
                 {
-                    Debug.WriteLine(log.Message); 
+                    //Debug.WriteLine(log.Message); 
                     if (FOpen(BackupLOG))
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
@@ -225,7 +225,7 @@ namespace Spa_Interaction_Screen
                 }
                 else
                 {
-                    Debug.WriteLine(log.ToString());
+                    //Debug.WriteLine(log.ToString());
                     if (FOpen(BackupLOG))
                     {
                         StreamWriter sw = new StreamWriter(BackupLOG);
@@ -306,7 +306,8 @@ namespace Spa_Interaction_Screen
                     }
                     if (log_Elements[LE.type[i]].Count <= 0)
                     {
-                        consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
+                        //TODO
+                        //consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
                     }
                 }
                 if (consoleshown && currentlyshowing == LE.type[i])
@@ -412,12 +413,17 @@ namespace Spa_Interaction_Screen
             }
             if(c.LogPath == null)
             {
-                Debug.Print($"mainForm.config.LogoFilePath is null");
+                Debug.Print($"LogFilePath is null");
             }
-            //File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+            try
+            {
+                File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+            }catch(Exception e)
+            {
+                Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
+            }
             if(LOG!=null)
             {
-                LOG.Flush();
                 LOG.Close();
                 LOG.Dispose();
                 LOG = null;
@@ -465,36 +471,7 @@ namespace Spa_Interaction_Screen
 
         public static String AddConsoleLine(String line)
         {
-            object[] delegateArray = new object[1];
-            delegateArray[0] = line;
-            if (form.HandleCreate)
-            {
-                try
-                {
-                    return (String) form.Invoke(new MyAddConsoleLine(delegateAddConsoleLine), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Error, true);
-                    Logger.Print("QuitMedia", [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Notice, true);
-                    return delegateAddConsoleLine(line);
-                }
-            }
-            else
-            {
-                try
-                {
-                    return delegateAddConsoleLine(line);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Error, true);
-                    Logger.Print("QuitMedia", [Logger.MessageType.VideoProjektion], Logger.MessageSubType.Notice, true);
-                    return (String) form.Invoke(new MyAddConsoleLine(delegateAddConsoleLine), delegateArray);
-                }
-            }
+            return Constants.InvokeDelegate<String>([line], new MyAddConsoleLine(delegateAddConsoleLine), form.vlc);
         }
 
         public static String delegateAddConsoleLine(String line)

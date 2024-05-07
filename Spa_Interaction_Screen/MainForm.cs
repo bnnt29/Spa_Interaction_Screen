@@ -23,12 +23,10 @@ using QRCoder.Extensions;
 using System.Net.Sockets;
 using Test;
 using System.Runtime.Intrinsics.X86;
+using System.ComponentModel;
 
 /*TODO:
- * Implement all Jsons (sending)
- * unblock scene via tcp
  * repair monitor setup (start with 1, then connect 1)
- * Implement UDP Send/Receive
  * Test TCPButtons
  * Refactor for performance
  * Remove left over artefacts
@@ -38,9 +36,27 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Spa_Interaction_Screen
 {
-    public partial class CForm : Form
+    public abstract partial class CForm : Form
     {
         public bool HandleCreate = false;
+
+        public CForm()
+        {
+            this.HandleCreated += new EventHandler((sender, args) =>
+            {
+                HandleCreate = true;
+            });
+            //this.CreateHandle();
+            /*if (this.IsHandleCreated)
+            {
+                HandleCreate = true;
+            }*/
+
+            this.FormClosed += OnFormClosed;
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
+        }
+        public abstract void OnFormClosed(object sender, EventArgs e);
+       
     }
     public partial class MainForm : CForm
     {
@@ -66,7 +82,7 @@ namespace Spa_Interaction_Screen
         public DateTime? TimeSessionEnd = null;
         private bool blocknonstreamingmedia = false;
         public bool SessionEndbool = false;
-        private EmbedVLC sessionEndVLC = null;
+        public EmbedVLC sessionEndVLC = null;
         public bool SessionendNet = false;
         public int timeleftnet = int.MaxValue;
         public bool switchedtotimepage = false;
@@ -75,13 +91,15 @@ namespace Spa_Interaction_Screen
         public bool lastpingpositiv = true;
         public bool lastZentralButtonstate = true;
         public bool endFading = false;
+        public bool watingforEmbed = false;
+        public bool[] SaunaAmbientButtons = new bool[3];
+        public bool volumeinit = false;
 
         private System.Windows.Forms.Timer ButtonColorTimer = new System.Windows.Forms.Timer();
 
         public Config config;
         public UIHelper helper;
         public Network? net = null;
-        public EnttecCom? enttec = null;
         public SerialPort? serialPort1 = null;
 
         private Task state = null;
@@ -92,33 +110,33 @@ namespace Spa_Interaction_Screen
 
         private bool exitProgramm = false;
 
-        private delegate void MyNoArgument(); 
-        private delegate void MySetupEmbedvlcScreen(MainForm form);
+        private delegate object MyNoArgument(); 
+        private delegate object MySetupEmbedvlcScreen(MainForm form);
         private delegate object Myswitchgastro(bool reachable);
-        private delegate void MyContentchange(bool reachable);
-        private delegate void Myperformsecondary(Constants.ServicesSettingfunction ssf);
-        private delegate void MyFullscreen(Form f, Screen screen);
-        private delegate void Mysetscenelocked(bool x, String txt, Color c);
-        private delegate void Mysetservicelocked(bool x, Color c);
-        private delegate void Mysetsessionlocked(bool x);
+        private delegate object MyContentchange(bool reachable);
+        private delegate object Myperformsecondary(Constants.ServicesSettingfunction ssf);
+        private delegate object MyFullscreen(Form f, Screen screen);
+        private delegate object Mysetscenelocked(bool x, String txt, Color c);
+        private delegate object Mysetservicelocked(bool x, Color c);
+        private delegate object Mysetsessionlocked(bool x);
 
-        public MainForm()
+        public MainForm() :base()
         {
             Logger.form = this;
-            this.FormClosed += OnFormClosed;
             mainscreen = Screen.PrimaryScreen;
-            SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             loadscreen = new Loading(this, mainscreen);
             loadscreen.Show();
             loadscreen.Activate();
             loadscreen.updateProgress(10);
+            loadscreen.Debugtext($"Loading Konfig", true);
             while ((config == null || !config.allread) && !exitProgramm)
             {
                 config = new Config(null);
                 loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !config.allread);
                 loadscreen.exitp(!config.allread);
             }
-            loadscreen.updateProgress(25);
+            loadscreen.updateProgress(20);
+            loadscreen.Debugtext($"Creating Static Objects", true);
             InitializeComponent();
             if (mainscreen == null)
             {
@@ -136,32 +154,20 @@ namespace Spa_Interaction_Screen
             loadscreen.Debugtext("", false);
             loadscreen.exitp(false);
             loadscreen.updateProgress(30);
-            this.HandleCreated += new EventHandler((sender, args) =>
-            {
-                HandleCreate = true;
-            });
             if (!Constants.noNet)
             {
                 net = new Network(this, config);
             }
-            /*Old way of creating Com port
-            this.components = new System.ComponentModel.Container();
-            serialPort1 = new SerialPort(this.components);
-            serialPort1.PortName = config.ComPort;
-            serialPort1.BaudRate = 9600;
-            */
-            if (!Constants.noCOM)
-            {
-                serialPort1 = new SerialPort(config.ComPort, 9600);
-                enttec = new EnttecCom(this, config);
-            }
+            streaming = false;
             loadscreen.updateProgress(40);
+            loadscreen.Debugtext($"Creating Dynamic Objects", true);
             helper = new UIHelper(this, config);
             loadscreen.updateProgress(45);
             helper.init();
             loadscreen.updateProgress(50);
             helper.setConfig(config);
             loadscreen.updateProgress(55);
+            loadscreen.Debugtext($"Sending first DMX", true);
             SendCurrentSceneOverCom();
         }
 
@@ -173,48 +179,58 @@ namespace Spa_Interaction_Screen
                 Application.Exit();
                 return;
             }
-            loadscreen.updateProgress(58);
-
-            loadscreen.updateProgress(88);
+            loadscreen.updateProgress(60);
+            loadscreen.Debugtext($"Connecting to Gastro Website", true);
             await GastronomieWebview.EnsureCoreWebView2Async(null);
-            for (int i = 0; i < UIControl.TabCount; i++)
-            {
-                UIControl.SelectTab(i);
-                Application.DoEvents();
-            }
+
+            GastronomieWebview.CoreWebView2InitializationCompleted += webcontentLoaded;
+
+            loadscreen.updateProgress(80);
+            loadscreen.Debugtext($"Initiating Variables", true);
             start();
+            loadscreen.updateProgress(85);
+            loadscreen.Debugtext($"Finishing UP", true);
+            //loadscreen.TopMost = true;
 
-            loadscreen.updateProgress(93);
-            if (vlc != null)
-            {
-                vlc.showthis();
-            }
-            loadscreen.updateProgress(95);
-            this.TopMost = false;
-            loadscreen.TopMost = true;
+            config.currentvalues[config.HDMISwitchchannel] = 255;
+            EnttecCom.sendDMX(config.currentvalues);
+            Task.Delay(Constants.sendtimeout*2+1).Wait();
+            SendCurrentSceneOverCom();
 
+            loadscreen.updateProgress(90);
 
             ButtonColorTimer.Interval = Constants.buttonupdatemillis;
             ButtonColorTimer.Tick += ButtonFader.UpdateButtoncolor;
             ButtonColorTimer.Enabled = true;
 
-            GastronomieWebview.CoreWebView2InitializationCompleted += webcontentLoaded;
+            loadscreen.updateProgress(99);
 
-            loadscreen.updateProgress(100);
-            UIControl.SelectTab(0);
-            this.Show();
-            EnterFullscreen(this, mainscreen, HandleCreate);
-            loadscreen.Hide();
-            loadscreen.Close();
-            loadscreen = null;
+            loadscreen.Debugtext($"Preloading Sites", true);
+            hidethis();
+            Constants.InvokeDelegate<object>([], new MyNoArgument(UIControlSwitcher), this);
+
+            loadscreen.Debugtext($"Switching to Mainview", true);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(loadscreensloser), this);
+            EnterFullscreen(this, mainscreen);
+            showthis();
             if (exitProgramm)
             {
                 Application.Exit();
             }
+            //Constants.InvokeDelegate<object>([], new MyNoArgument(selectUIControl), this);
+            //Constants.InvokeDelegate<object>([], new MyNoArgument(selectUIControl), this);
         }
 
-        public void OnFormClosed(object sender, EventArgs e)
+        public override void OnFormClosed(object sender, EventArgs e)
         {
+            if (vlc != null)
+            {
+                vlc.Close();
+            }
+            if(loadscreen != null)
+            {
+                loadscreen.Close();
+            }
             UIControl.SelectedIndex = 0;
             SendCurrentSceneOverCom();
             exitProgramm = true;
@@ -226,35 +242,33 @@ namespace Spa_Interaction_Screen
                     tcp.Close();
                 }
             }
+            Logger.Print("Shutdown Main", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             Logger.closeStreams();
             OpenDMX.done = true;
+            Program.runningParent = false;
+            Application.Exit();
+            Application.ExitThread();
+            Environment.Exit(0);
         }
 
         private void start()
         {
-            EnterFullscreen(this, mainscreen, HandleCreate);
+            EnterFullscreen(this, mainscreen);
 
+            Constants.InvokeDelegate<object>([], new MyNoArgument(removetabs), this);
             loadscreen.updateProgress(60);
-            if (!config.showtime)
-            {
-                UIControl.Controls.Remove(TimePage);
-            }
-            if (!config.showcolor)
-            {
-                UIControl.Controls.Remove(ColorPage);
-            }
-            resizeUIControlItems();
 
             loadscreen.updateProgress(70);
-            defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+            Task.Run(() => {
+                defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
+                volumeinit = true;
+            });
 
             setupThreads();
 
             SendCurrentSceneOverCom();
 
             loadscreen.updateProgress(80);
-            if (config.showtime)
-            {
                 if (SessionTimer != null)
                 {
                     SessionTimer.Stop();
@@ -265,36 +279,40 @@ namespace Spa_Interaction_Screen
                 SessionTimer.Interval = 1000;
                 SessionTimer.Tick += timer_tick;
                 SessionTimer.Enabled = true;
-            }
+            Constants.InvokeDelegate<object>([], new MyNoArgument(resizeUIControlItems), this);
         }
 
         private void setupThreads()
         {
             RunTask = false;
-            if (windows != null)
+            Task.Run(() =>
             {
-                windows.Wait();
-            }
-            if (pinggastro != null)
-            {
-                pinggastro.Wait();
-            }
-            if (pingzentrale != null)
-            {
-                pingzentrale.Wait();
-            }
-            if (state != null)
-            {
-                state.Wait();
-            }
-            RunTask = true;
-            windows = Task.Run(async () => ScreenManagerTaskMethod(this));
-            pinggastro = Task.Run(async () => GastroPing(this));
-            pingzentrale = Task.Run(async () => ZentralePing(this));
-            if (config.StateSendInterval > 0)
-            {
-                state = Task.Run(async () => sendState(this));
-            }
+                if (windows != null)
+                {
+                    windows.Wait();
+                }
+                if (pinggastro != null)
+                {
+                    pinggastro.Wait();
+                }
+                if (pingzentrale != null)
+                {
+                    pingzentrale.Wait();
+                }
+                if (state != null)
+                {
+                    state.Wait();
+                }
+                RunTask = true;
+                windows = Task.Run(async () => ScreenManagerTaskMethod(this));
+                pinggastro = Task.Run(async () => GastroPing(this));
+                pingzentrale = Task.Run(async () => ZentralePing(this));
+                if (config.StateSendInterval > 0)
+                {
+                    //TODO
+                    //state = Task.Run(async () => sendState(this));
+                }
+            });
         }
 
         private async Task ZentralePing(MainForm form)
@@ -331,58 +349,16 @@ namespace Spa_Interaction_Screen
                 if (lastZentralButtonstate != zisclient)
                 {
                     lastZentralButtonstate = zisclient;
-                    if (HandleCreate)
-                    {
-                        try
-                        {
-                            this.Invoke(new MyNoArgument(delegateswitchzentralenotreachable));
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            MainForm.currentState = 7;
-                            Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                            Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                            try
-                            {
-                                delegateswitchzentralenotreachable();
-                            }
-                            catch (InvalidOperationException ex2)
-                            {
-                                MainForm.currentState = 7;
-                                Logger.Print(ex2.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                                Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            delegateswitchzentralenotreachable();
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            try
-                            {
-                                this.Invoke(new MyNoArgument(delegateswitchzentralenotreachable));
-                            }
-                            catch (InvalidOperationException ex2)
-                            {
-                                MainForm.currentState = 7;
-                                Logger.Print(ex2.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                                Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                                
-                            }
-                        }
-                    }
+                    Constants.InvokeDelegate<object>([], new MyNoArgument(delegateswitchzentralenotreachable), form);
+                    
                 }
                 if (lastpingpositiv)
                 {
-                    await Task.Delay(5000);
+                    await Task.Delay(10000);
                 }
                 else
                 {
-                    await Task.Delay(2500);
+                    await Task.Delay(3000);
                 }
 
                 index++;
@@ -450,12 +426,12 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    MainForm.currentState = 4;
+                    MainForm.currentState = 5;
                     Logger.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                 }
                 if (response == null)
                 {
-                    MainForm.currentState = 4;
+                    MainForm.currentState = 5;
                     Logger.Print("No Connection", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
@@ -470,46 +446,19 @@ namespace Spa_Interaction_Screen
                 }
                 else if ((int)response.StatusCode > 500 && (int)response.StatusCode < 600)
                 {
-                    MainForm.currentState = 4;
+                    MainForm.currentState = 5;
                     Logger.Print("Server Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
                 else
                 {
-                    MainForm.currentState = 4;
+                    MainForm.currentState = 5;
                     Logger.Print("unknown Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
                     connectionok = false;
                 }
-                object[] delegateArray = new object[1];
-                delegateArray[0] = connectionok;
-                if (HandleCreate)
-                {
-                    try
-                    {
-                        this.Invoke(new Myswitchgastro(delegateswitchgastronotreachable), delegateArray);
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        MainForm.currentState = 7;
-                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                        delegateswitchgastronotreachable(connectionok);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        delegateswitchgastronotreachable(connectionok);
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        MainForm.currentState = 7;
-                        Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                        Logger.Print("switchgastronotreachable", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                        this.Invoke(new Myswitchgastro(delegateswitchgastronotreachable), delegateArray);
-                    }
-                }
+
+                Constants.InvokeDelegate<object>([connectionok], new Myswitchgastro(delegateswitchgastronotreachable), form);
+                
                 if (connectionok)
                 {
                     await Task.Delay(10000);
@@ -529,12 +478,13 @@ namespace Spa_Interaction_Screen
 
                 request.destination = ArraytoString(config.IPZentrale, 4);
                 request.port = config.PortZentrale;
-                request.type = "Status";
+                request.label = "State";
+                request.type = config.Typenames[0];
                 request.id = MainForm.currentState;
                 request.Raum = config.Room;
                 if (net.SendTCPMessage(request, null))
                 {
-                    Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                    Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
                 }
                 if(Programmstate != null)
                 {
@@ -564,7 +514,7 @@ namespace Spa_Interaction_Screen
                         {
                             form.showthis();
                         }
-                        EnterFullscreen(form, Screen.PrimaryScreen, HandleCreate);
+                        EnterFullscreen(form, Screen.PrimaryScreen);
                         if (vlc != null)
                         {
                             MainForm.currentState = 0;
@@ -573,19 +523,32 @@ namespace Spa_Interaction_Screen
                         }
                         break;
                     default:
-                        SetupEmbedvlcScreen(form);
-                        if (!form.SessionEndbool)
+                        if(vlc == null) 
                         {
-                            form.showthis();
+                        
+                            form.watingforEmbed = true;
+                            SetupEmbedvlcScreen(form);
+                            if (!form.SessionEndbool)
+                            {
+                                form.showthis();
+                            }
                         }
                         break;
+                }
+                while (form.watingforEmbed)
+                {
+                    await Task.Delay(1000);
                 }
                 await Task.Delay(3000);
             }
         }
 
-        public void delegateswitchzentralenotreachable()
+        public object delegateswitchzentralenotreachable()
         {
+            if(config.ServicesSettings == null)
+            {
+                return null;
+            }
             foreach (Constants.ServicesSetting ss in config.ServicesSettings)
             {
                 Button b = ss.ButtonElement;
@@ -614,6 +577,7 @@ namespace Spa_Interaction_Screen
             {
                 ZentraleNotReachable.Show();
             }
+            return null;
         }
 
         public object delegateswitchgastronotreachable(bool reachable)
@@ -633,84 +597,57 @@ namespace Spa_Interaction_Screen
             return null;
         }
 
-        public void showthis()
+        public object UIControlSwitcher()
         {
-            if (HandleCreate)
+            for (int i = UIControl.TabCount-1; i>=0; i--)
             {
-                try
-                {
-                    this.Invoke(new MyNoArgument(delegateshowthis));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegateshowthis();
-                }
+                UIControl.SelectTab(i);
+                Application.DoEvents();
             }
-            else
-            {
-                try
-                {
-                    delegateshowthis();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("showthis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyNoArgument(delegateshowthis));
-                }
-            }
+            return null;
         }
 
-        private void delegateshowthis()
+        public object selectUIControl()
+        {
+            UIControl.SelectTab(0);
+            return null;
+        }
+
+        public object loadscreensloser()
+        {
+            loadscreen.Debugtext($"Opening", true);
+            loadscreen.updateProgress(100);
+            loadscreen.Close();
+            return null;
+        }
+
+        public void showthis()
+        {
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), this);
+        }
+
+        private object delegateshowthis()
         {
             if(this != null && !this.IsDisposed)
             {
+                this.BringToFront();
                 this.Show();
             }
+            return null;
         }
 
         public void hidethis()
         {
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyNoArgument(delegatehidethis));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegatehidethis();
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatehidethis();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("hidethis", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyNoArgument(delegatehidethis));
-                }
-            }
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this);
         }
 
-        private void delegatehidethis()
+        private object delegatehidethis()
         {
             this.Hide();
+            return null;
         }
 
-        public void resizeUIControlItems()
+        public object resizeUIControlItems()
         {
             int tabs = 5;
             if (config.showcolor)
@@ -725,44 +662,33 @@ namespace Spa_Interaction_Screen
             {
                 tabs++;
             }
+            if (Constants.showButtonTester)
+            {
+                tabs++;
+            }
             UIControl.ItemSize = new Size((Constants.windowwidth - tabs) / tabs, UIControl.ItemSize.Height);
+            return null;
+        }
+
+        public object removetabs()
+        {
+            if (!config.showtime)
+            {
+                UIControl.Controls.Remove(TimePage);
+            }
+            if (!config.showcolor)
+            {
+                UIControl.Controls.Remove(ColorPage);
+            }
+            return null;
         }
 
         private void SetupEmbedvlcScreen(MainForm form)
         {
-            object[] delegateArray = new object[1];
-            delegateArray[0] = form;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegateSetupEmbedvlcScreen(form);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegateSetupEmbedvlcScreen(form);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("SetupEmbedvlcScreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    this.Invoke(new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([form], new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), form);
         }
 
-        private void delegateSetupEmbedvlcScreen(MainForm form)
+        private object delegateSetupEmbedvlcScreen(MainForm form)
         {
             if (SystemInformation.MonitorCount > 1)
             { 
@@ -823,6 +749,8 @@ namespace Spa_Interaction_Screen
                     }
                 }
             }
+            form.watingforEmbed = false;
+            return null;
         }
 
         public void timer_tick(object sender, EventArgs e)
@@ -852,6 +780,18 @@ namespace Spa_Interaction_Screen
                 clock.Text = $"{Hours}:{Minutes}";
                 clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
             }
+            if (helper.globaltimelabels != null)
+            {
+                foreach (Label l in helper.globaltimelabels)
+                {
+                    l.Text = $"{Hours}:{Minutes}";
+                    l.BackColor = Color.Transparent;
+                    l.Font = Constants.Time_font;
+                    l.Show();
+                    helper.SetEdgePosition(l, config.edgetimePosition);
+                }
+            }
+            
             if (TimeSessionEnd != null)
             {
                 int timeleftnotclamped = (int)Math.Ceiling(((TimeSpan)(TimeSessionEnd - DateTime.Now)).TotalMinutes);
@@ -871,13 +811,13 @@ namespace Spa_Interaction_Screen
                         {
                             if (config.showtime)
                             {
-                                Content_Change(false);
                                 int x = 4 + ((config.showcolor) ? 1 : 0);
                                 UIControl.SelectTab(x);
-                                if (vlc != null)
-                                {
-                                    vlc.changeMedia(config.SessionEndImage, false);
-                                }
+                            }
+                            Content_Change(false);
+                            if (vlc != null)
+                            {
+                                vlc.changeMedia(config.SessionEndImage, false);
                             }
                             switchedtotimepage = true;
                         }
@@ -1182,49 +1122,18 @@ namespace Spa_Interaction_Screen
 
         public void Programm_Enter_Handler(object sender, EventArgs e)
         {
-            EnterFullscreen(this, mainscreen, HandleCreate);
+            EnterFullscreen(this, mainscreen);
             ((Button)sender).Click -= Programm_Enter_Handler;
             ((Button)sender).Click += Programm_Exit_Handler;
             ((Button)sender).Text = Constants.ExitFullscreenText;
         }
 
-        public void EnterFullscreen(Form f, Screen screen, bool handle)
+        public void EnterFullscreen(CForm f, Screen screen)
         {
-            object[] delegateArray = new object[2];
-            delegateArray[0] = f;
-            delegateArray[1] = screen;
-            //The check for the Handle Create can fail when the questioning Form is EmbedVLC.
-            if (handle)
-            {
-                try
-                {
-                    f.Invoke(new MyFullscreen(delegateEnterFullscreen), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegateEnterFullscreen(f, screen);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegateEnterFullscreen(f,screen);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("EnterFullscreen", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    f.Invoke(new MyFullscreen(delegateEnterFullscreen), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([f, screen], new MyFullscreen(delegateEnterFullscreen), f);
         }
 
-        public void delegateEnterFullscreen(Form f, Screen screen)
+        public object delegateEnterFullscreen(Form f, Screen screen)
         {
 #if !DEBUG
             f.TopMost = true;
@@ -1239,12 +1148,21 @@ namespace Spa_Interaction_Screen
             //Set fullscreen
             f.Size = screen.Bounds.Size;
             f.Location = screen.Bounds.Location;
+            return null;
         }
 
         public void Ambiente_Change_Handler(object sender, EventArgs e)
         {
             Ambiente_Change(((Constants.DMXScene?)(((Button)(sender)).Tag)), false, true, false);
             //SendCurrentSceneOverCom();
+        }
+
+        public void Ambiente_Sauna_Handler(object sender, EventArgs e)
+        {
+            bool on = !SaunaAmbientButtons[(int)((Button)(sender)).Tag];
+            SaunaAmbientButtons[(int)((Button)(sender)).Tag] = on;
+            helper.selectButton(((Button)(sender)), on, Constants.selected_color);
+            SendCurrentSceneOverCom();
         }
 
         public void Ambiente_Change(Constants.DMXScene? scene, bool force, bool user, bool keepMedia)
@@ -1300,12 +1218,11 @@ namespace Spa_Interaction_Screen
             }
             bool noserial = true;
             Task con = null;
-            serialPort1 = new SerialPort();
-            if (!enttec.isopen())
+            if (!EnttecCom.isopen())
             {
                 con = Task.Run(() =>
                 {
-                    if (!enttec.connect())
+                    if (!EnttecCom.connect())
                     {
                         MainForm.currentState = 5;
                         Logger.Print("Error when trying to Communicate with Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
@@ -1323,6 +1240,10 @@ namespace Spa_Interaction_Screen
             byte[] tempchannelvalues = (byte[])config.DMXScenes[config.DMXSceneSetting].Channelvalues.Clone();
             if (!Scenelocked)
             {
+                for(int i = 0; i < SaunaAmbientButtons.Length; i++)
+                {
+                    tempchannelvalues[Constants.SaunaChanneloffset+i] = (SaunaAmbientButtons[i]) ? (byte)255 : (byte)0;
+                }
                 if (config.Dimmerchannel[0] >= 0 && config.Dimmerchannel[0] < tempchannelvalues.Length)
                 {
                     tempchannelvalues[config.Dimmerchannel[0]] = changeddimmerchannels[0];
@@ -1337,20 +1258,16 @@ namespace Spa_Interaction_Screen
                 }
                 if (config.HDMISwitchchannel >= 0 && config.HDMISwitchchannel < tempchannelvalues.Length)
                 {
-                    tempchannelvalues[config.HDMISwitchchannel] = (!streaming) ? (byte)255 : (byte)0;
+                    config.currentvalues[config.HDMISwitchchannel] = (streaming) ? (byte)255 : (byte)0;
+                    tempchannelvalues[config.HDMISwitchchannel] = (streaming) ? (byte)255 : (byte)0;
                 }
             }
-            for (int i = 0; i < tempchannelvalues.Length; i++)
-            {
-                tempchannelvalues[i] = (byte)Math.Min(tempchannelvalues[i], (byte)254);
-                tempchannelvalues[i] = (byte)Math.Max(tempchannelvalues[i], (byte)0);
-            }
-            tempchannelvalues[0] = 255;
             byte[] fade = new byte[tempchannelvalues.Length];
             //Logger.Print($"Time:{DateTime.Now}-{config.lastchangetime}={(DateTime.Now - config.lastchangetime).TotalMilliseconds}");
             double millis = (DateTime.Now - config.lastchangetime).TotalMilliseconds;
             if (millis <= config.FadeTime && config.currentvalues != null)
             {
+                bool x = false;
                 double fadesteps = (config.FadeTime - millis) / (double)Constants.sendtimeout;
                 for (int i = 0; i < tempchannelvalues.Length; i++)
                 {
@@ -1358,50 +1275,54 @@ namespace Spa_Interaction_Screen
                     {
                         break;
                     }
-                    fade[i] = (byte)(config.currentvalues[i] + Math.Round((double)(tempchannelvalues[i] - config.currentvalues[i]) / fadesteps));
+                    fade[i] = (byte)(config.currentvalues[i] + ((double)(tempchannelvalues[i] - config.currentvalues[i]) / fadesteps));
+                    if(((double)(tempchannelvalues[i] - config.currentvalues[i]) != 0)){
+                        x = true;
+                    }
                 }
-                if (fadingtimer != null)
+                if (fadingtimer != null && !fadingtimer.Enabled)
                 {
-                    fadingtimer.Start();
+                    fadingtimer.Stop();
+                    fadingtimer.Dispose();
+                    fadingtimer = null;
                 }
-                else
+                if ((fadingtimer == null || !fadingtimer.Enabled) && x)
                 {
                     fadingtimer = new System.Windows.Forms.Timer();
                     fadingtimer.Tick += SendCurrentSceneOverCom_Handle;
-                    fadingtimer.Interval = 30;
+                    fadingtimer.Interval = Constants.sendtimeout - 1;
                     fadingtimer.Start();
                 }
             }
             else
             {
-                if (fadingtimer != null)
+                if (fadingtimer != null && fadingtimer.Enabled)
                 {
                     fadingtimer.Stop();
+                    fadingtimer.Dispose();
+                    fadingtimer = null;
                 }
                 fade = tempchannelvalues;
             }
-            if (config.currentvalues.Length <= fade.Length)
-            {
-                config.currentvalues = fade;
-            }
-            else
-            {
-                Buffer.BlockCopy(fade, 0, config.currentvalues, 0, fade.Length);
-            }
+            config.currentvalues = fade;
             //Logger.Print($"Trying to send the following DMX Data:0,{fade[0]},{fade[1]},{fade[2]},{fade[3]},{fade[4]},{fade[5]},{fade[6]},{fade[7]},{fade[8]},{fade[9]},{fade[10]},{fade[11]},{fade[12]},{fade[13]},{fade[14]}");
-            if (con != null)
-            {
-                con.Wait();
-            }
-            if (!noserial && enttec.isopen())
-            {
-                enttec.sendDMX(fade);
-            }
-            else
-            {
-                MainForm.currentState = 5;
-                Logger.Print("unable to open Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
-            }
+            Task.Run(async () => {
+                if (con != null)
+                {
+                    con.Wait();
+                    con.Dispose();
+                    con = null;
+                }
+                if (!noserial && EnttecCom.isopen())
+                {
+                    EnttecCom.sendDMX(fade);
+                }
+                else
+                {
+                    MainForm.currentState = 5;
+                    Logger.Print("unable to open Enttec Port", Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                }
+            });
         }
 
         public void Ambiente_Design_Handler(object sender, EventArgs e)
@@ -1455,39 +1376,10 @@ namespace Spa_Interaction_Screen
 
         public void Content_Change(bool SwitchToStream)
         {
-            object[] delegateArray = new object[1];
-            delegateArray[0] = SwitchToStream;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyContentchange(delegateContent_Change), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegateContent_Change(SwitchToStream);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegateContent_Change(SwitchToStream);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyContentchange(delegateContent_Change), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([SwitchToStream], new MyContentchange(delegateContent_Change), this);
         }
 
-        public void delegateContent_Change(bool SwitchToStream)
+        public object delegateContent_Change(bool SwitchToStream)
         {
             helper.selectButton(TVSettingsAmbienteButton, !SwitchToStream, Constants.selected_color);
             helper.selectButton(TVSettingsStreamingButton, SwitchToStream, Constants.selected_color);
@@ -1521,8 +1413,9 @@ namespace Spa_Interaction_Screen
                 TVSettingsVolumeColorSliderDescribtion.Show();
                 streaming = false;
                 Ambiente_Change(config.DMXScenes[config.DMXSceneSetting], true, true, false);
-                SendCurrentSceneOverCom();
             }
+            SendCurrentSceneOverCom();
+            return null;
         }
 
         public void Wartung_Request_Handle(object sender, EventArgs e)
@@ -1535,13 +1428,14 @@ namespace Spa_Interaction_Screen
 
             request.destination = ArraytoString(config.IPZentrale, 4);
             request.port = config.PortZentrale;
-            request.type = "System";
+            request.type = config.Typenames[1];
             request.Raum = config.Room;
-            request.label = ((Constants.SystemSetting)((Button)(sender)).Tag).JsonText;
-            request.values = new String[] { ((Constants.SystemSetting)((Button)(sender)).Tag).value };
+            request.label = ((Constants.TCPSetting)((((Button)(sender)).Tag))).JsonText;
+            request.id = ((Constants.TCPSetting)((((Button)(sender)).Tag))).id;
+            //request.values = new String[] { ((Constants.SystemSetting)((Button)(sender)).Tag).value };
             if (net.SendTCPMessage(request, null))
             {
-                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             }
             ((Button)sender).BackColor = Constants.alternative_color;
             ((Button)sender).Click -= Wartung_Request_Handle;
@@ -1597,59 +1491,27 @@ namespace Spa_Interaction_Screen
 
             request.destination = ArraytoString(config.IPZentrale, 4);
             request.port = config.PortZentrale;
-            request.type = "Service";
+            request.type = config.Typenames[3];
             request.Raum = config.Room;
             request.label = s.JsonText;
+            request.id = s.id;
             if (net.SendTCPMessage(request, null))
             {
-                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             }
         }
 
         private void performsecondary(Constants.ServicesSettingfunction ssf)
         {
             Task wait = Task.Delay(ssf.delay);
-            object[] delegateArray = new object[1];
-            delegateArray[0] = ssf;
-            if (HandleCreate)
-            {
-                try
-                {
-                    wait.Wait();
-                    this.BeginInvoke(new Myperformsecondary(delegateperformsecondary), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    wait.Wait();
-                    delegateperformsecondary(ssf);
-                }
-            }
-            else
-            {
-                try
-                {
-                    wait.Wait();
-                    delegateperformsecondary(ssf);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    wait.Wait();
-                    this.BeginInvoke(new Myperformsecondary(delegateperformsecondary), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([ssf], new Myperformsecondary(delegateperformsecondary), this);
         }
 
-        private void delegateperformsecondary(Constants.ServicesSettingfunction ssf)
+        private object delegateperformsecondary(Constants.ServicesSettingfunction ssf)
         {
             if (ssf == null || ssf.functionclass == null || ssf.secondary == null)
             {
-                return;
+                return null;
             }
             if (ssf.functionclass.Equals(new Constants.SystemSetting().GetType()))
             {
@@ -1755,6 +1617,7 @@ namespace Spa_Interaction_Screen
             {
                 ssf.enable = !ssf.enable;
             }
+            return null;
         }
 
         public void temp(object sender, EventArgs e)
@@ -1830,7 +1693,10 @@ namespace Spa_Interaction_Screen
         public void AmbientVolume(Decimal Value, int? tag, object? sender)
         {
 #if !DEBUG
-            defaultPlaybackDevice.Volume = Decimal.ToDouble(Value);
+            if (volumeinit)
+            {
+                defaultPlaybackDevice.Volume = Decimal.ToDouble(Value);
+            }
 #endif
             if (helper.FormColorSlides == null)
             {
@@ -1920,37 +1786,10 @@ namespace Spa_Interaction_Screen
 
         public void reset()
         {
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.BeginInvoke(new MyNoArgument(delegatereset));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegatereset();
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatereset();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    this.BeginInvoke(new MyNoArgument(delegatereset));
-                }
-            }
+            Constants.InvokeDelegate<object>([],new MyNoArgument(delegatereset), this);
         }
 
-        public void delegatereset()
+        public object delegatereset()
         {
             Logger.Print("Performing Reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             if (SessionTimer != null)
@@ -2002,6 +1841,7 @@ namespace Spa_Interaction_Screen
             loadscreen.Hide();
             loadscreen.Close();
             Logger.Print("Reset finisched", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+            return null;
         }
 
         public String ArraytoString(String[] array, int until)
@@ -2020,6 +1860,10 @@ namespace Spa_Interaction_Screen
 
         public bool generateQRCode(PictureBox p, int pixelsize, bool quietzone, int size, bool inv)
         {
+            if(p == null)
+            {
+                return false;
+            }
             if (config.Wifipassword == null || config.Wifipassword.Length <= 0)
             {
                 p.Image = null;
@@ -2031,7 +1875,7 @@ namespace Spa_Interaction_Screen
                 p.Show();
             }
             QRCodeGenerator qrCodegen = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:S:{config.WiFiSSID};T:WPA;P:{config.Wifipassword};;", QRCodeGenerator.ECCLevel.H, true);
+            QRCodeData qrCodeData = qrCodegen.CreateQrCode($"WIFI:T:WPA;S:{config.WiFiSSID};P:{config.Wifipassword};;", QRCodeGenerator.ECCLevel.H, true);
             QRCode qrCode = new QRCode(qrCodeData);
             Bitmap qrCodeImage = null;
             Color a = Color.White;
@@ -2135,48 +1979,15 @@ namespace Spa_Interaction_Screen
             colorWheelElement.ColorChanged -= ColorChanged_Handler;
             colorWheelElement.Color = Color.White;
             colorWheelElement.ColorChanged += ColorChanged_Handler;
-            ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged -= ColorChanged_Handler;
             ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).Value = 100;
-            ((ColorSlider.ColorSlider)(colorWheelElement.Tag)).ValueChanged += ColorChanged_Handler;
         }
 
         public void setscenelocked(bool x, String txt, Color c)
         {
-            object[] delegateArray = new object[3];
-            delegateArray[0] = x;
-            delegateArray[1] = txt;
-            delegateArray[2] = c;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new Mysetscenelocked(delegatesetscenelocked), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatesetscenelocked( x,  txt,  c);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatesetscenelocked(x, txt, c);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new Mysetscenelocked(delegatesetscenelocked), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([x,txt,c],new Mysetscenelocked(delegatesetscenelocked), this);
         }
 
-        public void delegatesetscenelocked(bool x, String txt, Color c)
+        public object delegatesetscenelocked(bool x, String txt, Color c)
         {
             Scenelocked = x;
             foreach (Label l in helper.globalinformationlabels)
@@ -2263,44 +2074,15 @@ namespace Spa_Interaction_Screen
             {
                 ((ColorSlider.ColorSlider)colorWheelElement.Tag).Enabled = !x;
             }
+            return null;
         }
 
         public void setservicelocked(bool x,Color c)
         {
-            object[] delegateArray = new object[2];
-            delegateArray[0] = x;
-            delegateArray[1] = c;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new Mysetservicelocked(delegatesetservicelocked), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatesetservicelocked(x, c);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatesetservicelocked(x, c);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new Mysetservicelocked(delegatesetservicelocked), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([x,c], new Mysetservicelocked(delegatesetservicelocked), this);
         }
 
-        public void delegatesetservicelocked(bool x, Color c)
+        public object delegatesetservicelocked(bool x, Color c)
         {
             Servicelocked = x;
             Servicelockedlabel.ForeColor = c;
@@ -2320,43 +2102,15 @@ namespace Spa_Interaction_Screen
                 Servicelockedlabel.Location = new Point((Constants.windowwidth / 2) - (Servicelockedlabel.Size.Width / 2), Servicelockedlabel.Location.Y);
             }
             delegateswitchzentralenotreachable();
+            return null;
         }
 
         public void setsessionlocked(bool x)
         {
-            object[] delegateArray = new object[1];
-            delegateArray[0] = x;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new Mysetsessionlocked(delegatesetsessionlocked), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatesetsessionlocked(x);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatesetsessionlocked(x);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new Mysetsessionlocked(delegatesetsessionlocked), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([x], new Mysetsessionlocked(delegatesetsessionlocked), this);
         }
 
-        public void delegatesetsessionlocked(bool x)
+        public object delegatesetsessionlocked(bool x)
         {
             Sessionlocked = x;
             if (x)
@@ -2367,6 +2121,7 @@ namespace Spa_Interaction_Screen
             {
                 resetSessionlockbutton.Hide();
             }
+            return null;
         }
 
         public void resetscenelock_Handler(object sender, EventArgs e)
@@ -2673,7 +2428,7 @@ namespace Spa_Interaction_Screen
             p += '"';
             if (CommandboxLabel.Text.Length > 0)
             {
-                p += ", ";
+                p += ',';
                 p += '"';
                 p += "label";
                 p += '"';
@@ -2697,7 +2452,7 @@ namespace Spa_Interaction_Screen
             }
             if (id >= 0)
             {
-                p += ", ";
+                p += ',';
                 p += '"';
                 p += "id";
                 p += '"';
@@ -2706,7 +2461,7 @@ namespace Spa_Interaction_Screen
             }
             if (Commandboxvalues.Text.Length > 0)
             {
-                p += ", ";
+                p += ',';
                 p += '"';
                 p += "values";
                 p += '"';
@@ -2741,46 +2496,8 @@ namespace Spa_Interaction_Screen
             {
                 e.Handled = true;
             }
-            InvokeDelegate<object>(null, delegateswitchgastronotreachable(true), new Myswitchgastro(delegateswitchgastronotreachable), this);
+
         }
 
-        public static Type InvokeDelegate<Type>(object[]? args, Type eh, Delegate Mydelegate, CForm form)
-        {
-            if (form.GetType().GetProperty("HandleCreate") != null && form.GetType().GetProperty("HandleCreate").PropertyType.Equals(typeof(Boolean)))
-            {
-                if (form.HandleCreate)
-                {
-                    try
-                    {
-                        return (Type)form.Invoke(Mydelegate, args);
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        MainForm.currentState = 7;
-                        Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                        return eh;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        return eh;
-                    }
-                    catch (InvalidOperationException ex)
-                    {
-                        MainForm.currentState = 7;
-                        Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                        return (Type)form.Invoke(Mydelegate, args);
-                    }
-                }
-            }
-            else
-            {
-                return default(Type);
-            }
-        }
     }
 }

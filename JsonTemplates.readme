@@ -16,12 +16,13 @@ Data types:
 State ids:
   0: Something wrong
   1: All right
-  2: TCP (connection itself or commands send / received)
-  3: Monitors
-  4: Error when communicating with router or gastro
-  5: Error when communicating with ambient Light
-  6: Config Error
-  7: Other Error (Investigate LOG or BLOG)
+  2: Error in TCP (connection itself or commands send / received)
+  3: Error with Monitors
+  4: Error when communicating with router
+  5: Error when communicating with gastro
+  6: Error when communicating with ambient Light
+  7: Config Error
+  8: Other Error (Investigate LOG or BLOG)
 
 ----- Data To Interaction_Screen -----
 

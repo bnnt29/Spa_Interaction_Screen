@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Microsoft.VisualBasic.ApplicationServices;
 using static System.Windows.Forms.LinkLabel;
+using static QRCoder.PayloadGenerator;
 
 namespace Spa_Interaction_Screen
 {
@@ -13,17 +14,15 @@ namespace Spa_Interaction_Screen
         private Label DebugText;
         private Button exit_b;
 
-        private delegate void MyDebugText(String Text, bool show);
+        private delegate object MyDebugText(String Text, bool show);
+        private delegate object MyupdateProgress(int percentage);
 
-        public Loading(MainForm f, Screen screen)
+        public Loading(MainForm f, Screen screen) : base()
         {
             InitializeComponent();
-            this.HandleCreated += new EventHandler((sender, args) =>
-            {
-                HandleCreate = true;
-            });
             form = f;
-            form.EnterFullscreen(this, screen, false);
+            form.EnterFullscreen(this, screen);
+
             this.BackColor = Constants.Background_color;
             addcomponents();
             exit_b = Constants.createButton(Constants.Element_width, Constants.Element_height, 0, 0, (List<Button>)null, "ExitProgramm", null, this, null, form.ExitProgramm);
@@ -44,40 +43,10 @@ namespace Spa_Interaction_Screen
 
         public void Debugtext(String Text, bool show)
         {
-            object[] delegateArray = new object[2];
-            delegateArray[0] = Text;
-            delegateArray[1] = show;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    delegateDebugtext(Text, show);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegateDebugtext(Text, show);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                    Logger.Print("Debugtext", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyDebugText(delegateDebugtext), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([Text, show], new MyDebugText(delegateDebugtext), this);
         }
 
-        private void delegateDebugtext(String Text, bool show)
+        private object delegateDebugtext(String Text, bool show)
         {
             if (DebugText == null)
             {
@@ -100,6 +69,7 @@ namespace Spa_Interaction_Screen
                 DebugText.Hide();
             }
             updateloadGUI();
+            return null;
         }
 
         public void updateloadGUI()
@@ -133,9 +103,29 @@ namespace Spa_Interaction_Screen
 
         public void updateProgress(int percentage)
         {
-            progressBar.Value = percentage;
-            updateloadGUI();
+            Constants.InvokeDelegate<object>([percentage], new MyupdateProgress(delegateupdateProgress), this);
         }
 
+        public object delegateupdateProgress(int percentage)
+        {
+            progressBar.Value = percentage;
+            updateloadGUI();
+            return null;
+        }
+
+
+        public override void OnFormClosed(object sender, EventArgs e)
+        {
+            if (form != null)
+            {
+                if (form.loadscreen != null)
+                {
+                    form.loadscreen.Dispose();
+                    form.loadscreen = null;
+                }
+            }
+            this.Hide();
+            Logger.Print("Shutdown Loading", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
+        }
     }
 }

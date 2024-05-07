@@ -7,7 +7,7 @@ ConfigComment%#
 ConfigEmpty%!
 maxscenes%12
 maxhelps%12
-maxhelps%5
+maxtcps%5
 XButtonCount%5
 YButtonCount%5
 InlineuntilXButtons%5

@@ -3,10 +3,12 @@ using LibVLCSharp.WinForms;
 using Microsoft.VisualBasic.ApplicationServices;
 using PlanwerkLichtSpa.Properties;
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
+using Test;
 using static Spa_Interaction_Screen.MainForm;
 using static System.Windows.Forms.LinkLabel;
 
@@ -23,19 +25,15 @@ namespace Spa_Interaction_Screen
         private bool SessionEnd = false;
         private bool showingconsole = false;
 
-        private delegate void MyNoArgument();
-        private delegate void MyquitMedia(bool user);
-        private delegate void MychangeMedia(String link, bool user);
+        private delegate object MyNoArgument();
+        private delegate object MyquitMedia(bool user);
+        private delegate object MychangeMedia(String link, bool user);
 
-        public EmbedVLC(MainForm f, Screen screen, bool Sessionend)
+        public EmbedVLC(MainForm f, Screen screen, bool Sessionend) : base()
         {
             this.FormClosed += OnFormClosed;
             SessionEnd = Sessionend;
             InitializeComponent();
-            this.HandleCreated += new EventHandler((sender, args) =>
-            {
-                HandleCreate = true;
-            });
 
             this.main = f;
             scrn = screen;
@@ -43,7 +41,7 @@ namespace Spa_Interaction_Screen
             Core.Initialize();
             libvlc = new LibVLC();
 
-            main.EnterFullscreen(this, scrn, HandleCreate);
+            main.EnterFullscreen(this, scrn);
             createElements();
 
             TVvideoView.MediaPlayer = new MediaPlayer(libvlc);
@@ -56,12 +54,26 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public void OnFormClosed(object sender, EventArgs e)
+        public override void OnFormClosed(object sender, EventArgs e)
         {
+            if(main != null) 
+            {
+                if (main.vlc != null && main.vlc.Equals(this))
+                {
 #if DEBUG
-            main.vlcclosed = true;
+                    main.vlcclosed = true;
 #endif
-            main.vlc = null;
+                    main.vlc.Dispose();
+                    main.vlc = null;
+                }
+                else if(main.vlc != null && main.sessionEndVLC.Equals(this))
+                {
+                    main.sessionEndVLC.Dispose();
+                    main.sessionEndVLC = null;
+                }
+            }
+            this.hidethis();
+            Logger.Print("Shutdown EmbedVLC", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
         }
 
         private void createElements()
@@ -122,39 +134,10 @@ namespace Spa_Interaction_Screen
 
         public void quitMedia(bool user)
         {
-            object[] delegateArray = new object[1];
-            delegateArray[0] = user;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatequitMedia(user);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatequitMedia(user);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyquitMedia(delegatequitMedia), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([user], new MyquitMedia(delegatequitMedia), this);
         }
 
-        private void delegatequitMedia(bool user)
+        private object delegatequitMedia(bool user)
         {
             this.BackgroundImage = null;
             if (TVvideoView != null)
@@ -167,119 +150,42 @@ namespace Spa_Interaction_Screen
             {
                 welcomeqr.Hide();
             }
+            return null;
         }
 
         public void showthis()
         {
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyNoArgument(delegateshowthis));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegateshowthis();
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegateshowthis();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("showthis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyNoArgument(delegateshowthis));
-                }
-            }
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), main);
         }
 
-        private void delegateshowthis()
+        public object delegateshowthis()
         {
             if (this != null && !this.IsDisposed)
             {
                 this.Show();
             }
+            return null;
         }
 
         public void hidethis()
         {
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyNoArgument(delegatehidethis));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatehidethis();
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatehidethis();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("hidethis", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyNoArgument(delegatehidethis));
-                }
-            }
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this);
         }
 
-        private void delegatehidethis()
+        private object delegatehidethis()
         {
             this.Hide();
+            return null;
         }
 
         public void newsession()
         {
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.Invoke(new MyNoArgument(delegatenewsession));
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatenewsession();
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatenewsession();
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("newsession", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.Invoke(new MyNoArgument(delegatenewsession));
-                }
-            }
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatenewsession), this);
         }
 
-        private void delegatenewsession()
+        private object delegatenewsession()
         {
+            GC.KeepAlive(welcomeqr);
             if (main.generateQRCode(welcomeqr, 29, true, (int)(scrn.Bounds.Width * 0.2), true))
             {
                 welcomeqr.Location = new Point(this.Width / 2 - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
@@ -290,6 +196,7 @@ namespace Spa_Interaction_Screen
             {
                 welcomeqr.Hide();
             }
+            return null;
         }
 
         public void changeMedia(String link, bool user)
@@ -301,40 +208,10 @@ namespace Spa_Interaction_Screen
                     return;
                 }
             }
-            object[] delegateArray = new object[2];
-            delegateArray[0] = link;
-            delegateArray[1] = user;
-            if (HandleCreate)
-            {
-                try
-                {
-                    this.BeginInvoke(new MychangeMedia(delegatechangeMedia), delegateArray);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    delegatechangeMedia(link, user);
-                }
-            }
-            else
-            {
-                try
-                {
-                    delegatechangeMedia(link, user);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("changeMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
-                    this.BeginInvoke(new MychangeMedia(delegatechangeMedia), delegateArray);
-                }
-            }
+            Constants.InvokeDelegate<object>([link, user], new MychangeMedia(delegatechangeMedia), this);
         }
 
-        private void delegatechangeMedia(String link, bool user)
+        private object delegatechangeMedia(String link, bool user)
         {
             if (currentlyshowing != null && currentlyshowing.Length >= 0 && currentlyshowing.Equals(link))
             {
@@ -342,12 +219,12 @@ namespace Spa_Interaction_Screen
                 {
                     welcomeqr.Hide();
                 }
-                return;
+                return null;
             }
             quitMedia(user);
             if (link == null || link.Length <= 0)
             {
-                return;
+                return null;
             }
             Logger.Print($"Showing {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Information);
             int index = link.LastIndexOf('.');
@@ -401,6 +278,7 @@ namespace Spa_Interaction_Screen
                 Logger.ConsoleBox.Hide();
                 Logger.ConsoleBox.SendToBack();
             }
+            return null;
         }
 
         private void video(String link, bool user)

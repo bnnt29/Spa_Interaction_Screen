@@ -65,7 +65,13 @@ namespace Test
             done = true;
             if (handle != null || handle != 0)
             {
-                status = FT_Close(handle);
+                try
+                {
+                    status = FT_Close(handle);
+                }catch(SEHException ex)
+                {
+                    Logger.Print(ex.Message, Logger.MessageType.Licht, Logger.MessageSubType.Error);
+                }
             }
             handle = 0;
             status = FT_Open(0, ref handle);
@@ -90,6 +96,12 @@ namespace Test
             {
                 buffer[channel+1] = value;
             }
+        }
+
+        public static void setDMXValues(byte[] values)
+        {
+            Buffer.BlockCopy(values, 0, buffer, 0, values.Length);
+            buffer[0] = 0;
         }
 
         public static void writeData()

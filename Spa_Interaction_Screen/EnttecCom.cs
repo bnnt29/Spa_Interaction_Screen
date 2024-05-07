@@ -15,59 +15,42 @@ using static QRCoder.PayloadGenerator;
 
 namespace Spa_Interaction_Screen
 {
-    public class EnttecCom
+    public static class EnttecCom
     {
-        private MainForm form;
-        private Config config;
-        private SerialPort port = null;
-
-        public EnttecCom(MainForm f, Config c)
-        {
-            form = f;
-            config = c;
-            connect();
-        }
-
-        public void sendDMX(byte[] channels)
+        private static bool triedtoopen = false;
+        public static void sendDMX(byte[] channels)
         {
             if (OpenDMX.status == FT_STATUS.FT_DEVICE_NOT_FOUND)
             {
                 Logger.Print("No Enttec USB Device Found", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
             }
-            byte[] temp = new byte[config.DMXScenes[0].Channelvalues.Length+1];
-            Buffer.BlockCopy(channels, 0, temp, 0, channels.Length);
-            String s = "";
-            for(int i = 0; i < temp.Length; i++) 
-            {
-                OpenDMX.setDmxValue(i, temp[i]);
-                s += temp[i]+":";
-            }
-            s = $"{channels[8]}:{channels[9]}:{channels[10]}:{channels[11]}:{channels[12]}";
-            Logger.Print($"{s}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
-            Logger.Print($"Enttec written bytes: {OpenDMX.bytesWritten}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
+            OpenDMX.setDMXValues(channels);
+            //Logger.Print($"Enttec written bytes: {OpenDMX.bytesWritten}", Logger.MessageType.Licht, Logger.MessageSubType.Information);
         }
 
-        public bool isopen()
+        public static bool isopen()
         {
-            return OpenDMX.status == FT_STATUS.FT_OK;
+            return OpenDMX.status == FT_STATUS.FT_OK && triedtoopen;
         }
 
-        public FT_STATUS getstate()
+        public static FT_STATUS getstate()
         {
             return OpenDMX.status;
         }
 
-        public bool connect()
+        public static bool connect()
         {
             try
             {
                 OpenDMX.start();//find and connect to devive (first found if multiple)
+                triedtoopen = true;
             }
             catch (Exception exp)
             {
                 MainForm.currentState = 5;
                 Logger.Print(exp.Message, Logger.MessageType.Licht, Logger.MessageSubType.Error);
                 Logger.Print("Error Connecting to Enttec USB Device", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
+                triedtoopen = false;
                 return false;
             }
             if (OpenDMX.status == FT_STATUS.FT_DEVICE_NOT_FOUND)

@@ -15,6 +15,7 @@ using System.Diagnostics.Eventing.Reader;
 using static Spa_Interaction_Screen.Constants;
 using static System.Collections.Specialized.BitVector32;
 using System.Text.RegularExpressions;
+using static QRCoder.PayloadGenerator.SwissQrCode;
 
 namespace Spa_Interaction_Screen
 {
@@ -33,6 +34,7 @@ namespace Spa_Interaction_Screen
         {
             form = f;
             config = c;
+            //connect();
             StartTCPServer();
         }
 
@@ -57,11 +59,11 @@ namespace Spa_Interaction_Screen
         private static String assembleJsonString(RequestJson req)
         {
             String s = "{";
-            s += $"\"type\":{req.type}";
-            s += $",\"room\":{req.Raum}";
+            s += $"\"room\":{req.Raum}";
+            s += $",\"type\":\"{req.type}\"";
             if (req.label != null)
             {
-                s += $",\"label\":{req.label}";
+                s += $",\"label\":\"{req.label}\"";
             }
             if (req.id != null)
             {
@@ -280,6 +282,7 @@ namespace Spa_Interaction_Screen
             }
             NetworkStream stream = new NetworkStream(cl);
             string text = assembleJsonString(json);
+            Logger.Print(text, Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             byte[] send_buffer = Encoding.Default.GetBytes(text);
             try
             {
@@ -321,6 +324,45 @@ namespace Spa_Interaction_Screen
                 IPEndPoint endpoint = client.RemoteEndPoint as IPEndPoint;
                 Logger.Print($"Client with IP:{endpoint.Address} connected", [Logger.MessageType.TCPReceive, Logger.MessageType.TCPSend], Logger.MessageSubType.Information);
             }
+        }
+
+        private void connect()
+        {
+            TcpClient client = new TcpClient();
+            byte[] ip = new byte[4];
+            for (int i = 0; i < config.IPZentrale.Length; i++)
+            {
+                ip[i] = Byte.Parse(config.IPZentrale[i]);
+            }
+            Debug.Print("Connecting client");
+            IPAddress specifiedIP = new IPAddress(ip);
+            try
+            {
+                client.Connect(specifiedIP, config.PortZentrale);
+            }catch(Exception e)
+            {
+                Logger.Print(e.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                Logger.Print("Couldn't connect to Zentrale.", Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
+                return;
+            }
+            tcpSockets.Add(client.Client);
+            ListeningClients.Add(Task.Run(async () => listenTCPConnection(client.Client, this, false, ListeningClients.Count)));
+            Network.RequestJson request = new Network.RequestJson();
+            request.destination = form.ArraytoString(config.IPZentrale, 4);
+            request.port = config.PortZentrale;
+            request.type = "Status";
+            request.id = MainForm.currentState;
+            request.Raum = config.Room;
+            if (SendTCPMessage(request, null))
+            {
+                Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+            }
+            if (form.Programmstate != null)
+            {
+                form.Programmstate.Text = $"Programmstatus: {MainForm.currentState}";
+            }
+            IPEndPoint endpoint = client.Client.RemoteEndPoint as IPEndPoint;
+            Logger.Print($"Client with IP:{endpoint.Address} connected", [Logger.MessageType.TCPReceive, Logger.MessageType.TCPSend], Logger.MessageSubType.Information);
         }
 
         private async void listenTCPConnection(Socket cl, Network net, bool isTelnet, int index)
@@ -598,6 +640,10 @@ namespace Spa_Interaction_Screen
 
         public String WaitForPass()
         {
+            if(routerclient == null || !routerclient.Connected)
+            {
+                return "";
+            }
             NetworkStream ns = routerclient.GetStream();
             DateTime dateTimestart = DateTime.Now;
             while (routerclient.Connected && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
@@ -812,6 +858,10 @@ namespace Spa_Interaction_Screen
                 return false;
             }
             bool receivedadd = false;
+            if(routerclient == null || !routerclient.Connected)
+            {
+                return false;
+            }
             NetworkStream ns = routerclient.GetStream();
             DateTime dateTimestart = DateTime.Now;
             while (routerclient.Connected && (DateTime.Now-dateTimestart).TotalSeconds <= Constants.TelnetComTimeout)
@@ -887,13 +937,13 @@ namespace Spa_Interaction_Screen
             int x = -1;
             if (Json["type"].GetType().Equals(typeof(Int64)))
             {
-                processedjson = indexsjsontypewitch(Json, (Int32)(Int64)(Json["type"]));
+                processedjson = indexsjsontypeswitch(Json, (Int32)(Int64)(Json["type"]));
             }
             else if (Json["type"].GetType().Equals(typeof(String)))
             {
                 if (int.TryParse(((String)Json["type"]).Trim().ToLower(), out x))
                 {
-                    processedjson = indexsjsontypewitch(Json, x);
+                    processedjson = indexsjsontypeswitch(Json, x);
                 }
                 else
                 {
@@ -908,7 +958,7 @@ namespace Spa_Interaction_Screen
                             {
                                 if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
                                 {
-                                    processedjson = indexsjsontypewitch(Json, i);
+                                    processedjson = indexsjsontypeswitch(Json, i);
                                 }
                             }
                             break;
@@ -1316,7 +1366,8 @@ namespace Spa_Interaction_Screen
                 {
                     foreach (Constants.TCPSetting tcp in c.TCPSettings)
                     {
-                        edittcpwithjsonvalusarraydata(json, f, c, tcp);
+                        edittcpwithjsonvaluesarraydata(json, f, c, tcp);
+                        form.logout();
                     }
                 }
                 else
@@ -1329,7 +1380,8 @@ namespace Spa_Interaction_Screen
                 if (jsonpartvalid(json, "values") && ((JArray)json["values"]).Count > 2)
                 {
                     Constants.TCPSetting tcp = new Constants.TCPSetting();
-                    edittcpwithjsonvalusarraydata(json, f, c, tcp);
+                    edittcpwithjsonvaluesarraydata(json, f, c, tcp);
+                    form.logout();
                 }
                 else
                 {
@@ -1723,7 +1775,7 @@ namespace Spa_Interaction_Screen
             f.SendCurrentSceneOverCom();
         }
 
-        private bool indexsjsontypewitch(Dictionary<string, object>? Json, int i)
+        private bool indexsjsontypeswitch(Dictionary<string, object>? Json, int i)
         {
             switch (i)
             {
@@ -1747,7 +1799,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void edittcpwithjsonvalusarraydata(Dictionary<string, object> json, MainForm f, Config c, Constants.TCPSetting tcp)
+        private void edittcpwithjsonvaluesarraydata(Dictionary<string, object> json, MainForm f, Config c, Constants.TCPSetting tcp)
         {
             String[] jsonvalues = ((JArray)json["values"]).ToObject<String[]>();
             tcp.ShowText = jsonvalues[0];

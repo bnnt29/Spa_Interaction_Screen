@@ -15,6 +15,7 @@ using Microsoft.Web.WebView2.Core;
 using ColorSlider;
 using Cyotek.Windows.Forms;
 using System.Windows.Forms;
+using BrbVideoManager.Controls;
 
 
 namespace Spa_Interaction_Screen
@@ -61,9 +62,9 @@ namespace Spa_Interaction_Screen
             WiFiSSIDLabel = new Label();
             WiFiPasswordTitle = new Label();
             WiFiPasswortLabel = new Label();
-            WiFiQRCodePicturebox = new PictureBox();
             TVSettingsTitle = new Label();
             ServicePage = new TabPage();
+            ButtonPage = new TabPage();
             HowCanIHelpYouDescribtion = new Label();
             WartungPage = new TabPage();
             WartungCodeField = new Label();
@@ -76,12 +77,12 @@ namespace Spa_Interaction_Screen
             GastronomiePage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)GastronomieWebview).BeginInit();
             MediaPage.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)WiFiQRCodePicturebox).BeginInit();
             TimePage.SuspendLayout();
             ColorPage.SuspendLayout();
             ServicePage.SuspendLayout();
             WartungPage.SuspendLayout();
             ConsolePage.SuspendLayout();
+            ButtonPage.SuspendLayout();
             SuspendLayout();
             // 
             // UIControl
@@ -94,6 +95,10 @@ namespace Spa_Interaction_Screen
             UIControl.Controls.Add(MediaPage);
             UIControl.Controls.Add(TimePage);
             UIControl.Controls.Add(WartungPage);
+            if (Constants.showButtonTester)
+            {
+                UIControl.Controls.Add(ButtonPage);
+            }
             UIControl.Dock = DockStyle.Fill;
             UIControl.Font = Constants.Standart_font;
             UIControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
@@ -159,7 +164,6 @@ namespace Spa_Interaction_Screen
             MediaPage.Controls.Add(WiFiSSIDLabel);
             MediaPage.Controls.Add(WiFiPasswordTitle);
             MediaPage.Controls.Add(WiFiPasswortLabel);
-            MediaPage.Controls.Add(WiFiQRCodePicturebox);
             MediaPage.Controls.Add(TVSettingsTitle);
             MediaPage.BackColor = Constants.Background_color;
             MediaPage.Font = Constants.Standart_font;
@@ -212,24 +216,6 @@ namespace Spa_Interaction_Screen
             WiFiPasswortLabel.Size = new Size(227, 25);
             WiFiPasswortLabel.TabIndex = 4;
             WiFiPasswortLabel.Text = "Spa Placeholder Passwort";
-            // 
-            // WiFiQRCodePicturebox
-            // 
-            WiFiQRCodePicturebox.Image = null;
-            try
-            {
-                WiFiQRCodePicturebox.Image = Image.FromFile(@"C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\QRplaceholderstillcreating.png");
-            }catch(IOException e) 
-            {
-                Debug.Print(e.Message);
-            }
-            WiFiQRCodePicturebox.BackColor = Constants.Background_color;
-            WiFiQRCodePicturebox.Location = new Point(124, 164);
-            WiFiQRCodePicturebox.Name = "WiFiQRCodePicturebox";
-            WiFiQRCodePicturebox.Size = new Size(424, 332);
-            WiFiQRCodePicturebox.SizeMode = PictureBoxSizeMode.Zoom;
-            WiFiQRCodePicturebox.TabIndex = 5;
-            WiFiQRCodePicturebox.TabStop = false;
             // 
             // TVSettingsTitle
             // 
@@ -337,6 +323,17 @@ namespace Spa_Interaction_Screen
             ConsolePage.TabIndex = 10;
             ConsolePage.Text = "Konsole";
             // 
+            // ButtonPage
+            // 
+            ButtonPage.BackColor = Constants.Background_color;
+            ButtonPage.Font = Constants.Standart_font;
+            ButtonPage.ForeColor = Constants.Text_color;
+            ButtonPage.Location = new Point(4, 4);
+            ButtonPage.Name = "ColorWheel";
+            ButtonPage.Padding = new Padding(3);
+            ButtonPage.TabIndex = 11;
+            ButtonPage.Text = "Button";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -361,7 +358,6 @@ namespace Spa_Interaction_Screen
             ((System.ComponentModel.ISupportInitialize)GastronomieWebview).EndInit();
             MediaPage.ResumeLayout(false);
             MediaPage.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)WiFiQRCodePicturebox).EndInit();
             TimePage.ResumeLayout(false);
             TimePage.PerformLayout();
             ServicePage.ResumeLayout(false);
@@ -370,6 +366,8 @@ namespace Spa_Interaction_Screen
             WartungPage.PerformLayout();
             ConsolePage.ResumeLayout(false);
             ConsolePage.PerformLayout();
+            ButtonPage.ResumeLayout(false);
+            ButtonPage.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -390,6 +388,7 @@ namespace Spa_Interaction_Screen
         public TabPage ServicePage;
         public TabPage WartungPage;
         public TabPage ConsolePage;
+        public TabPage ButtonPage;
 
         //AmbientePage
         public Label Dimmer1ColorSliderDescribtion;
@@ -446,6 +445,14 @@ namespace Spa_Interaction_Screen
         public TextBox Commandboxvalues;
         public Label Messagepreview;
         public Label Programmstate;
+
+        //Buttontester
+        public Button Testbutton;
+        public ColorSlider.ColorSlider Testbuttonwidth;
+        public ColorSlider.ColorSlider Testbuttonheight;
+        public ColorSlider.ColorSlider TestbuttonborderRadius;
+        public ColorSlider.ColorSlider TestbuttonborderWidth;
+        public TextBox Testbuttontext;
 
     }
 }

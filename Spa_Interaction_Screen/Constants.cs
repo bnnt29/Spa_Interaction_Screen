@@ -21,6 +21,8 @@ namespace Spa_Interaction_Screen
         public const int Buttonshortfadetime = 150;
         public const int ButtonLongfadetime = 1000;
         public const bool NetRoomSpecMandatory = false;
+        public const int SaunaChanneloffset = 1;
+        public const bool showButtonTester = true;
 
         //PreConfig
         public static String ContentPath = null;
@@ -65,7 +67,7 @@ namespace Spa_Interaction_Screen
         //USB
         public const int waitfordmxanswer = 10;
         public const int waittonextcheck = 100;
-        public const int sendtimeout = 32;
+        public const int sendtimeout = 30;
 
         public class SystemSetting : configclasses
         {
@@ -280,6 +282,61 @@ namespace Spa_Interaction_Screen
                 b.Location = (Point)p;
             }
             return (Button)b;
+        }
+
+        public static ReturnType InvokeDelegate<ReturnType>(object[]? args, Delegate Mydelegate, CForm form)
+        {
+            if (form == null)
+            {
+                return default(ReturnType);
+            }
+            if (form.HandleCreate)
+            {
+                try
+                {
+                    return (ReturnType)form.Invoke(Mydelegate, args);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    try
+                    {
+                        return (ReturnType)Mydelegate.DynamicInvoke(args);
+                    }
+                    catch (InvalidOperationException ex2)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex2.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    }
+                }
+            }
+            else
+            {
+                try
+                {
+                    return (ReturnType)Mydelegate.DynamicInvoke(args);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    try
+                    {
+                        return (ReturnType)form.Invoke(Mydelegate, args);
+                    }
+                    catch (InvalidOperationException ex2)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex2.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    }
+                }
+            }
+            return default(ReturnType);
         }
     }
 }
