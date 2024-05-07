@@ -112,6 +112,7 @@ namespace Spa_Interaction_Screen
                 welcomeqr.TabStop = false;
                 welcomeqr.SizeMode = PictureBoxSizeMode.Zoom;
                 Controls.Add(welcomeqr);
+
                 newsession();
             }
 
@@ -185,15 +186,15 @@ namespace Spa_Interaction_Screen
 
         private object delegatenewsession()
         {
-            GC.KeepAlive(welcomeqr);
             if (main.generateQRCode(welcomeqr, 29, true, (int)(scrn.Bounds.Width * 0.2), true))
             {
-                welcomeqr.Location = new Point(this.Width / 2 - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
+                welcomeqr.Location = new Point((this.Width / 2) - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
                 welcomeqr.BringToFront();
                 welcomeqr.Show();
             }
             else
             {
+
                 welcomeqr.Hide();
             }
             return null;
@@ -278,6 +279,11 @@ namespace Spa_Interaction_Screen
                 Logger.ConsoleBox.Hide();
                 Logger.ConsoleBox.SendToBack();
             }
+            if (user && welcomeqr != null)
+            {
+                welcomeqr.Hide();
+                welcomeqr.BringToFront();
+            }
             return null;
         }
 
@@ -313,10 +319,6 @@ namespace Spa_Interaction_Screen
 
             this.BackgroundImage = image;
             currentlyshowing = link;
-            if (user && welcomeqr != null)
-            {
-                welcomeqr.BringToFront();
-            }
         }
 
         public void toggleConsoleBox(bool show)

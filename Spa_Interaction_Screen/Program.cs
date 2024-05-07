@@ -17,7 +17,7 @@ namespace Spa_Interaction_Screen
             Application.EnableVisualStyles();
             ApplicationConfiguration.Initialize();
 
-#if DEBUG
+#if !DEBUG
             Application.Run(new MainForm());
 #else
             while (runningParent)

@@ -41,7 +41,7 @@ namespace Spa_Interaction_Screen
         public static int EdgeItemposydist = 50;
         public static int Logoxsize = 50;
         public static int Logoysize = 50;
-        public static int buttonupdatemillis = 35;
+        public static int buttonupdatemillis = 40;
         public static int DateTimeFormat = 0;
 
 
@@ -55,10 +55,10 @@ namespace Spa_Interaction_Screen
         public static int Element_height = (int)(((double)tabheight / (YButtonCount + 1)) * 0.85);
         public static int Element_y_padding = (int)(((double)tabheight / (YButtonCount + 1)) - Element_height)/2;
         public static Color Background_color = ColorTranslator.FromHtml("#1C3F5E");
+        public static Color selected_color = ColorTranslator.FromHtml("#CDAA39");
         public static Color alternative_color = ColorTranslator.FromHtml("#617C94"); 
-        public static Color selected_color = Color.Turquoise;
         public static Color Text_color = Color.White;
-        public static Color Button_color = ColorTranslator.FromHtml("#CDAA39");
+        public static Color Button_color = alternative_color;
         public static Color ButtonText_color = Text_color;
         public static Color Warning_color = Color.Red;
         public static Font Standart_font = new Font("Segoe UI", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);

@@ -14,10 +14,10 @@ InlineuntilXButtons%5
 noCom%false
 noNet%false
 showdirectlypotentiallyfalsewificreds%false
-EdgeItemposxdist%60
-EdgeItemposydist%60
-Logoxsize%200
-Logoysize%200
+EdgeItemposxdist%80
+EdgeItemposydist%80
+Logoxsize%100
+Logoysize%100
 
 
 

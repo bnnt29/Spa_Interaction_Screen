@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualBasic.ApplicationServices;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.IO;
+using static Spa_Interaction_Screen.Constants;
 using static Spa_Interaction_Screen.EmbedVLC;
 
 namespace Spa_Interaction_Screen
@@ -9,8 +11,6 @@ namespace Spa_Interaction_Screen
     {
         private static List<Log_Element>[] log_Elements = null;
         private static byte currentlyshowing = Byte.MaxValue;
-        private static FileStream BackupLOG = null;
-        private static FileStream LOG = null;
         public static RichTextBox ConsoleBox;
         public static ComboBox consoletype;
         public static ComboBox consolesubtype;
@@ -21,27 +21,11 @@ namespace Spa_Interaction_Screen
 
         public static List<Log_Element> getList(int index)
         {
-            if(log_Elements != null && log_Elements.Length> index && log_Elements[index] == null || log_Elements[index].Count <= 0)
+            if (log_Elements != null && log_Elements.Length > index && log_Elements[index] == null || log_Elements[index].Count <= 0)
             {
                 return null;
             }
             return log_Elements[index];
-        }
-
-        public static void closeStreams()
-        {
-            if (BackupLOG != null)
-            {
-                BackupLOG.Close();
-                BackupLOG.Dispose();
-                BackupLOG = null;
-            }
-            if (LOG != null)
-            {
-                LOG.Close();
-                LOG.Dispose();
-                LOG = null;
-            }
         }
 
         public class Log_Element
@@ -55,7 +39,7 @@ namespace Spa_Interaction_Screen
             {
                 String p = "";
                 p += TimeToString(DateTime.Now);
-                p += " : "; 
+                p += " : ";
                 if (type != null && type.Length > 0)
                 {
                     p += "{[";
@@ -89,7 +73,7 @@ namespace Spa_Interaction_Screen
                 p += Message;
                 return p;
             }
-            
+
         }
         public static string TimeToString(DateTime Time)
         {
@@ -193,74 +177,87 @@ namespace Spa_Interaction_Screen
                 }
                 if (ShowfullMessageLater)
                 {
-                    //Debug.WriteLine(log.Message); 
-                    if (FOpen(BackupLOG))
-                    {
-                        StreamWriter sw = new StreamWriter(BackupLOG);
-                        sw.WriteLine(log.Message + "\n");
-                        try
-                        {
-                            sw.Flush();
-                            sw.Close();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
-                        }
-                    }
-                    if (FOpen(LOG))
-                    {
-                        StreamWriter sw = new StreamWriter(LOG);
-                        sw.WriteLine(log.Message + "\n");
-                        try
-                        {
-                            sw.Flush();
-                            sw.Close();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
-                        }
-                    }
+
+                    WritedoubleLogMessage(log.Message);
                 }
                 else
                 {
-                    //Debug.WriteLine(log.ToString());
-                    if (FOpen(BackupLOG))
+                    WritedoubleLogMessage(log.ToString());
+                }
+            }
+        }
+
+        private static void WritedoubleLogMessage(String m)
+        {
+            try
+            {
+                WriteSingleLogMessage(Constants.BackupLOGPath, m, false);
+                WriteSingleLogMessage(Config.LogPath, m, false);
+            }catch(Exception e)
+            {
+                Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
+                Logger.Print("Die Log Dateien sind seit Programm start verschwunden", MessageType.Logger, MessageSubType.Notice);
+            }
+        }
+
+        private static void WriteSingleLogMessage(String Path, String log, Boolean shouldcreate)
+        {
+            if (Path != null && Path.Length > 0)
+            {
+                if (!File.Exists(Path))
+                {
+                    if (shouldcreate)
                     {
-                        StreamWriter sw = new StreamWriter(BackupLOG);
-                        sw.WriteLine(log.ToString());
                         try
                         {
-                            sw.Flush();
-                            sw.Close();
+                            File.Create(Path);
                         }
-                        catch (Exception ex)
+                        catch(Exception ex)
                         {
                             Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                            Logger.Print($"Could not Create File: {Path}", MessageType.Logger, MessageSubType.Notice);
                         }
                     }
-                    if (FOpen(LOG))
+                    else
                     {
-                        StreamWriter sw = new StreamWriter(LOG);
-                        sw.WriteLine(log.ToString());
-                        try
+                        throw new IOException("Die Datei existiert nicht und durfte nicht erstellt werden an dieser Stelle.");
+                    }
+                }
+                try
+                {
+                    using (StreamWriter sw = new StreamWriter(Path, true))
+                    {
+                        if (sw != null)
                         {
-                            sw.Flush();
-                            sw.Close();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                            sw.WriteLine(log);
+                            try
+                            {
+                                sw.Flush();
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                                Logger.Print($"Could not write to {Path}", MessageType.Logger, MessageSubType.Notice);
+                            }
+                            finally
+                            {
+                                sw.Close();
+                                sw.Dispose();
+                            }
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                    Logger.Print($"Could not create {Path} Streamwriter", MessageType.Logger, MessageSubType.Notice);
                 }
             }
         }
 
         public static int addElement(Log_Element LE, bool ShowfullMessageLater)
         {
-            if (log_Elements == null || log_Elements.Length <= 0 || BackupLOG == null)
+            if (log_Elements == null || log_Elements.Length <= 0)
             {
                 log_Elements = new List<Log_Element>[Byte.MaxValue];
                 Log_Element start = new Log_Element();
@@ -268,31 +265,6 @@ namespace Spa_Interaction_Screen
                 start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
                 start.time = DateTime.Now;
                 start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
-                if (BackupLOG == null)
-                {
-                    FileStream tmp = null;
-                    File.Create(Constants.BackupLOGPath).Close();
-                    if (!File.Exists(Constants.BackupLOGPath))
-                    {
-                        try
-                        {
-                            tmp = File.Create(Constants.BackupLOGPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            MainForm.currentState = 6;
-                            Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                            Logger.Print($"Missing Permissions to Open File:{Constants.BackupLOGPath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                        }
-                    }
-                    if (tmp != null)
-                    {
-                        tmp.Close();
-                        tmp = null;
-                    }
-                    BackupLOG = CreateLOGHandle(Constants.BackupLOGPath);
-                    initLog(BackupLOG);
-                }
                 addElement(start, true);
             }
             int i;
@@ -307,7 +279,7 @@ namespace Spa_Interaction_Screen
                     if (log_Elements[LE.type[i]].Count <= 0)
                     {
                         //TODO
-                        //consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
+                        consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
                     }
                 }
                 if (consoleshown && currentlyshowing == LE.type[i])
@@ -334,26 +306,12 @@ namespace Spa_Interaction_Screen
             return i;
         }
 
-        public static void initLog(FileStream x)
+        public static void initLog()
         {
-            if(x == null)
-            {
-                Logger.Print("FileStream for Log File init is null", MessageType.Logger, MessageSubType.Error);
-            }
-            StreamWriter z = new StreamWriter(x);
-            z.WriteLine($"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n[{Logger.TimeToString(DateTime.Now)}]");
-            try
-            {
-                z.Flush();
-                z.Close();
-            }
-            catch (Exception ex)
-            {
-                Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
-            }
+            WriteSingleLogMessage(Constants.BackupLOGPath, $"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n{Logger.TimeToString(DateTime.Now)}", true);
         }
 
-        public static bool FOpen(FileStream file)
+        public static bool FOpenWrite(FileStream file)
         {
             return file != null && file.CanWrite;
         }
@@ -403,43 +361,37 @@ namespace Spa_Interaction_Screen
             return currentlyshowing;
         }
 
-        public static void InitLogfromBackup(Config c)
+        public static void InitLogfromBackup()
         {
-            if (BackupLOG == null)
+            if (Constants.BackupLOGPath == null)
             {
                 File.Create(Constants.BackupLOGPath).Close();
-                BackupLOG = CreateLOGHandle(Constants.BackupLOGPath);
-                initLog(BackupLOG);
+                initLog();
             }
-            if(c.LogPath == null)
+            if(Config.LogPath == null)
             {
                 Debug.Print($"LogFilePath is null");
             }
             try
             {
-                File.Copy(Constants.BackupLOGPath, c.LogPath, true);
+                File.Copy(Constants.BackupLOGPath, Config.LogPath, true);
             }catch(Exception e)
             {
                 Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
             }
-            if(LOG!=null)
-            {
-                LOG.Close();
-                LOG.Dispose();
-                LOG = null;
-            }
-            File.Create(c.LogPath).Close();
-            LOG = CreateLOGHandle(c.LogPath);
         }
 
         private static FileStream CreateLOGHandle(String path)
         {
-            FileStream tmp = null;
+            if(path == null || path.Length <= 0)
+            {
+                return null;
+            }
             if (!File.Exists(path))
             {
                 try
                 {
-                    tmp = File.Create(path);
+                    File.Create(path).Close();
                 }
                 catch (Exception ex)
                 {
@@ -448,11 +400,7 @@ namespace Spa_Interaction_Screen
                     Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 }
             }
-            if (tmp != null)
-            {
-                tmp.Close();
-                tmp = null;
-            }
+            FileStream tmp = null;
             if (File.Exists(path))
             {
                 tmp = CreateStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
@@ -462,7 +410,7 @@ namespace Spa_Interaction_Screen
                 Print("Could not create Log File", MessageType.Logger, MessageSubType.Error);
             }
             if(tmp != null)
-            if (!FOpen(tmp))
+            if (!FOpenWrite(tmp))
             {
                 tmp = null;
             }

@@ -8,16 +8,16 @@
 #String;#Arduino Com Port Name;COM4;;;;;;;;;;;;;;;;;
 #String;#Restricted Page Desciption;Zugriff nur für Mitarbeiter;;;;;;;;;;;;;;;;;
 #Integer;#Ambiente Fade Time (ms);666;;;;;;;;;;;;;;;;;
-#Array of Integer;#Wartungs Pin;1;2;3;4;5;6;;;;;;;;;;;;
+#Array of Integer;#Wartungs Pin;0;9;8;7;6;5;;;;;;;;;;;;
 #String;#Gastronomie Adresse;https://www.soundcraft.com/ui-demo/mixer.html;#(Connecting to Port 80/443);;;;;;;;;;;;;;;;
-#String;#WiFi SSID (Mit [Room] kann dynamisch der Raum ersetzt werden);WifiName_ofRoom:[Room];;;;;;;;;;;;;;;;;
+#String;#WiFi SSID (Mit [Room] kann dynamisch der Raum ersetzt werden);WifiRaum[Room];;;;;;;;;;;;;;;;;
 #Array of Integer;#IP Router;192;168;4;130;;;;;;;;;;;;;;
 #String;#Port Router;23;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;false;;;;;;;;;;;;;;;;;
 #Bool;#Zeige Eck Zeit;true;3;;;;;;;;;;;;;;;;
 #Bool;#Zeige Color Wheel Seite;true;#Ambiente;#Color;#Gastronomie;#Service;#Media;#Time;#Wartung;;;;;;;;;;
 #Integer;#Zeige Logo (Position|Ambiente|Farbe|Gastro|Media|Service|Wartung|restricted);4;true;true;false;true;true;true;true;;;;;;;;;;
-#String;#Logo Absolut Filepath;Logo.png;;;;;;;;;;;;;;;;;
+#String;#Logo Absolut Filepath;Logoscaled.png;;;;;;;;;;;;;;;;;
 #String;#QRCode Logo;QRLogo.png;;;;;;;;;;;;;;;;;
 #String;#Ambiente Hintergrund Bild;;;;;;;;;;;;;;;;;;
 #String;#Color Hintergrund Bild;;;;;;;;;;;;;;;;;;
@@ -58,12 +58,13 @@ Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Su
 #String;#3;Handtuch;frische Handtücher;;#This is important when selecting a ServiceSetting as Secondary Function;;;;;;;;;;;;;;
 #;#[More Serives can be added (max 12 mit Anzeige Text)];;;;;;;;;;;;;;;;;;
 Json Type:5;Scenes;#Json Label;#Anzeige Text;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
-#Order Importance;#0;default;!;255;56;0;0;128;128;0;255;255;0;0;0;0;0;WerbeVideo.mp4;
-#Order Importance;#1;Putzlicht;!;255;200;128;255;255;255;0;100;0;255;0;0;0;0;;#(Wird nur im Service Tab angezeigt)
-#Order Importance;#2;Notfall;!;255;200;128;255;255;255;0;255;0;100;0;0;0;0;;
+#Order Importance;#0;default;!;255;56;0;0;0;128;0;255;255;0;0;0;0;0;WerbeVideo.mp4;
+#Order Importance;#1;Putzlicht;!;255;200;128;255;0;255;0;100;0;255;0;0;0;0;Werbung.jpg;#(Wird nur im Service Tab angezeigt)
+#Order Importance;#2;Notfall;!;255;200;128;255;0;255;0;255;0;100;0;0;0;0;;
 #Order Importance;#3;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;
-#;#4;Kamin;Kamin;255;0;0;0;0;0;0;255;0;0;0;255;0;0;Werbung.jpeg;
-#;#5;Wellen;Wellen;0;255;0;0;0;0;0;0;0;255;0;0;0;0;;
-#;#6;Wald;Wald;0;0;255;0;128;128;0;0;255;0;0;0;0;0;WerbeVideo.mp4;
+#;#4;Kamin;Kamin;255;0;0;0;0;0;0;255;0;0;0;255;0;0;Feuer.mp4;
+#;#5;Wellen;Wellen;0;255;0;0;0;0;0;0;0;255;0;0;0;0;Wellen.mp4;
+#;#6;Wald;Wald;0;0;255;0;0;128;0;0;255;0;0;0;0;0;Wald.mp4;
+#;#7;Wolken;Wolken;0;0;255;0;0;128;0;255;255;255;255;0;0;0;Wolken.mp4;
 #;#[More Scenes can be added (max 15 mit Anzeige Text)];;;;;;;;;;;;;;;;;;
 #End of Data Placeholder;;;;;;;;;;;;;;;;;;;

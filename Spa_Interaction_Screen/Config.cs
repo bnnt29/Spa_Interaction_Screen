@@ -13,85 +13,89 @@ using static Spa_Interaction_Screen.Logger;
 
 namespace Spa_Interaction_Screen
 {
-    public class Config
+    public static class Config
     {
-        private String[] __preconfiglines;
-        private int currentpreconfigindex = 0;
-        private String[] __configlines;
-        private int currentconfigindex = 0;
+        private static String[] __preconfiglines;
+        private static int currentpreconfigindex = 0;
+        private static String[] __configlines;
+        private static int currentconfigindex = 0;
 
-        public bool allread = false;
-        public byte[] currentvalues = null;
-        public DateTime lastchangetime;
+        public static bool allread = false;
+        public static byte[] currentvalues = null;
+        public static DateTime lastchangetime;
 
         //current generated wifi password
-        public String Wifipassword = null;
+        public static String Wifipassword = null;
 
         //Config
-        public int Room = -1;
-        public int TotalRooms = -1;
-        public String[] IPZentrale = null;
-        public int PortZentrale = -1;
-        public int LocalPort = -1;
-        public int StateSendInterval = -1;
-        public String ComPort = null;
-        public String RestrictedDescription = null;
-        public int FadeTime = -1;
-        public String[] Wartungspin = null;
-        public String GastroUrl = null;
-        public String WiFiSSID = null;
-        public String[] IPRouter = null;
-        public int PortRouter = -1;
-        public bool showtime = false;
-        public bool showedgetime = false;
-        public int edgetimePosition = -1;
-        public bool showcolor = false;
-        public int Logoposition = -1;
-        public bool[] showLogo = null;
-        public String LogoFilePath = null;
-        public String QRLogoFilePath = null;
-        public String AmbienteBackgroundImage = null;
-        public String ColorBackgroundImage = null;
-        public String MediaBackgroundImage = null;
-        public String TimeBackgroundImage = null;
-        public String ServiceBackgroundImage = null;
-        public String WartungBackgroundImage = null;
-        public String SessionEndImage = null;
-        public int SessionEndShowTimeLeft = -1;
-        public String LogPath = null;
-        public int[] Dimmerchannel = null;
-        public String[] slidernames = null;
-        public byte[] HDMISwitchInterval = null;
-        public int HDMISwitchchannel = -1;
-        public byte[] ObjectLightInterval = null;
-        public int ObjectLightchannel = -1;
-        public String Objectname = null;
-        public int[][] colorwheelvalues;
-        public String[] Typenames = null;
-        public int SessionSetting = -1;
-        public int DMXSceneSetting = -1;
-        public String DMXSceneSettingJson = null;
-        public String VolumeSliderName = null;
-        public int Volume = -1;
-        public String VolumeJson = null;
-        public List<Constants.SystemSetting> SystemSettings = null;
-        public List<Constants.TCPSetting> TCPSettings = null;
-        public List<Constants.SessionSetting> SessionSettings = null;
-        public List<Constants.ServicesSetting> ServicesSettings = null;
-        public List<Constants.DMXScene> DMXScenes = null;
+        public static int Room = -1;
+        public static int TotalRooms = -1;
+        public static String[] IPZentrale = null;
+        public static int PortZentrale = -1;
+        public static int LocalPort = -1;
+        public static int StateSendInterval = -1;
+        public static String ComPort = null;
+        public static String RestrictedDescription = null;
+        public static int FadeTime = -1;
+        public static String[] Wartungspin = null;
+        public static String GastroUrl = null;
+        public static String WiFiSSID = null;
+        public static String[] IPRouter = null;
+        public static int PortRouter = -1;
+        public static bool showtime = false;
+        public static bool showedgetime = false;
+        public static int edgetimePosition = -1;
+        public static bool showcolor = false;
+        public static int Logoposition = -1;
+        public static bool[] showLogo = null;
+        public static String LogoFilePath = null;
+        public static String QRLogoFilePath = null;
+        public static String AmbienteBackgroundImage = null;
+        public static String ColorBackgroundImage = null;
+        public static String MediaBackgroundImage = null;
+        public static String TimeBackgroundImage = null;
+        public static String ServiceBackgroundImage = null;
+        public static String WartungBackgroundImage = null;
+        public static String SessionEndImage = null;
+        public static int SessionEndShowTimeLeft = -1;
+        public static String LogPath = null;
+        public static int[] Dimmerchannel = null;
+        public static String[] slidernames = null;
+        public static byte[] HDMISwitchInterval = null;
+        public static int HDMISwitchchannel = -1;
+        public static byte[] ObjectLightInterval = null;
+        public static int ObjectLightchannel = -1;
+        public static String Objectname = null;
+        public static int[][] colorwheelvalues;
+        public static String[] Typenames = null;
+        public static int SessionSetting = -1;
+        public static int DMXSceneSetting = -1;
+        public static String DMXSceneSettingJson = null;
+        public static String VolumeSliderName = null;
+        public static int Volume = -1;
+        public static String VolumeJson = null;
+        public static List<Constants.SystemSetting> SystemSettings = null;
+        public static List<Constants.TCPSetting> TCPSettings = null;
+        public static List<Constants.SessionSetting> SessionSettings = null;
+        public static List<Constants.ServicesSetting> ServicesSettings = null;
+        public static List<Constants.DMXScene> DMXScenes = null;
 
-        public Config(Config? c)
+        public static void initconfig()
         {
-            if (!LoadPreConfig())
+        __preconfiglines = null;
+        currentpreconfigindex = 0;
+        __configlines = null;
+        currentconfigindex = 0;
+        if (!Config.LoadPreConfig())
             {
                 MainForm.currentState = 6;
                 Logger.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
-            LoadContentConfig();
+            Config.LoadContentConfig();
         }
 
-        private bool LoadPreConfig()
+        public static bool LoadPreConfig()
         {
             if (!File.Exists(Constants.PreConfigPath))
             {
@@ -213,7 +217,7 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
-        private String ReadPreConfig()
+        private static String ReadPreConfig()
         {
             String s = "";
             if (currentpreconfigindex< __preconfiglines.Length)
@@ -223,7 +227,7 @@ namespace Spa_Interaction_Screen
             return (s!=null)?s:"";
         }
 
-        private void LoadContentConfig()
+        public static void LoadContentConfig()
         {
             String FilePath = "ConfigFile.csv";
             finalizePaths(out FilePath, FilePath);
@@ -383,7 +387,7 @@ namespace Spa_Interaction_Screen
             LogPath = LogPath.Replace('/', '_').Replace('\\', '_').Replace('|', '_').Replace('?', '_').Replace('*', '_');
             finalizePaths(out LogPath, LogPath);
             Debug.Print(LogPath);
-            Logger.InitLogfromBackup(this);
+            Logger.InitLogfromBackup();
             currentconfigindex++;
             String[] Dimmerchannelval1 = null;
             read_all = getcsvFields(ref Dimmerchannelval1, -1, false, read_all);
@@ -757,7 +761,7 @@ namespace Spa_Interaction_Screen
             allread = true;
         }
 
-        public Constants.ServicesSetting setupsecondaryfunctionsforServiceButtons(Constants.ServicesSettingfunction sss)
+        public static Constants.ServicesSetting setupsecondaryfunctionsforServiceButtons(Constants.ServicesSettingfunction sss)
         {
 
             if (sss.secondary == null || ((Constants.rawfunctiontext)(sss.secondary)).functionText == null || ((Constants.rawfunctiontext)(sss.secondary)).functionText.Length <= 0 || !((Constants.rawfunctiontext)(sss.secondary)).functionText.Contains(',') || ((Constants.rawfunctiontext)(sss.secondary)).functionText.Split(',').Length < 2)
@@ -807,7 +811,7 @@ namespace Spa_Interaction_Screen
             return sss;
         }
 
-        private ServicesSettingfunction getServiceFunctionFromString(int type, Constants.ServicesSettingfunction s)
+        private static ServicesSettingfunction getServiceFunctionFromString(int type, Constants.ServicesSettingfunction s)
         {
             Debug.Print(((Constants.rawfunctiontext)(s.secondary)).functionText);
             String[] functionspecs = ((Constants.rawfunctiontext)(s.secondary)).functionText.Split(',');
@@ -936,7 +940,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private List<configclasses> getListfromint(int x)
+        private static List<configclasses> getListfromint(int x)
         {
             switch (x)
             {
@@ -955,7 +959,7 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public void finalizePaths(out String? sp, String s)
+        public static void finalizePaths(out String? sp, String s)
         {
             if (s != null)
             {
@@ -971,7 +975,7 @@ namespace Spa_Interaction_Screen
             sp = s;
         }
 
-        public bool getcsvFields<T>(ref T variable, int index, bool canbeempty, bool lasttry)
+        public static bool getcsvFields<T>(ref T variable, int index, bool canbeempty, bool lasttry)
         {
             variable = default(T); 
             String line = __configlines[currentconfigindex++];
@@ -1025,7 +1029,7 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
-        public String[] stripComments(String[] field, Char CommandDelimiters, Char EmptyDelimiter)
+        public static String[] stripComments(String[] field, Char CommandDelimiters, Char EmptyDelimiter)
         {
             String[] res = new String[field.Length];
             int x = 0;
@@ -1047,7 +1051,7 @@ namespace Spa_Interaction_Screen
             return res;
         }
 
-        public bool UseoldWiFicreds()
+        public static bool UseoldWiFicreds()
         {
             FileStream tmp = null;
             if (!File.Exists(Constants.WifiCreds))
@@ -1103,7 +1107,7 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
-        public void updateWificreds()
+        public static void updateWificreds()
         {
             if (WiFiSSID == null || WiFiSSID.Length <= 0 || Wifipassword == null || Wifipassword.Length <= 0)
             {

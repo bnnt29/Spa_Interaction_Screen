@@ -16,6 +16,7 @@ namespace Spa_Interaction_Screen
 
         private delegate object MyDebugText(String Text, bool show);
         private delegate object MyupdateProgress(int percentage);
+        private delegate object Myswitchexit(bool show);
 
         public Loading(MainForm f, Screen screen) : base()
         {
@@ -84,15 +85,21 @@ namespace Spa_Interaction_Screen
 
         public void exitp(bool show)
         {
-            if(show)
+            Constants.InvokeDelegate<object>([show], new Myswitchexit(delegateexitp), this);
+        }
+
+        public object delegateexitp(bool show)
+        {
+            if (show)
             {
-                exit_b.Show();  
+                exit_b.Show();
             }
             else
             {
                 exit_b.Hide();
             }
             updateloadGUI();
+            return null;
         }
 
         public void exit_Handler(object sender, EventArgs e)

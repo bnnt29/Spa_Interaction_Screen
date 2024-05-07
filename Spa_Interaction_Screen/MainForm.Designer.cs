@@ -437,6 +437,7 @@ namespace Spa_Interaction_Screen
         public Button resetscenelockbutton;
         public Button resetSessionlockbutton;
         public Button resetServicelockbutton;
+        public Button showconsoleonallsites_button;
 
         //ConsolePage
         public ComboBox tcptype;

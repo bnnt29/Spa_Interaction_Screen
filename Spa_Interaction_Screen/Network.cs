@@ -22,7 +22,6 @@ namespace Spa_Interaction_Screen
     public class Network
     {
         private MainForm form;
-        private Config config;
         public List<Socket> tcpSockets = new List<Socket>();
         private Task connectClients = null;
         public List<Task> ListeningClients = new List<Task>();
@@ -30,17 +29,11 @@ namespace Spa_Interaction_Screen
         private Task ListenRouter = null;
         public bool routertelnetinit = false;
 
-        public Network(MainForm f, Config c)
+        public Network(MainForm f)
         {
             form = f;
-            config = c;
             //connect();
             StartTCPServer();
-        }
-
-        public void changeconfig(Config c)
-        {
-            config = c;
         }
        
         //Structures 
@@ -118,9 +111,9 @@ namespace Spa_Interaction_Screen
                 {
                     if(dest == null || dest.Length <= 0)
                     {
-                        for (int i = 0; i < config.IPZentrale.Length; i++)
+                        for (int i = 0; i < Config.IPZentrale.Length; i++)
                         {
-                            ip[i] = Byte.Parse(config.IPZentrale[i]);
+                            ip[i] = Byte.Parse(Config.IPZentrale[i]);
                         }
                     }
                     else
@@ -149,7 +142,7 @@ namespace Spa_Interaction_Screen
                         if (endpoint.Address.Equals(specifiedIP))
                         {
                             possibilities.Add(client);
-                            if (((port != null && port > 0 && endpoint.Port.Equals(port))||(config.PortZentrale != null && config.PortZentrale > 0 && endpoint.Port.Equals(config.PortZentrale))) && client.Connected)
+                            if (((port != null && port > 0 && endpoint.Port.Equals(port))||(Config.PortZentrale != null && Config.PortZentrale > 0 && endpoint.Port.Equals(Config.PortZentrale))) && client.Connected)
                             {
                                 return client;
                             }
@@ -189,14 +182,14 @@ namespace Spa_Interaction_Screen
 
         public bool isClientZentrale(Socket client)
         {
-            if (config != null && config.IPZentrale != null && client != null && client.Connected)
+            if (Config.IPZentrale != null && client != null && client.Connected)
             {
                 return false;
             }
             byte[] ip = new byte[4];
-            for (int i = 0; i < config.IPZentrale.Length; i++)
+            for (int i = 0; i < Config.IPZentrale.Length; i++)
             {
-                ip[i] = Byte.Parse(config.IPZentrale[i]);
+                ip[i] = Byte.Parse(Config.IPZentrale[i]);
             }
             IPAddress specifiedIP = new IPAddress(ip);
             IPEndPoint endpoint = client.RemoteEndPoint as IPEndPoint;
@@ -307,7 +300,7 @@ namespace Spa_Interaction_Screen
 
         private void StartTCPServer()
         {
-            TcpListener server = new TcpListener(IPAddress.Any, config.LocalPort);
+            TcpListener server = new TcpListener(IPAddress.Any, Config.LocalPort);
             server.Start();
             connectClients = Task.Run(() => acceptClientsLoop(this, server));
         }
@@ -330,15 +323,15 @@ namespace Spa_Interaction_Screen
         {
             TcpClient client = new TcpClient();
             byte[] ip = new byte[4];
-            for (int i = 0; i < config.IPZentrale.Length; i++)
+            for (int i = 0; i < Config.IPZentrale.Length; i++)
             {
-                ip[i] = Byte.Parse(config.IPZentrale[i]);
+                ip[i] = Byte.Parse(Config.IPZentrale[i]);
             }
             Debug.Print("Connecting client");
             IPAddress specifiedIP = new IPAddress(ip);
             try
             {
-                client.Connect(specifiedIP, config.PortZentrale);
+                client.Connect(specifiedIP, Config.PortZentrale);
             }catch(Exception e)
             {
                 Logger.Print(e.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
@@ -348,11 +341,11 @@ namespace Spa_Interaction_Screen
             tcpSockets.Add(client.Client);
             ListeningClients.Add(Task.Run(async () => listenTCPConnection(client.Client, this, false, ListeningClients.Count)));
             Network.RequestJson request = new Network.RequestJson();
-            request.destination = form.ArraytoString(config.IPZentrale, 4);
-            request.port = config.PortZentrale;
+            request.destination = form.ArraytoString(Config.IPZentrale, 4);
+            request.port = Config.PortZentrale;
             request.type = "Status";
             request.id = MainForm.currentState;
-            request.Raum = config.Room;
+            request.Raum = Config.Room;
             if (SendTCPMessage(request, null))
             {
                 Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
@@ -689,7 +682,7 @@ namespace Spa_Interaction_Screen
             {
                 Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                if (config.UseoldWiFicreds())
+                if (Config.UseoldWiFicreds())
                 {
                     f.helper.setnewPassword();
                 }
@@ -700,14 +693,14 @@ namespace Spa_Interaction_Screen
                 Logger.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
             }
             
-            config.Wifipassword = WaitForPass();
-            //Logger.Print($"old Password: {config.password}");
+            Config.Wifipassword = WaitForPass();
+            //Logger.Print($"old Password: {Config.password}");
             WaitforRouterClientClose();
             if (!connectrouter(f))
             {
                 Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                if (config.UseoldWiFicreds())
+                if (Config.UseoldWiFicreds())
                 {
                     f.helper.setnewPassword();
                 }
@@ -717,7 +710,7 @@ namespace Spa_Interaction_Screen
             {
                 Logger.Print("Error occured while refreshing router password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                if (config.UseoldWiFicreds())
+                if (Config.UseoldWiFicreds())
                 {
                     f.helper.setnewPassword();
                 }
@@ -739,9 +732,9 @@ namespace Spa_Interaction_Screen
                     Logger.Print("Error occured while Asking Router for Password", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 }
                 npw = WaitForPass();
-            } while (npw.Equals(config.Wifipassword) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 1.5);
+            } while (npw.Equals(Config.Wifipassword) && (DateTime.Now - dateTimestart).TotalSeconds <= Constants.TelnetComTimeout * 1.5);
             WaitforRouterClientClose();
-            config.Wifipassword = npw;
+            Config.Wifipassword = npw;
             Logger.Print($"Neues Passwort: {npw}", Logger.MessageType.Router, Logger.MessageSubType.Information);
             f.helper.setnewPassword();
         }
@@ -752,13 +745,13 @@ namespace Spa_Interaction_Screen
             {
                 Logger.Print("Error occured while connecting to router", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 WaitforRouterClientClose();
-                if (config.UseoldWiFicreds())
+                if (Config.UseoldWiFicreds())
                 {
                     f.helper.setnewPassword();
                 }
                 return;
             }
-            if (!SendTelnetSetSSID($"{config.WiFiSSID}"))
+            if (!SendTelnetSetSSID($"{Config.WiFiSSID}"))
             {
                 Logger.Print("Error occured while Setting new Router SSID", Logger.MessageType.Router, Logger.MessageSubType.Notice);
 
@@ -810,7 +803,7 @@ namespace Spa_Interaction_Screen
                     if (line.Contains('#') && line.Contains("pass") && line.Contains(":"))
                     {
                         String p = line.Split(":")[1].Split("\n\r")[0].Trim();
-                        config.Wifipassword = p;
+                        Config.Wifipassword = p;
                         foundline = true;
                         break;
                     }
@@ -834,8 +827,8 @@ namespace Spa_Interaction_Screen
             {
                 return true;
             }
-            String ip_address = f.ArraytoString(config.IPRouter, 4);
-            int port_number = config.PortRouter;
+            String ip_address = f.ArraytoString(Config.IPRouter, 4);
+            int port_number = Config.PortRouter;
             NetworkStream stream = null;
             String response = null;
             try
@@ -954,9 +947,9 @@ namespace Spa_Interaction_Screen
                             processedjson = true;
                             break;
                         default:
-                            for (int i = 0; i < config.Typenames.Length && !processedjson; i++)
+                            for (int i = 0; i < Config.Typenames.Length && !processedjson; i++)
                             {
-                                if (config.Typenames[i] != null && config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
+                                if (Config.Typenames[i] != null && Config.Typenames[i].Trim().ToLower().Equals(((string)Json["type"]).Trim().ToLower()))
                                 {
                                     processedjson = indexsjsontypeswitch(Json, i);
                                 }
@@ -971,15 +964,15 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void SystemPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void SystemPacket(Dictionary<String, Object> json, MainForm f)
         {
             int index = -1;
             bool usedidforindex = false;
             if (jsonpartvalid(json, "label"))
             {
-                for (int i = 0; i < c.SystemSettings.Count; i++)
+                for (int i = 0; i < Config.SystemSettings.Count; i++)
                 {
-                    Constants.SystemSetting ss = c.SystemSettings[i];
+                    Constants.SystemSetting ss = Config.SystemSettings[i];
                     if (ss.JsonText.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
                     {
                         index = i;
@@ -995,25 +988,25 @@ namespace Spa_Interaction_Screen
             {
                 Logger.Print("Invalid \"label\", \"id\" or \"values\" for a System Packet", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
             }
-            if(index <=0 && c.DMXSceneSettingJson.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+            if(index <=0 && Config.DMXSceneSettingJson.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
-                index = c.SystemSettings.Count;
+                index = Config.SystemSettings.Count;
             }
-            if (index <= 0 && c.VolumeJson.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
+            if (index <= 0 && Config.VolumeJson.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
-                index = c.SystemSettings.Count + 1;
+                index = Config.SystemSettings.Count + 1;
             }
             if (index <= 0 && ("block").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
-                index = c.SystemSettings.Count + 2;
+                index = Config.SystemSettings.Count + 2;
             }
             if (index <= 0 && ("video").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
-                index = c.SystemSettings.Count + 3;
+                index = Config.SystemSettings.Count + 3;
             }
             if (index <= 0 && ("?").Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
             {
-                index = c.SystemSettings.Count + 4;
+                index = Config.SystemSettings.Count + 4;
             }
             switch (index) 
             {
@@ -1051,9 +1044,9 @@ namespace Spa_Interaction_Screen
                         if (sceneindex <= 0)
                         {
                             String name = ((JArray)json["values"]).ToObject<String[]>()[0];
-                            for (int i = 0; i < c.DMXScenes.Count; i++)
+                            for (int i = 0; i < Config.DMXScenes.Count; i++)
                             {
-                                if (name.Trim().ToLower().Equals(c.DMXScenes[i].JsonText.Trim().ToLower()))
+                                if (name.Trim().ToLower().Equals(Config.DMXScenes[i].JsonText.Trim().ToLower()))
                                 {
                                     sceneindex = i;
                                     break;
@@ -1065,12 +1058,12 @@ namespace Spa_Interaction_Screen
                     {
                         Logger.Print("Missing necesarry Json key (\"id\" or \"values\", to change scene to).", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
-                    if (sceneindex < 0 || sceneindex >= c.DMXScenes.Count)
+                    if (sceneindex < 0 || sceneindex >= Config.DMXScenes.Count)
                     {
                         Logger.Print("Index / value outside Scenes Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         break;
                     }
-                    f.Ambiente_Change(c.DMXScenes[sceneindex], true, false, false);
+                    f.Ambiente_Change(Config.DMXScenes[sceneindex], true, false, false);
                     break;
                 case 5:
                     int volumevalue = -1;
@@ -1121,9 +1114,9 @@ namespace Spa_Interaction_Screen
                                 if (int.TryParse(s, out dex[x]));
                                 if (dex[x] < 0)
                                 {
-                                    for (int i = config.Typenames.Length-3; i < 3; i++)
+                                    for (int i = Config.Typenames.Length-3; i < 3; i++)
                                     {
-                                        if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                        if (s.Trim().ToLower().Equals(Config.Typenames[i].Trim().ToLower()))
                                         {
                                             dex[x] = i;
                                             break;
@@ -1172,9 +1165,9 @@ namespace Spa_Interaction_Screen
                                     if (int.TryParse(s, out dex[x])) ;
                                     if (dex[x] < 0)
                                     {
-                                        for (int i = config.Typenames.Length - 3; i < 3; i++)
+                                        for (int i = Config.Typenames.Length - 3; i < 3; i++)
                                         {
-                                            if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                            if (s.Trim().ToLower().Equals(Config.Typenames[i].Trim().ToLower()))
                                             {
                                                 dex[x] = i;
                                                 break;
@@ -1223,9 +1216,9 @@ namespace Spa_Interaction_Screen
                                     if (int.TryParse(s, out dex[x])) ;
                                     if (dex[x] < 0)
                                     {
-                                        for (int i = config.Typenames.Length - 3; i < 3; i++)
+                                        for (int i = Config.Typenames.Length - 3; i < 3; i++)
                                         {
-                                            if (s.Trim().ToLower().Equals(config.Typenames[i].Trim().ToLower()))
+                                            if (s.Trim().ToLower().Equals(Config.Typenames[i].Trim().ToLower()))
                                             {
                                                 dex[x] = i;
                                                 break;
@@ -1268,7 +1261,7 @@ namespace Spa_Interaction_Screen
                     if (jsonpartvalid(json, "values"))
                     {
                         String Path = ((JArray)json["values"]).ToObject<String[]>()[0];
-                        c.finalizePaths(out Path, Path);
+                        Config.finalizePaths(out Path, Path);
                         if (File.Exists(Path))
                         {
                             if (f.vlc != null)
@@ -1290,11 +1283,11 @@ namespace Spa_Interaction_Screen
                     break;
                 case 8:
                     String ret = "";
-                    foreach(Constants.SystemSetting ss in c.SystemSettings)
+                    foreach(Constants.SystemSetting ss in Config.SystemSettings)
                     {
                         RequestJson j = new RequestJson();
-                        j.type = config.Typenames[0].Trim().ToLower();
-                        j.Raum = config.Room;
+                        j.type = Config.Typenames[0].Trim().ToLower();
+                        j.Raum = Config.Room;
                         j.id = ss.id;
                         j.label = ss.JsonText;
                         String[] t = new string[1];
@@ -1309,8 +1302,8 @@ namespace Spa_Interaction_Screen
 
                     }
                     RequestJson r = new RequestJson();
-                    r.Raum = c.Room;
-                    r.type = c.Typenames[0];
+                    r.Raum = Config.Room;
+                    r.type = Config.Typenames[0];
                     r.label = "?";
                     r.values = [ ret ];
                     SendTCPMessage(r, null);
@@ -1321,10 +1314,10 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void TCPPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void TCPPacket(Dictionary<String, Object> json, MainForm f)
         {
             int currenttcpws = 0;
-            foreach(TCPSetting tcp in c.TCPSettings)
+            foreach(TCPSetting tcp in Config.TCPSettings)
             {
                 if(tcp.ShowText != null &&  tcp.ShowText.Length > 0)
                 {
@@ -1336,11 +1329,11 @@ namespace Spa_Interaction_Screen
                 if (((string)json["label"]).Equals("?"))
                 {
                     String ret = "";
-                    foreach (Constants.TCPSetting ss in c.TCPSettings)
+                    foreach (Constants.TCPSetting ss in Config.TCPSettings)
                     {
                         RequestJson j = new RequestJson();
-                        j.type = config.Typenames[1].Trim().ToLower();
-                        j.Raum = config.Room;
+                        j.type = Config.Typenames[1].Trim().ToLower();
+                        j.Raum = Config.Room;
                         j.id = ss.id;
                         j.label = ss.JsonText;
                         String[] t = new string[1];
@@ -1355,8 +1348,8 @@ namespace Spa_Interaction_Screen
 
                     }
                     RequestJson r = new RequestJson();
-                    r.Raum = c.Room;
-                    r.type = c.Typenames[0];
+                    r.Raum = Config.Room;
+                    r.type = Config.Typenames[0];
                     r.label = "?";
                     r.values = [ret];
                     SendTCPMessage(r, null);
@@ -1364,9 +1357,9 @@ namespace Spa_Interaction_Screen
                 }
                 if (jsonpartvalid(json, "values") && ((JArray)json["values"]).Count > 2)
                 {
-                    foreach (Constants.TCPSetting tcp in c.TCPSettings)
+                    foreach (Constants.TCPSetting tcp in Config.TCPSettings)
                     {
-                        edittcpwithjsonvaluesarraydata(json, f, c, tcp);
+                        edittcpwithjsonvaluesarraydata(json, f,tcp);
                         form.logout();
                     }
                 }
@@ -1380,7 +1373,7 @@ namespace Spa_Interaction_Screen
                 if (jsonpartvalid(json, "values") && ((JArray)json["values"]).Count > 2)
                 {
                     Constants.TCPSetting tcp = new Constants.TCPSetting();
-                    edittcpwithjsonvaluesarraydata(json, f, c, tcp);
+                    edittcpwithjsonvaluesarraydata(json, f,tcp);
                     form.logout();
                 }
                 else
@@ -1394,16 +1387,16 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void SessionPacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void SessionPacket(Dictionary<String, Object> json, MainForm f)
         {
             if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
-                foreach (Constants.SessionSetting ss in c.SessionSettings)
+                foreach (Constants.SessionSetting ss in Config.SessionSettings)
                 {
                     RequestJson j = new RequestJson();
-                    j.type = config.Typenames[2].Trim().ToLower();
-                    j.Raum = config.Room;
+                    j.type = Config.Typenames[2].Trim().ToLower();
+                    j.Raum = Config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[3];
@@ -1415,8 +1408,8 @@ namespace Spa_Interaction_Screen
 
                 }
                 RequestJson r = new RequestJson();
-                r.Raum = c.Room;
-                r.type = c.Typenames[0];
+                r.Raum = Config.Room;
+                r.type = Config.Typenames[0];
                 r.label = "?";
                 r.values = [ret];
                 SendTCPMessage(r, null);
@@ -1436,7 +1429,7 @@ namespace Spa_Interaction_Screen
                         Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                     }
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(time);
-                    if (f.timeleftnet >= config.SessionEndShowTimeLeft)
+                    if (f.timeleftnet >= Config.SessionEndShowTimeLeft)
                     {
                         f.switchedtotimepage = false;
                     }
@@ -1444,9 +1437,9 @@ namespace Spa_Interaction_Screen
                 else if(((JArray)(json["values"])).Count >= 1)
                 {
                     Constants.SessionSetting session = new Constants.SessionSetting();
-                    session.id = c.SessionSettings.Count;
+                    session.id = Config.SessionSettings.Count;
                     bool neueSession = true;
-                    foreach (Constants.SessionSetting ss in c.SessionSettings)
+                    foreach (Constants.SessionSetting ss in Config.SessionSettings)
                     {
                         if (ss.JsonText.Trim().ToLower().Equals(((string)json["id"]).Trim().ToLower()) || ss.JsonText.Trim().ToLower().Equals(((string)json["label"]).Trim().ToLower()))
                         {
@@ -1485,9 +1478,9 @@ namespace Spa_Interaction_Screen
                         }
                     }
                     session.ShowText = ((JArray)json["values"]).ToObject<String[]>()[i++];
-                    c.SessionSettings.Add(session); if (!c.SessionSettings.Contains(session))
+                    Config.SessionSettings.Add(session); if (!Config.SessionSettings.Contains(session))
                     {
-                        c.SessionSettings.Add(session);
+                        Config.SessionSettings.Add(session);
                     }
                 }
                 else
@@ -1501,7 +1494,7 @@ namespace Spa_Interaction_Screen
                 {
                     f.TimeSessionEnd = DateTime.Now.AddMinutes(((Int64)json["id"]));
                     f.timeleftnet = (Int32)((Int64)json["id"]);
-                    if (f.timeleftnet >= config.SessionEndShowTimeLeft)
+                    if (f.timeleftnet >= Config.SessionEndShowTimeLeft)
                     {
                         f.switchedtotimepage = false;
                     }
@@ -1514,16 +1507,16 @@ namespace Spa_Interaction_Screen
             
         }
 
-        private void ServicePacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void ServicePacket(Dictionary<String, Object> json, MainForm f)
         {
             if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
-                foreach (Constants.ServicesSetting ss in c.ServicesSettings)
+                foreach (Constants.ServicesSetting ss in Config.ServicesSettings)
                 {
                     RequestJson j = new RequestJson();
-                    j.type = config.Typenames[3].Trim().ToLower();
-                    j.Raum = config.Room;
+                    j.type = Config.Typenames[3].Trim().ToLower();
+                    j.Raum = Config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[3];
@@ -1534,8 +1527,8 @@ namespace Spa_Interaction_Screen
 
                 }
                 RequestJson r = new RequestJson();
-                r.Raum = c.Room;
-                r.type = c.Typenames[0];
+                r.Raum = Config.Room;
+                r.type = Config.Typenames[0];
                 r.label = "?";
                 r.values = [ret];
                 SendTCPMessage(r, null);
@@ -1544,9 +1537,9 @@ namespace Spa_Interaction_Screen
             if ((jsonpartvalid(json, "id") || jsonpartvalid(json, "label")) && jsonpartvalid(json, "values") && ((JArray)(json["values"])).Count > 0)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
-                ss.id = c.SessionSettings.Count;
+                ss.id = Config.SessionSettings.Count;
                 int x = -1;
-                if (jsonpartvalid(json, "id") && ((int)json["id"]) < c.ServicesSettings.Count)
+                if (jsonpartvalid(json, "id") && ((int)json["id"]) < Config.ServicesSettings.Count)
                 {
                     x = ((int)json["id"]);
                 }
@@ -1561,9 +1554,9 @@ namespace Spa_Interaction_Screen
                     }
                     if (x < 0)
                     {
-                        for(int i = 0; i< c.ServicesSettings.Count;i++)
+                        for(int i = 0; i< Config.ServicesSettings.Count;i++)
                         {
-                            if (((string)json["label"]).Trim().ToLower().Equals(c.ServicesSettings[i].JsonText.Trim().ToLower()))
+                            if (((string)json["label"]).Trim().ToLower().Equals(Config.ServicesSettings[i].JsonText.Trim().ToLower()))
                             {
                                 x = i;
                                 break;
@@ -1571,9 +1564,9 @@ namespace Spa_Interaction_Screen
                         }
                     }
                 }
-                if (x >= 0 || x < c.ServicesSettings.Count)
+                if (x >= 0 || x < Config.ServicesSettings.Count)
                 {
-                    ss = (ServicesSettingfunction)c.ServicesSettings[x];
+                    ss = (ServicesSettingfunction)Config.ServicesSettings[x];
                 }
                 if(jsonpartvalid(json, "label") && ((string)(json["label"])).Length > 0)
                 {
@@ -1588,17 +1581,17 @@ namespace Spa_Interaction_Screen
                 fun.functionText = ((JArray)(json["values"])).ToObject<String[]>()[1];
                 ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
-                ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
-                if (!c.ServicesSettings.Contains(ss))
+                ss = (ServicesSettingfunction)Config.setupsecondaryfunctionsforServiceButtons(ss);
+                if (!Config.ServicesSettings.Contains(ss))
                 {
-                    c.ServicesSettings.Add(ss);
+                    Config.ServicesSettings.Add(ss);
                     f.helper.GendynamicServiceButtons();
                 }
             }
             else if(jsonpartvalid(json, "values") && ((JArray)(json["values"])).Count > 2)
             {
                 Constants.ServicesSettingfunction ss = new Constants.ServicesSettingfunction();
-                ss.id = c.SessionSettings.Count;
+                ss.id = Config.SessionSettings.Count;
                 int x = -1;
                 try
                 {
@@ -1610,18 +1603,18 @@ namespace Spa_Interaction_Screen
                 }
                 if (x < 0)
                 {
-                    for (int i = 0; i < c.ServicesSettings.Count; i++)
+                    for (int i = 0; i < Config.ServicesSettings.Count; i++)
                     {
-                        if (((string[])json["values"])[0].Trim().ToLower().Equals(c.ServicesSettings[i].JsonText.Trim().ToLower()))
+                        if (((string[])json["values"])[0].Trim().ToLower().Equals(Config.ServicesSettings[i].JsonText.Trim().ToLower()))
                         {
                             x = i;
                             break;
                         }
                     }
                 }
-                if (x >= 0 || x < c.ServicesSettings.Count)
+                if (x >= 0 || x < Config.ServicesSettings.Count)
                 {
-                    ss = (ServicesSettingfunction)c.ServicesSettings[x];
+                    ss = (ServicesSettingfunction)Config.ServicesSettings[x];
                 }
                 ss.ShowText = ((JArray)(json["values"])).ToObject<String[]>()[0];
                 Constants.rawfunctiontext fun = new Constants.rawfunctiontext();
@@ -1629,10 +1622,10 @@ namespace Spa_Interaction_Screen
                 ss.JsonText = ((JArray)(json["values"])).ToObject<String[]>()[2];
                 ss.secondary = fun;
                 //Not secure, because setupsecondaryfunctionsforServiceButtons can return ServiceSettings without secondary function.
-                ss = (ServicesSettingfunction)c.setupsecondaryfunctionsforServiceButtons(ss);
-                if (!c.ServicesSettings.Contains(ss))
+                ss = (ServicesSettingfunction)Config.setupsecondaryfunctionsforServiceButtons(ss);
+                if (!Config.ServicesSettings.Contains(ss))
                 {
-                    c.ServicesSettings.Add(ss);
+                    Config.ServicesSettings.Add(ss);
                     f.helper.GendynamicServiceButtons();
                 }
             }
@@ -1642,16 +1635,16 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private void DMXScenePacket(Dictionary<String, Object> json, MainForm f, Config c)
+        private void DMXScenePacket(Dictionary<String, Object> json, MainForm f)
         {
             if (jsonpartvalid(json, "label") && ((string)json["label"]).Equals("?"))
             {
                 String ret = "";
-                foreach (Constants.DMXScene ss in c.DMXScenes)
+                foreach (Constants.DMXScene ss in Config.DMXScenes)
                 {
                     RequestJson j = new RequestJson();
-                    j.type = config.Typenames[4].Trim().ToLower();
-                    j.Raum = config.Room;
+                    j.type = Config.Typenames[4].Trim().ToLower();
+                    j.Raum = Config.Room;
                     j.id = ss.id;
                     j.label = ss.JsonText;
                     String[] t = new string[2+ss.Channelvalues.Length];
@@ -1666,8 +1659,8 @@ namespace Spa_Interaction_Screen
                     ret += assembleQuestionJsonString(j);
                 }
                 RequestJson r = new RequestJson();
-                r.Raum = c.Room;
-                r.type = c.Typenames[0];
+                r.Raum = Config.Room;
+                r.type = Config.Typenames[0];
                 r.label = "?";
                 r.values = [ret];
                 SendTCPMessage(r, null);
@@ -1680,9 +1673,9 @@ namespace Spa_Interaction_Screen
             }
             else if (jsonpartvalid(json, "label"))
             {
-                for (int i = 0; i < c.DMXScenes.Count; i++)
+                for (int i = 0; i < Config.DMXScenes.Count; i++)
                 {
-                    if (c.DMXScenes[i].JsonText.Trim().ToLower().Equals(((String)json["label"]).Trim().ToLower()))
+                    if (Config.DMXScenes[i].JsonText.Trim().ToLower().Equals(((String)json["label"]).Trim().ToLower()))
                     {
                         if (index > 0)
                         {
@@ -1700,20 +1693,20 @@ namespace Spa_Interaction_Screen
             }
             if (jsonpartvalid(json, "values"))
             {
-                if (c.DMXScenes.Count > index && index >= 0)
+                if (Config.DMXScenes.Count > index && index >= 0)
                 {
-                    c.DMXScenes[index].ShowText = ((JArray)json["values"]).ToObject<String[]>()[0];
+                    Config.DMXScenes[index].ShowText = ((JArray)json["values"]).ToObject<String[]>()[0];
                     String Path = ((JArray)json["values"]).ToObject<String[]>()[1];
-                    c.finalizePaths(out Path, Path);
+                    Config.finalizePaths(out Path, Path);
                     if (File.Exists(Path))
                     {
-                        c.DMXScenes[index].ContentPath = Path;
+                        Config.DMXScenes[index].ContentPath = Path;
                         f.helper.GendynamicAmbientButtons();
-                        Logger.Print($"Name and Path of Scene {c.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+                        Logger.Print($"Name and Path of Scene {Config.DMXScenes[index].JsonText} updated", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                     }
                     else
                     {
-                        Logger.Print($"Only Name of Scene {c.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
+                        Logger.Print($"Only Name of Scene {Config.DMXScenes[index].JsonText} updated, No File found for the given Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     }
 
                 }
@@ -1721,7 +1714,7 @@ namespace Spa_Interaction_Screen
                 {
                     Logger.Print("DMXScene Paket id out of range. Creating new temporary scene. To show scene in UI you have to send another packet to set showname and (optionally) the Content Path", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                     Constants.DMXScene scene = new Constants.DMXScene();
-                    scene.id = c.DMXScenes.Count;
+                    scene.id = Config.DMXScenes.Count;
                     scene.JsonText = (string)json["type"];
                     bool sucess = false;
                     if (json["values"].GetType() == typeof(byte[]))
@@ -1752,7 +1745,7 @@ namespace Spa_Interaction_Screen
                     }
                     if (sucess)
                     {
-                        c.DMXScenes.Add(scene);
+                        Config.DMXScenes.Add(scene);
                         Logger.Print($"Added DMXScene with Json label: {scene.JsonText}", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
                     }
                     else
@@ -1763,9 +1756,9 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                if (index >= 0 && index < c.DMXScenes.Count)
+                if (index >= 0 && index < Config.DMXScenes.Count)
                 {
-                    f.Ambiente_Change(c.DMXScenes[index], true, true, false);
+                    f.Ambiente_Change(Config.DMXScenes[index], true, true, false);
                 }
                 else
                 {
@@ -1780,26 +1773,26 @@ namespace Spa_Interaction_Screen
             switch (i)
             {
                 case 0:
-                    SystemPacket((Dictionary<String, Object>)Json, form, config);
+                    SystemPacket((Dictionary<String, Object>)Json, form);
                     return true;
                 case 1:
-                    TCPPacket((Dictionary<String, Object>)Json, form, config);
+                    TCPPacket((Dictionary<String, Object>)Json, form);
                     return true;
                 case 2:
-                    SessionPacket((Dictionary<String, Object>)Json, form, config);
+                    SessionPacket((Dictionary<String, Object>)Json, form);
                     return true;
                 case 3:
-                    ServicePacket((Dictionary<String, Object>)Json, form, config);
+                    ServicePacket((Dictionary<String, Object>)Json, form);
                     return true;
                 case 4:
-                    DMXScenePacket((Dictionary<String, Object>)Json, form, config);
+                    DMXScenePacket((Dictionary<String, Object>)Json, form);
                     return true;
                 default:
                     return false;
             }
         }
 
-        private void edittcpwithjsonvaluesarraydata(Dictionary<string, object> json, MainForm f, Config c, Constants.TCPSetting tcp)
+        private void edittcpwithjsonvaluesarraydata(Dictionary<string, object> json, MainForm f, Constants.TCPSetting tcp)
         {
             String[] jsonvalues = ((JArray)json["values"]).ToObject<String[]>();
             tcp.ShowText = jsonvalues[0];
@@ -1818,7 +1811,7 @@ namespace Spa_Interaction_Screen
             {
                 tcp.value = jsonvalues[3];
             }
-            c.TCPSettings.Add(tcp);
+            Config.TCPSettings.Add(tcp);
             f.logout();
             f.UIControl.SelectTab(f.UIControl.TabCount - 1);
             Logger.Print("Added new TCP Setting to the \"Wartungs\" Page", Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
