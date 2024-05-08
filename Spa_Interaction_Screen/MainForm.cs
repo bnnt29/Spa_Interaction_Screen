@@ -26,6 +26,9 @@ using System.Runtime.Intrinsics.X86;
 using System.ComponentModel;
 
 /*TODO:
+ * Umschaltung zu Endszene trotz Streaming
+ * Bildschirmschoner knopf broken
+ * TCPWartung blinkt nicht
  * repair monitor setup (start with 1, then connect 1)
  * Test TCPButtons
  * Refactor for performance
@@ -96,9 +99,8 @@ namespace Spa_Interaction_Screen
             // And load it
             return new Icon(ms);
         }
-
-
     }
+
     public partial class MainForm : CForm
     {
         public EmbedVLC vlc;
@@ -303,7 +305,6 @@ namespace Spa_Interaction_Screen
             });
 
             setupThreads();
-            
 
             SendCurrentSceneOverCom();
 
@@ -314,6 +315,7 @@ namespace Spa_Interaction_Screen
             }
             SessionTimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([1000], new MycreateTimer(createTimer), this);
             SessionTimer.Tick += timer_tick;
+            ButtonFader.removeall();
             Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(enableTimer), this);
             if (ButtonColorTimer != null)
             {
@@ -816,6 +818,7 @@ namespace Spa_Interaction_Screen
             t.Start();
             return null;
         }
+
         private object disposeTimer(System.Windows.Forms.Timer t)
         {
             t.Stop();
@@ -1546,8 +1549,9 @@ namespace Spa_Interaction_Screen
 
         public void Service_Request_Handle(object sender, EventArgs e)
         {
-            ((Button)sender).BackColor = Constants.selected_color;
-            ((Button)sender).Click -= Service_Request_Handle; bool zisclient = net.tcpSockets.Count > 0 && lastpingpositiv;
+            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).Click -= Service_Request_Handle; 
+            bool zisclient = net.tcpSockets.Count > 0 && lastpingpositiv;
             if ((zisclient || ((Constants.ServicesSetting)((Button)sender).Tag).hassecondary) && !Servicelocked)
             {
                 ButtonFader.addcolortimedButton(((Button)sender), Constants.ButtonLongfadetime, Constants.Button_color, Service_Request_Handle);
@@ -1875,12 +1879,6 @@ namespace Spa_Interaction_Screen
         public object delegatereset()
         {
             Logger.Print("Performing Reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
-            if (SessionTimer != null)
-            {
-                SessionTimer.Stop();
-                SessionTimer.Enabled = false;
-                SessionTimer.Dispose();
-            }
             RunTask = false;
             this.Hide();
             
@@ -1906,6 +1904,8 @@ namespace Spa_Interaction_Screen
             switchedtotimepage = false;
             Logger.consoleshown = false;
             Config.initconfig();
+            helper.setConfig();
+            Ambiente_Change(Config.DMXScenes[Config.DMXSceneSetting], true, false, false);
             AmbientVolume(Config.Volume, 3, null);
             loadscreen.updateProgress(50);
             start();

@@ -44,6 +44,7 @@ namespace Spa_Interaction_Screen
             {
                 if (timecoloredbuttons[i].b == b)
                 {
+                    timecoloredbuttons[i].b.Click += timecoloredbuttons[i].eh;
                     timecoloredbuttons.RemoveAt(i);
                     return true;
                 }
@@ -54,8 +55,8 @@ namespace Spa_Interaction_Screen
         public static void addcolortimedButton(Button b, long millis, Color to, EventHandler eh)
         {
             DateTime until = DateTime.Now.AddMilliseconds(millis);
-            Buttonfader? bf = null;
             /*
+            Buttonfader? bf = null;
             foreach (Buttonfader tb in timecoloredbuttons)
             {
                 if (tb.b == b)
@@ -75,6 +76,16 @@ namespace Spa_Interaction_Screen
             removefadingbutton(b);
             Buttonfader nbu = new Buttonfader(b, until, to, eh);
             timecoloredbuttons.Add(nbu);
+        }
+
+        public static void removeall()
+        {
+            foreach(Buttonfader bf in timecoloredbuttons)
+            {
+                bf.b.BackColor = bf.to;
+                bf.b.Click += bf.eh;
+            }
+            timecoloredbuttons = new List<Buttonfader>();
         }
 
         public static void UpdateButtoncolor(object sender, EventArgs e)

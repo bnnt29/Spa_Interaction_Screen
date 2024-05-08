@@ -59,7 +59,7 @@ Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Su
 #;#[More Serives can be added (max 12 mit Anzeige Text)];;;;;;;;;;;;;;;;;;
 Json Type:5;Scenes;#Json Label;#Anzeige Text;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#CH13;#CH14;#TVContent absolute Filepath;#Info
 #Order Importance;#0;default;!;255;56;0;0;0;128;0;255;255;0;0;0;0;0;WerbeVideo.mp4;
-#Order Importance;#1;Putzlicht;!;255;200;128;255;0;255;0;100;0;255;0;0;0;0;Werbung.jpg;#(Wird nur im Service Tab angezeigt)
+#Order Importance;#1;Putzlicht;!;255;200;128;255;0;255;0;100;0;255;0;0;0;0;Werbung.jpeg;#(Wird nur im Service Tab angezeigt)
 #Order Importance;#2;Notfall;!;255;200;128;255;0;255;0;255;0;100;0;0;0;0;;
 #Order Importance;#3;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;0;0;0;0;;
 #;#4;Kamin;Kamin;255;0;0;0;0;0;0;255;0;0;0;255;0;0;Feuer.mp4;

@@ -16,7 +16,8 @@ namespace Spa_Interaction_Screen
             // see https://aka.ms/applicationconfiguration.
             Application.EnableVisualStyles();
             ApplicationConfiguration.Initialize();
-
+            Application.Run(new MainForm());
+/*
 #if !DEBUG
             Application.Run(new MainForm());
 #else
@@ -35,6 +36,7 @@ namespace Spa_Interaction_Screen
                 }
             }
 #endif
+*/
         }
     }
 }
