@@ -325,10 +325,9 @@ namespace Spa_Interaction_Screen
             ControlBox = false;
             Controls.Add(UIControl);
             Name = "Form1";
-            ShowIcon = false;
-            ShowInTaskbar = false;
+            ShowIcon = true;
+            ShowInTaskbar = true;
             StartPosition = FormStartPosition.Manual;
-            Text = "Ambiente";
             TopMost = true;
             WindowState = FormWindowState.Maximized;
             Load += Main_Load;

@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="AudioSwitcher.AudioApi.CoreAudio" Version="3.0.3" />
     <PackageReference Include="Cyotek.Windows.Forms.ColorPicker" Version="1.7.2" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.3" />
     <PackageReference Include="LibVLCSharp.WinForms" Version="3.8.2" />
     <PackageReference Include="lioncs.ColorSlider" Version="1.0.0" />
     <PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="7.1.0" />

@@ -37,6 +37,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.Black;
             ClientSize = new Size(800, 450);
+            ShowInTaskbar = false;
             Name = "EmbedVLC";
             StartPosition = FormStartPosition.Manual;
             Text = "EmbedVLC";

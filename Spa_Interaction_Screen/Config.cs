@@ -58,6 +58,7 @@ namespace Spa_Interaction_Screen
         public static byte[] ObjectLightInterval = null;
         public static int ObjectLightchannel = -1;
         public static String Objectname = null;
+        public static int SaunaChanneloffset = 0;
         public static int[][] colorwheelvalues = null;
         public static String[] Typenames = null;
         public static int SessionSetting = -1;
@@ -97,41 +98,9 @@ namespace Spa_Interaction_Screen
             }
             using (FileStream fstream = Logger.CreateStream(Constants.PreConfigPath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                if (fstream != null && fstream.CanRead)
-                {
-                    using (StreamReader stream = new StreamReader(fstream))
-                    {
-                        if (stream == null || stream.EndOfStream)
-                        {
-                            MainForm.currentState = 6;
-                            Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                            return false;
-                        }
-                        try
-                        {
-                            __preconfiglines = stream.ReadToEnd().Split("\r\n");
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Konfig, MessageSubType.Error);
-                            Logger.Print("Could not read Konfig file", MessageType.Konfig, MessageSubType.Notice);
-                        }
-                        stream.Close();
-                        stream.Dispose();
-                    }
-                }
-                else
-                {
-                    MainForm.currentState = 6;
-                    Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
-                }
-                if (fstream != null)
-                {
-                    fstream.Close();
-                    fstream.Dispose();
-                }
+                __preconfiglines = readfile(fstream);
             }
-            if(__preconfiglines == null || __preconfiglines.Length <= 0)
+            if (__preconfiglines == null || __preconfiglines.Length <= 0)
             {
                 Logger.Print("Could not read Konfig file", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 return false;
@@ -167,6 +136,7 @@ namespace Spa_Interaction_Screen
             seps[1] = ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             seps[2] = ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToCharArray()[0];
             Constants.Delimiter = seps;
+            Constants.Unternehmensname = @$"{ReadPreConfig().Split(Constants.PreConfigDelimiter)[1]}";
             try
             {
                 Constants.maxscenes = Int32.Parse(ReadPreConfig().Split(Constants.PreConfigDelimiter)[1]);
@@ -209,10 +179,67 @@ namespace Spa_Interaction_Screen
             return true;
         }
 
+        private static String[]? readfile(FileStream fstream)
+        {
+            if (fstream != null && fstream.CanRead)
+            {
+                using (StreamReader stream = new StreamReader(fstream))
+                {
+                    if (stream == null)
+                    {
+                        MainForm.currentState = 6;
+                        Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        fstream.Close();
+                        fstream.Dispose();
+                        return null;
+                    }
+                    if (stream.EndOfStream)
+                    {
+                        MainForm.currentState = 6;
+                        Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                        stream.Close();
+                        stream.Dispose();
+                        return null;
+                    }
+                    try
+                    {
+                        return stream.ReadToEnd().Split("\r\n");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Print(ex.Message, MessageType.Konfig, MessageSubType.Error);
+                        Logger.Print("Could not read Konfig file", MessageType.Konfig, MessageSubType.Notice);
+                        return null;
+                    }
+                    finally
+                    {
+                        stream.Close();
+                        stream.Dispose();
+                        fstream.Close();
+                        fstream.Dispose();
+                    }
+                }
+            }
+            else if(fstream != null)
+            {
+                MainForm.currentState = 6;
+                Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error); 
+                fstream.Close();
+                fstream.Dispose();
+                return null;
+            }
+            else
+            {
+                MainForm.currentState = 6;
+                Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error); 
+                return null;
+            }
+        }
+
         private static String ReadPreConfig()
         {
             String s = "";
-            if (currentpreconfigindex< __preconfiglines.Length)
+            if (currentpreconfigindex < __preconfiglines.Length)
             {
                 s = __preconfiglines[currentpreconfigindex++];
             }
@@ -234,42 +261,13 @@ namespace Spa_Interaction_Screen
             bool read_all = true;
             using (FileStream fstream = Logger.CreateStream(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                if (fstream != null && fstream.CanRead)
-                {
-                    using (StreamReader stream = new StreamReader(fstream))
-                    {
-                        if (stream == null || stream.EndOfStream)
-                        {
-                            MainForm.currentState = 6;
-                            Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                            return;
-                        }
-                        try
-                        {
-                            __configlines = stream.ReadToEnd().Split("\r\n");
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Konfig, MessageSubType.Error);
-                            Logger.Print("Could not read Konfig file", MessageType.Konfig, MessageSubType.Notice);
-                        }
-                        stream.Close();
-                        stream.Dispose();
-                    }
-                }
-                else
-                {
-                    MainForm.currentState = 6;
-                    Logger.Print("Opened Config, but cannot Read it.", MessageType.Konfig, MessageSubType.Error);
-
-                }
-                if (fstream != null)
-                {
-                    fstream.Close();
-                    fstream.Dispose();
-                }
+                __configlines = readfile(fstream);
             }
-
+            if (__configlines == null || __configlines.Length <= 0)
+            {
+                Logger.Print("Could not read Konfig file", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                return;
+            }
             String[] fields = stripComments(__configlines[currentconfigindex++].Split(Constants.Delimiter[0]), Constants.Delimiter[1], Constants.Delimiter[2]);
             Logger.Print($"Loading CSV Config Version: {fields[0]}", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!fields[0].Equals(Constants.CurrentVersion))
@@ -277,24 +275,24 @@ namespace Spa_Interaction_Screen
                 Logger.Print("Config doesnt have the Correct Version", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
                 return;
             }
-            read_all = getcsvFields(ref Room, 0, false, read_all);
-            read_all = getcsvFields(ref TotalRooms, 0, false, read_all);
-            read_all = getcsvFields(ref IPZentrale, -1, false, read_all);
-            read_all = getcsvFields(ref PortZentrale, 0, false, read_all);
-            read_all = getcsvFields(ref LocalPort, 0, false, read_all);
-            read_all = getcsvFields(ref StateSendInterval, 0, false, read_all);
-            read_all = getcsvFields(ref ComPort, 0, false, read_all);
-            read_all = getcsvFields(ref RestrictedDescription, 0, false, read_all);
-            read_all = getcsvFields(ref FadeTime, 0, false, read_all);
-            read_all = getcsvFields(ref Wartungspin, -1, false, read_all);
-            read_all = getcsvFields(ref GastroUrl, 0, false, read_all);
-            read_all = getcsvFields(ref WiFiSSID, 0, false, read_all);
+            read_all = getcsvFields(ref Room, 0, false, read_all, true);
+            read_all = getcsvFields(ref TotalRooms, 0, false, read_all, true);
+            read_all = getcsvFields(ref IPZentrale, -1, false, read_all, false);
+            read_all = getcsvFields(ref PortZentrale, 0, false, read_all, true);
+            read_all = getcsvFields(ref LocalPort, 0, false, read_all, true);
+            read_all = getcsvFields(ref StateSendInterval, 0, false, read_all, true);
+            read_all = getcsvFields(ref ComPort, 0, false, read_all, false);
+            read_all = getcsvFields(ref RestrictedDescription, 0, false, read_all, false);
+            read_all = getcsvFields(ref FadeTime, 0, false, read_all, true);
+            read_all = getcsvFields(ref Wartungspin, -1, false, read_all, false);
+            read_all = getcsvFields(ref GastroUrl, 0, false, read_all, false);
+            read_all = getcsvFields(ref WiFiSSID, 0, false, read_all, false);
             WiFiSSID = WiFiSSID.Replace("[Room]", $"{Room}");
-            read_all = getcsvFields(ref IPRouter, -1, false, read_all);
-            read_all = getcsvFields(ref PortRouter, 0, false, read_all);
-            read_all = getcsvFields(ref showtime, 0, false, read_all);
+            read_all = getcsvFields(ref IPRouter, -1, false, read_all, false);
+            read_all = getcsvFields(ref PortRouter, 0, false, read_all, true);
+            read_all = getcsvFields(ref showtime, 0, false, read_all, false);
             String[] time = null;
-            read_all = getcsvFields(ref time, -1, false, read_all);
+            read_all = getcsvFields(ref time, -1, false, read_all, false);
             try
             {
                 showedgetime = Boolean.Parse(time[0]);
@@ -313,9 +311,9 @@ namespace Spa_Interaction_Screen
                 MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
-            read_all = getcsvFields(ref showcolor, 0, false, read_all);
+            read_all = getcsvFields(ref showcolor, 0, false, read_all, false);
             String[] sl = null;
-            read_all = getcsvFields(ref sl, -1, false, read_all);
+            read_all = getcsvFields(ref sl, -1, false, read_all, false);
             try
             {
                 Logoposition = Int32.Parse(sl[0]);
@@ -338,16 +336,16 @@ namespace Spa_Interaction_Screen
                 MainForm.currentState = 7;
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
-            read_all = getcsvFields(ref LogoFilePath, 0, true, read_all);
-            read_all = getcsvFields(ref QRLogoFilePath, 0, true, read_all);
-            read_all = getcsvFields(ref AmbienteBackgroundImage, 0, true, read_all);
-            read_all = getcsvFields(ref ColorBackgroundImage, 0, true, read_all);
-            read_all = getcsvFields(ref MediaBackgroundImage, 0, true, read_all);
-            read_all = getcsvFields(ref TimeBackgroundImage, 0, true, read_all);
-            read_all = getcsvFields(ref ServiceBackgroundImage, 0, true, read_all);
-            read_all = getcsvFields(ref WartungBackgroundImage, 0, true, read_all);
+            read_all = getcsvFields(ref LogoFilePath, 0, true, read_all, false);
+            read_all = getcsvFields(ref QRLogoFilePath, 0, true, read_all, false);
+            read_all = getcsvFields(ref AmbienteBackgroundImage, 0, true, read_all, false);
+            read_all = getcsvFields(ref ColorBackgroundImage, 0, true, read_all, false);
+            read_all = getcsvFields(ref MediaBackgroundImage, 0, true, read_all, false);
+            read_all = getcsvFields(ref TimeBackgroundImage, 0, true, read_all, false);
+            read_all = getcsvFields(ref ServiceBackgroundImage, 0, true, read_all, false);
+            read_all = getcsvFields(ref WartungBackgroundImage, 0, true, read_all, false);
             String[] SessionEnd = null;
-            read_all = getcsvFields(ref SessionEnd, -1, true, read_all);
+            read_all = getcsvFields(ref SessionEnd, -1, true, read_all, false);
             SessionEndImage = SessionEnd[0];
             try
             {
@@ -358,7 +356,7 @@ namespace Spa_Interaction_Screen
                 MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
             }
-            read_all = getcsvFields(ref LogPath, 0, true, read_all);
+            read_all = getcsvFields(ref LogPath, 0, true, read_all, false);
             if (!read_all)
             {
                 Logger.Print("Something went wrong in reading the single Variables (x01)", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
@@ -382,9 +380,9 @@ namespace Spa_Interaction_Screen
             Logger.InitLogfromBackup();
             currentconfigindex++;
             String[] Dimmerchannelval1 = null;
-            read_all = getcsvFields(ref Dimmerchannelval1, -1, false, read_all);
+            read_all = getcsvFields(ref Dimmerchannelval1, -1, false, read_all, false);
             String[] Dimmerchannelval2 = null;
-            read_all = getcsvFields(ref Dimmerchannelval2, -1, false, read_all);
+            read_all = getcsvFields(ref Dimmerchannelval2, -1, false, read_all, false);
             try
             {
                 Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]), Int32.Parse(Dimmerchannelval2[0]) };
@@ -397,7 +395,7 @@ namespace Spa_Interaction_Screen
             }
             slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
             String[] field = null;
-            read_all = getcsvFields(ref field, -1, false, read_all);
+            read_all = getcsvFields(ref field, -1, false, read_all, false);
             try
             {
                 HDMISwitchchannel = Int32.Parse(field[0]);
@@ -410,7 +408,7 @@ namespace Spa_Interaction_Screen
                 Logger.Print("Die in der Konfig angegebene Zahl für die HDMIchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
             field = null;
-            read_all = getcsvFields(ref field, -1, false, read_all);
+            read_all = getcsvFields(ref field, -1, false, read_all, false);
             try
             {
                 ObjectLightchannel = Int32.Parse(field[0]);
@@ -423,8 +421,9 @@ namespace Spa_Interaction_Screen
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
+            read_all = getcsvFields(ref SaunaChanneloffset, 0, false, read_all, true);
             String[] ReadFields = null;
-            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
             colorwheelvalues = new Int32[4][];
             bool atleastonechannel = false;
             for (int i = 0; i < Math.Min(ReadFields.Length, colorwheelvalues.Length); i++)
@@ -453,7 +452,7 @@ namespace Spa_Interaction_Screen
             }
             while (!read_all || ReadFields == null || ReadFields.Length <= 0 || !ReadFields[0].Contains("Json Type:"))
             {
-                read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
             }
 
             if (!read_all)
@@ -463,7 +462,7 @@ namespace Spa_Interaction_Screen
             }
             while (!read_all || ReadFields == null || ReadFields.Length <= 0 || (!ReadFields[0].Contains("Json Type:")))
             {
-                read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
             }
             if (!read_all)
             {
@@ -486,7 +485,7 @@ namespace Spa_Interaction_Screen
                 }
                 if (ReadFields == null || !ReadFields[0].Contains(':'))
                 {
-                    read_all = getcsvFields(ref ReadFields, -1, true, read_all);
+                    read_all = getcsvFields(ref ReadFields, -1, true, read_all, false);
                     continue;
                 }
 
@@ -515,7 +514,7 @@ namespace Spa_Interaction_Screen
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
                         for (int i = 0; i < 4; i++)
                         {
-                            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                             SystemSetting s = new SystemSetting();
                             s.Typename = Typenames[Jtype - 1];
                             s.JsonText = ReadFields[0];
@@ -523,11 +522,11 @@ namespace Spa_Interaction_Screen
                             SystemSettings.Add(s);
                         }
                         currentconfigindex++;
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         DMXSceneSettingJson = ReadFields[0];
                         DMXSceneSetting = Int32.Parse(ReadFields[1]);
 
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         slidernames[2] = ReadFields[0];
                         VolumeJson = ReadFields[1];
                         Volume = Int32.Parse(ReadFields[2]);
@@ -537,7 +536,7 @@ namespace Spa_Interaction_Screen
                         break;
                     case 2:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             TCPSetting s = new TCPSetting();
@@ -563,13 +562,13 @@ namespace Spa_Interaction_Screen
                                 s.value = ReadFields[3];
                             }
                             TCPSettings.Add(s);
-                            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         }
                         read_all = true;
                         break;
                     case 3:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         SessionSetting firstss = new SessionSetting();
                         firstss.mins = int.MinValue + 1;
                         firstss.JsonText = "";
@@ -617,13 +616,13 @@ namespace Spa_Interaction_Screen
                                 si.ShowText = ReadFields[2];
                             }
                             SessionSettings.Add(si);
-                            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         }
                         read_all = true;
                         break;
                     case 4:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         while (read_all && ReadFields != null && ReadFields.Length >= 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             ServicesSettingfunction si = new ServicesSettingfunction();
@@ -642,13 +641,13 @@ namespace Spa_Interaction_Screen
                                 si.secondary = null;
                             }
                             ServicesSettings.Add(si);
-                            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         }
                         read_all = true;
                         break;
                     case 5:
                         Typenames[Jtype - 1] = ReadFields[1].Trim().ToLower();
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         while (read_all && ReadFields != null && ReadFields.Length > 2 && !ReadFields[0].Contains("Json Type:"))
                         {
                             DMXScene scene = new DMXScene();
@@ -659,11 +658,17 @@ namespace Spa_Interaction_Screen
                             scene.ShowText = ReadFields[i++];
                             scene.Channelvalues = new byte[ReadFields.Length - 2];
                             int rese;
-                            if (!int.TryParse(ReadFields[ReadFields.Length - 1], out rese))
+                            for(int j = ReadFields.Length-1; j >= 0; j--)
                             {
-                                scene.ContentPath = ReadFields[ReadFields.Length - 1];
-                                finalizePaths(out scene.ContentPath, scene.ContentPath);
-                                scene.Channelvalues = new byte[ReadFields.Length - 3];
+                                if (int.TryParse(ReadFields[j], out rese))
+                                {
+                                    if (j < ReadFields.Length-1)
+                                    {
+                                        scene.ContentPath = ReadFields[j+1];
+                                        finalizePaths(out scene.ContentPath, scene.ContentPath);
+                                    }
+                                    break;
+                                }
                             }
                             int y = i;
                             for (i = y; i < scene.Channelvalues.Length; i++)
@@ -680,15 +685,15 @@ namespace Spa_Interaction_Screen
                                 }
                                 save = Math.Min(255, save);
                                 save = Math.Max(0, save);
-                                scene.Channelvalues[i - y] = (byte)save;
+                                scene.Channelvalues[(i - y) + 1] = (byte)save;
                             }
                             DMXScenes.Add(scene);
-                            read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                            read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         }
                         read_all = true;
                         break;
                     default:
-                        read_all = getcsvFields(ref ReadFields, -1, false, read_all);
+                        read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
                         break;
                 }
                 x--;
@@ -967,9 +972,14 @@ namespace Spa_Interaction_Screen
             sp = s;
         }
 
-        public static bool getcsvFields<T>(ref T variable, int index, bool canbeempty, bool lasttry)
+        public static bool getcsvFields<T>(ref T variable, int index, bool canbeempty, bool lasttry, bool is_number)
         {
-            variable = default(T); 
+            variable = default(T);
+            if (currentconfigindex < 0 && currentconfigindex >= __configlines.Length)
+            {
+                currentconfigindex++;
+                return false;
+            }
             String line = __configlines[currentconfigindex++];
             if (!lasttry)
             {
@@ -1016,6 +1026,10 @@ namespace Spa_Interaction_Screen
             }
             if (EqualityComparer<T>.Default.Equals(variable, default(T)) && !default(T).GetType().Equals(typeof(Boolean)))
             {
+                if(default(T).GetType().Equals(typeof(Int32)) && is_number)
+                {
+                    return true;
+                }
                 return false;
             }
             return true;

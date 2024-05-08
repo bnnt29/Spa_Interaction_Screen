@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.VisualBasic.Logging;
+using System.Diagnostics;
 
 namespace Spa_Interaction_Screen
 {
@@ -13,6 +14,7 @@ namespace Spa_Interaction_Screen
         public static bool consoleshown = false;
         public static MainForm form;
         private delegate String MyAddConsoleLine(String line);
+        private delegate int MyaddElement(Log_Element LE, bool ShowfullMessageLater);
 
         public static List<Log_Element> getList(int index)
         {
@@ -168,11 +170,10 @@ namespace Spa_Interaction_Screen
                 log.Message = Message;
                 if (valid > 0)
                 {
-                    addElement(log, ShowfullMessageLater);
+                    Constants.InvokeDelegate<int>([log, ShowfullMessageLater], new MyaddElement(addElement), form);
                 }
                 if (ShowfullMessageLater)
                 {
-
                     WritedoubleLogMessage(log.Message);
                 }
                 else
@@ -184,6 +185,7 @@ namespace Spa_Interaction_Screen
 
         private static void WritedoubleLogMessage(String m)
         {
+            Debug.WriteLine(m);
             try
             {
                 WriteSingleLogMessage(Constants.BackupLOGPath, m, false);
@@ -260,7 +262,7 @@ namespace Spa_Interaction_Screen
                 start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
                 start.time = DateTime.Now;
                 start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
-                addElement(start, true);
+                Constants.InvokeDelegate<int>([start, true], new MyaddElement(addElement), form);
             }
             int i;
             for (i = 0; i < LE.type.Length; i++)
@@ -273,7 +275,6 @@ namespace Spa_Interaction_Screen
                     }
                     if (log_Elements[LE.type[i]].Count <= 0)
                     {
-                        //TODO
                         consoletype.Items.Add(new Constants.ComboItem { Text = ((MessageType)LE.type[i]).ToString(), ID = LE.type[i] });
                     }
                 }
@@ -293,10 +294,6 @@ namespace Spa_Interaction_Screen
                     log_Elements[LE.type[i]] = new List<Log_Element>();
                 }
                 log_Elements[LE.type[i]].Add(LE);
-                if (!ShowfullMessageLater  && LE.type[i] == currentlyshowing)
-                {
-                    AddConsoleLine(LE.ToString());
-                }
             }
             return i;
         }
@@ -335,12 +332,12 @@ namespace Spa_Interaction_Screen
                 {
                     if(MTypetobyte<MessageSubType>(subtype) == log.SubType)
                     {
-                        c += log.ToString();
+                        c += log.ToString() + "\r\n";
                     }
                 }
                 else
                 {
-                    c += log.ToString();
+                    c += log.ToString() + "\r\n";
                 }
             }
             return c;
@@ -429,7 +426,7 @@ namespace Spa_Interaction_Screen
                         scroll = false;
                     }
                     ConsoleBox.Text += line;
-                    ConsoleBox.Text += "\n\r";
+                    ConsoleBox.Text += "\r\n";
                     if (scroll)
                     {
                         ConsoleBox.SelectionStart = ConsoleBox.Text.Length;

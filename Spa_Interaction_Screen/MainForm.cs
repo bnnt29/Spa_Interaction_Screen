@@ -1,24 +1,26 @@
 using AudioSwitcher.AudioApi.CoreAudio;
-using Cyotek.Windows.Forms;
 using QRCoder;
+using System;
 using System.Diagnostics;
 using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
+using System.Management;   //This namespace is used to work with WMI classes. For using this namespace add reference of System.Management.dll .
+using Microsoft.Win32;
 using Test;
+using LibreHardwareMonitor;
+using LibreHardwareMonitor.Hardware;
+using System.Windows.Forms;
 
 /*TODO:
  * File Logging reparieren
  * CPU stats in Log
- * Channel nummern prüfen
  * frisst manche "Session fast zuende" nachrichten nicht
- * QR Code auf Media Seite broken, wenn noch nicht backup geladen
  * Umschaltung zu Endszene trotz Streaming
  * Bildschirmschoner knopf broken
- * TCPWartung blinkt nicht
  * repair monitor setup (start with 1, then connect 1)
- * evtl. Tab swicth delayen, um Grafik zu laden
+ * evtl. Tab switch delayen, um Grafik zu laden
  * Design / Sauna nicht konfig überschreiben, wenn nicht geändert
  * Test TCPButtons
  * Refactor for performance
@@ -47,15 +49,10 @@ namespace Spa_Interaction_Screen
 
             this.FormClosed += OnFormClosed;
             this.SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
-            try
-            {
-                this.Icon = IconFromImage(Image.FromFile(Config.LogoFilePath));
-            }catch(Exception ex)
-            {
-                Logger.Print(ex.Message, Logger.MessageType.Ohne_Kategorie, Logger.MessageSubType.Error);
-            }
+
         }
         public abstract void OnFormClosed(object sender, EventArgs e);
+
         public static Icon IconFromImage(Image img)
         {
             var ms = new System.IO.MemoryStream();
@@ -88,6 +85,22 @@ namespace Spa_Interaction_Screen
 
             // And load it
             return new Icon(ms);
+        }
+
+        public void SetIcon()
+        {
+            if (Config.LogoFilePath == null || Config.LogoFilePath.Length <= 0)
+            {
+                return;
+            }
+            try
+            {
+                this.Icon = IconFromImage(Image.FromFile(Config.LogoFilePath));
+            }
+            catch (Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Ohne_Kategorie, Logger.MessageSubType.Error);
+            }
         }
     }
 
@@ -127,6 +140,8 @@ namespace Spa_Interaction_Screen
         public bool watingforEmbed = false;
         public bool[] SaunaAmbientButtons = new bool[3];
         public bool volumeinit = false;
+        public String?[] PCStats = null; // CPU Total Load, CPU Core Max Load, Memory Load, GPU Core Temp, GPU HotSpot Temp
+        public List<Label> PCStatLabels = null;
 
         private System.Windows.Forms.Timer ButtonColorTimer;
 
@@ -138,6 +153,7 @@ namespace Spa_Interaction_Screen
         private Task windows = null;
         private Task pinggastro = null;
         private Task pingzentrale = null;
+        private Task systemstats = null;
         private Task<PingReply>[] ping = new Task<PingReply>[2];
 
         private bool exitProgramm = false;
@@ -146,7 +162,7 @@ namespace Spa_Interaction_Screen
         private delegate object MyTimer(System.Windows.Forms.Timer t);
         private delegate object MySetupEmbedvlcScreen(MainForm form);
         private delegate object Myswitchgastro(bool reachable);
-        private delegate object MyContentchange(bool reachable); 
+        private delegate object MyContentchange(bool reachable);
         private delegate object Myperformsecondary(Constants.ServicesSettingfunction ssf);
         private delegate object MyFullscreen(Form f, Screen screen);
         private delegate object Mysetscenelocked(bool x, String txt, Color c);
@@ -154,7 +170,7 @@ namespace Spa_Interaction_Screen
         private delegate System.Windows.Forms.Timer MycreateTimer(int innterval);
         private delegate object Mysetsessionlocked(bool x);
 
-        public MainForm() :base()
+        public MainForm() : base()
         {
             Logger.form = this;
             Logger.initLog();
@@ -170,8 +186,22 @@ namespace Spa_Interaction_Screen
                 Config.initconfig();
                 loadscreen.Debugtext("Es gibt ein Problem beim lesen der Konfig Datei. (Vielleicht ist sie noch blockiert)", !Config.allread);
             }
-            loadscreen.updateProgress(20);
-            loadscreen.Debugtext($"Creating Static Objects", true);
+            if (loadscreen != null)
+            {
+                loadscreen.SetIcon();
+                if (Constants.Unternehmensname != null && Constants.Unternehmensname.Length > 0)
+                {
+                    loadscreen.Text = Constants.Unternehmensname;
+                    this.Text = Constants.Unternehmensname;
+                }
+                this.SetIcon();
+                loadscreen.updateProgress(20);
+                loadscreen.Debugtext($"Creating Static Objects", true);
+            }
+            else if (exitProgramm)
+            {
+                OnFormClosed(null, null);
+            }
             InitializeComponent();
             if (mainscreen == null)
             {
@@ -183,8 +213,7 @@ namespace Spa_Interaction_Screen
             changeddimmerchannels = new byte[3];
             if (exitProgramm)
             {
-                Application.Exit();
-                return;
+                OnFormClosed(null, null);
             }
             loadscreen.Debugtext("", false);
             loadscreen.updateProgress(30);
@@ -210,8 +239,7 @@ namespace Spa_Interaction_Screen
             this.Hide();
             if (exitProgramm)
             {
-                Application.Exit();
-                return;
+                OnFormClosed(null, null);
             }
             loadscreen.updateProgress(60);
             loadscreen.Debugtext($"Connecting to Gastro Website", true);
@@ -228,7 +256,7 @@ namespace Spa_Interaction_Screen
 
             Config.currentvalues[Config.HDMISwitchchannel] = 255;
             EnttecCom.sendDMX(Config.currentvalues);
-            Task.Delay(Constants.sendtimeout*2+1).Wait();
+            Task.Delay(Constants.sendtimeout * 2 + 1).Wait();
             SendCurrentSceneOverCom();
 
             loadscreen.updateProgress(90);
@@ -246,7 +274,7 @@ namespace Spa_Interaction_Screen
             showthis();
             if (exitProgramm)
             {
-                Application.Exit();
+                OnFormClosed(null, null);
             }
             //Constants.InvokeDelegate<object>([], new MyNoArgument(selectUIControl), this);
             //Constants.InvokeDelegate<object>([], new MyNoArgument(selectUIControl), this);
@@ -258,12 +286,18 @@ namespace Spa_Interaction_Screen
             {
                 vlc.Close();
             }
-            if(loadscreen != null)
+            if (loadscreen != null)
             {
                 loadscreen.Close();
             }
-            UIControl.SelectedIndex = 0;
-            SendCurrentSceneOverCom();
+            if (UIControl != null)
+            {
+                UIControl.SelectedIndex = 0;
+            }
+            if (!exitProgramm)
+            {
+                SendCurrentSceneOverCom();
+            }
             exitProgramm = true;
             RunTask = false;
             if (net != null && net.tcpSockets != null)
@@ -289,7 +323,8 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(60);
 
             loadscreen.updateProgress(70);
-            Task.Run(() => {
+            Task.Run(() =>
+            {
                 defaultPlaybackDevice = new CoreAudioController().DefaultPlaybackDevice;
                 volumeinit = true;
             });
@@ -298,7 +333,7 @@ namespace Spa_Interaction_Screen
 
             SendCurrentSceneOverCom();
 
-            loadscreen.updateProgress(80); 
+            loadscreen.updateProgress(80);
             if (SessionTimer != null)
             {
                 Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(disposeTimer), this);
@@ -345,16 +380,182 @@ namespace Spa_Interaction_Screen
                 {
                     state.Wait();
                 }
+                if (systemstats != null)
+                {
+                    systemstats.Wait();
+                }
                 RunTask = true;
                 windows = Task.Run(async () => ScreenManagerTaskMethod(this));
                 pinggastro = Task.Run(async () => GastroPing(this));
                 pingzentrale = Task.Run(async () => ZentralePing(this));
+                PCStats = new String?[5];
+                systemstats = Task.Run(async () => SastemStats(this));
                 if (Config.StateSendInterval > 0)
                 {
-                    //TODO
-                    //state = Task.Run(async () => sendState(this));
+                    state = Task.Run(async () => sendState(this));
                 }
             });
+        }
+        public class UpdateVisitor : IVisitor
+        {
+            public void VisitComputer(IComputer computer)
+            {
+                computer.Traverse(this);
+            }
+            public void VisitHardware(IHardware hardware)
+            {
+                hardware.Update();
+                foreach (IHardware subHardware in hardware.SubHardware) subHardware.Accept(this);
+            }
+            public void VisitSensor(ISensor sensor) { }
+            public void VisitParameter(IParameter parameter) { }
+        }
+        private async Task SastemStats(MainForm form)
+        {
+            Computer computer = new Computer
+            {
+                IsCpuEnabled = true,
+                IsGpuEnabled = true,
+                IsMemoryEnabled = true,
+                IsMotherboardEnabled = true,
+                IsControllerEnabled = true,
+                IsNetworkEnabled = true,
+                IsStorageEnabled = true
+            };
+            while (form.RunTask)
+            {
+                Debug.Print("----------Open Computer----------");
+                computer.Open();
+                Debug.Print("----------Opened Computer----------");
+                computer.Accept(new UpdateVisitor());
+                Debug.Print("----------Accept Computer----------");
+                foreach (IHardware hardware in computer.Hardware)
+                {
+                    Debug.Print("1");
+                    foreach (ISensor s in hardware.Sensors)
+                    {
+                        Debug.Print("2");
+                        if (s.Value==null && s.Value < 0)
+                        {
+                            form.PCStats[3] = "";
+                            continue;
+                        }
+                        Debug.Print("3");
+                        if (s.SensorType == SensorType.Temperature)
+                        {
+                            Debug.Print("4");
+                            switch (s.Name)
+                            {
+                                case "GPU Core":
+                                    form.PCStats[3] = $"GPU Core temperatur: {(int)s.Value}";
+                                    if (s.Value > 85)
+                                    {
+                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Notice);
+                                    }
+                                    else if (s.Value > 95)
+                                    {
+                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Error);
+                                    }
+                                    else
+                                    {
+                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Information);
+                                    }
+                                    break;
+                                case "GPU Hot Spot":
+                                    form.PCStats[4] = $"GPU Hot Spot temperatur: {(int)s.Value}";
+                                    break;
+                                default:
+                                    break;
+
+                            }
+                        }
+                        else if (s.SensorType == SensorType.Load)
+                        {
+                            Debug.Print("5");
+                            switch (s.Name)
+                            {
+                                case "CPU Total":
+                                    form.PCStats[0] = $"CPU Total Load: {(int)s.Value}";
+                                    if (s.Value > 85)
+                                    {
+                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Notice);
+                                    }else if (s.Value > 95)
+                                    {
+                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Error);
+                                    }
+                                    else
+                                    {
+                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Information);
+                                    }
+                                    break;
+                                case "CPU Core Max":
+                                    form.PCStats[1] = $"CPU Core Max Load: {(int)s.Value}";
+                                    break;
+                                case "Memory":
+                                    form.PCStats[2] = $"Memory Load: {(int)s.Value}";
+                                    break;
+                                default:
+                                    break;
+
+                            }
+                        }
+                    }
+                }
+                Debug.Print("6");
+                assemblePCStats();
+                Debug.Print("----------Closing Computer----------");
+                computer.Close();
+                Debug.Print("----------Closed Computer----------");
+                Task.Delay(10000).Wait();
+                Debug.Print($"----------Delayed Computer----------{RunTask}");
+            }
+        }
+        // CPU Total Load, CPU Core Max Load, Memory Load, GPU Core Temp, GPU HotSpot Temp
+        private void assemblePCStats()
+        {
+            if (Logger.consoleshown)
+            {
+                if (PCStatLabels == null)
+                {
+                    PCStatLabels = new List<Label>();
+                    int posx, posy;
+                    for (int i = 0; i < PCStats.Length; i++)
+                    {
+                        helper.GetDynamicPosition(5, i, out posx, out posy, 0, 4.5, false);
+                        Label l = new Label();
+                        l.AutoSize = true;
+                        l.ForeColor = Constants.Text_color;
+                        l.Location = new Point(posx, posy);
+                        l.Tag = new Point(0, 4);
+                        l.Font = Constants.Standart_font;
+                        ConsolePage.Controls.Add(l);
+                        helper.ConsoleElements.Add(l);
+                        PCStatLabels.Add(l);
+                    }
+                }
+                for (int i = 0; i < PCStatLabels.Count; i++)
+                {
+                    if (PCStats[i] != null)
+                    {
+                        PCStatLabels[i].Text = PCStats[i];
+                    }
+                }
+            }
+            else
+            {
+                if (PCStatLabels != null)
+                {
+                    for (int i = 0; i < PCStatLabels.Count; i++)
+                    {
+                        Label l = PCStatLabels[i];
+                        l.Hide();
+                        ConsolePage.Controls.Remove(l);
+                        helper.ConsoleElements.Remove(l);
+                        PCStatLabels.Remove(l);
+                        l.Dispose();
+                    }
+                }
+            }
         }
 
         private async Task ZentralePing(MainForm form)
@@ -392,7 +593,7 @@ namespace Spa_Interaction_Screen
                 {
                     lastZentralButtonstate = zisclient;
                     Constants.InvokeDelegate<object>([], new MyNoArgument(delegateswitchzentralenotreachable), form);
-                    
+
                 }
                 if (lastpingpositiv)
                 {
@@ -500,7 +701,7 @@ namespace Spa_Interaction_Screen
                 }
 
                 Constants.InvokeDelegate<object>([connectionok], new Myswitchgastro(delegateswitchgastronotreachable), form);
-                
+
                 if (connectionok)
                 {
                     await Task.Delay(10000);
@@ -528,7 +729,7 @@ namespace Spa_Interaction_Screen
                 {
                     Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
                 }
-                if(Programmstate != null)
+                if (Programmstate != null)
                 {
                     Programmstate.Text = $"Programmstatus: {MainForm.currentState}";
                 }
@@ -540,7 +741,7 @@ namespace Spa_Interaction_Screen
         {
             while (form.RunTask)
             {
-                switch (SystemInformation.MonitorCount)
+                switch (System.Windows.Forms.SystemInformation.MonitorCount)
                 {
                     case 0:
                         MainForm.currentState = 3;
@@ -565,9 +766,9 @@ namespace Spa_Interaction_Screen
                         }
                         break;
                     default:
-                        if(vlc == null) 
+                        if (vlc == null)
                         {
-                        
+
                             form.watingforEmbed = true;
                             SetupEmbedvlcScreen(form);
                             if (!form.SessionEndbool)
@@ -587,7 +788,7 @@ namespace Spa_Interaction_Screen
 
         public object delegateswitchzentralenotreachable()
         {
-            if(Config.ServicesSettings == null)
+            if (Config.ServicesSettings == null)
             {
                 return null;
             }
@@ -641,7 +842,7 @@ namespace Spa_Interaction_Screen
 
         public object UIControlSwitcher()
         {
-            for (int i = UIControl.TabCount-1; i>=0; i--)
+            for (int i = UIControl.TabCount - 1; i >= 0; i--)
             {
                 UIControl.SelectTab(i);
                 Application.DoEvents();
@@ -670,7 +871,7 @@ namespace Spa_Interaction_Screen
 
         private object delegateshowthis()
         {
-            if(this != null && !this.IsDisposed)
+            if (this != null && !this.IsDisposed)
             {
                 this.BringToFront();
                 this.Show();
@@ -732,8 +933,8 @@ namespace Spa_Interaction_Screen
 
         private object delegateSetupEmbedvlcScreen(MainForm form)
         {
-            if (SystemInformation.MonitorCount > 1)
-            { 
+            if (System.Windows.Forms.SystemInformation.MonitorCount > 1)
+            {
                 Screen TV = null;
                 Size bounds = new Size(0, 0);
                 if (Screen.AllScreens.Length > 1)
@@ -843,7 +1044,7 @@ namespace Spa_Interaction_Screen
                 clock.Text = $"{Hours}:{Minutes}";
                 clock.Location = new Point((Constants.windowwidth / 2) - (clock.Size.Width / 2), clock.Location.Y);
             }
-            
+
             if (TimeSessionEnd != null)
             {
                 int timeleftnotclamped = (int)Math.Ceiling(((TimeSpan)(TimeSessionEnd - DateTime.Now)).TotalMinutes);
@@ -892,7 +1093,7 @@ namespace Spa_Interaction_Screen
                 {
                     Logger.Print($"Session Timer was locked, release it via tcp or in the restricted area. Current overtime: {timeleftnotclamped}; Locked Time: {timeleftnet}", [Logger.MessageType.Benutzeroberfläche, Logger.MessageType.Hauptprogramm], Logger.MessageSubType.Notice);
 
-                    timeleftnotclamped = timeleftclamped = timeleftnet; 
+                    timeleftnotclamped = timeleftclamped = timeleftnet;
                 }
                 if (timeleftnotclamped <= 0)
                 {
@@ -1169,7 +1370,7 @@ namespace Spa_Interaction_Screen
 #if !DEBUG
             logout();
 #endif
-            if (Logger.consoleshown && !showconsoleonallsites && vlc != null && UIControl!=null)
+            if (Logger.consoleshown && !showconsoleonallsites && vlc != null && UIControl != null)
             {
                 vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabCount - 1);
             }
@@ -1278,7 +1479,7 @@ namespace Spa_Interaction_Screen
             SendCurrentSceneOverCom();
         }
 
-        public void SendCurrentSceneOverCom_Handle(object sender, EventArgs e) 
+        public void SendCurrentSceneOverCom_Handle(object sender, EventArgs e)
         {
             SendCurrentSceneOverCom();
         }
@@ -1313,9 +1514,9 @@ namespace Spa_Interaction_Screen
             byte[] tempchannelvalues = (byte[])Config.DMXScenes[Config.DMXSceneSetting].Channelvalues.Clone();
             if (!Scenelocked)
             {
-                for(int i = 0; i < SaunaAmbientButtons.Length; i++)
+                for (int i = 0; i < SaunaAmbientButtons.Length; i++)
                 {
-                    tempchannelvalues[Constants.SaunaChanneloffset+i] = (SaunaAmbientButtons[i]) ? (byte)255 : (byte)0;
+                    tempchannelvalues[Config.SaunaChanneloffset + i] = (SaunaAmbientButtons[i]) ? (byte)255 : (byte)0;
                 }
                 if (Config.Dimmerchannel[0] >= 0 && Config.Dimmerchannel[0] < tempchannelvalues.Length)
                 {
@@ -1336,7 +1537,6 @@ namespace Spa_Interaction_Screen
                 }
             }
             byte[] fade = new byte[tempchannelvalues.Length];
-            //Logger.Print($"Time:{DateTime.Now}-{Config.lastchangetime}={(DateTime.Now - Config.lastchangetime).TotalMilliseconds}");
             double millis = (DateTime.Now - Config.lastchangetime).TotalMilliseconds;
             if (millis <= Config.FadeTime && Config.currentvalues != null)
             {
@@ -1351,19 +1551,14 @@ namespace Spa_Interaction_Screen
                         break;
                     }
                     double tmpfade = (Config.currentvalues[i] + ((double)(tempchannelvalues[i] - Config.currentvalues[i]) / fadesteps));
-                    tmpfade = Math.Min(tmpfade, Byte.MaxValue); 
+                    tmpfade = Math.Min(tmpfade, Byte.MaxValue);
                     tmpfade = Math.Max(tmpfade, Byte.MinValue);
                     fade[i] = (byte)(tmpfade);
-                    if(((double)(tempchannelvalues[i] - Config.currentvalues[i]) != 0)){
+                    if (((double)(tempchannelvalues[i] - Config.currentvalues[i]) != 0))
+                    {
                         notsamevalue = true;
                     }
                 }
-                /*if (fadingtimer != null && !fadingtimer.Enabled)
-                {
-                    fadingtimer.Stop();
-                    fadingtimer.Dispose();
-                    fadingtimer = null;
-                }*/
                 if ((fadingtimer == null || !fadingtimer.Enabled) && notsamevalue)
                 {
 
@@ -1381,8 +1576,8 @@ namespace Spa_Interaction_Screen
                 fade = tempchannelvalues;
             }
             Config.currentvalues = fade;
-            //Logger.Print($"Trying to send the following DMX Data:0,{fade[0]},{fade[1]},{fade[2]},{fade[3]},{fade[4]},{fade[5]},{fade[6]},{fade[7]},{fade[8]},{fade[9]},{fade[10]},{fade[11]},{fade[12]},{fade[13]},{fade[14]}");
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 if (con != null)
                 {
                     con.Wait();
@@ -1513,7 +1708,7 @@ namespace Spa_Interaction_Screen
             {
                 Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             }
-            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).BackColor = Constants.selected_color;
             ((Button)sender).Click -= Wartung_Request_Handle;
             ButtonFader.addcolortimedButton(((Button)sender), Constants.ButtonLongfadetime, Constants.Button_color, Wartung_Request_Handle);
         }
@@ -1525,8 +1720,8 @@ namespace Spa_Interaction_Screen
 
         public void EndSession()
         {
-            EmbedVLC evlc =new EmbedVLC(this, mainscreen, true);
-            if(evlc != null)
+            EmbedVLC evlc = new EmbedVLC(this, mainscreen, true);
+            if (evlc != null)
             {
                 evlc.changeMedia(Config.SessionEndImage, true);
             }
@@ -1539,8 +1734,8 @@ namespace Spa_Interaction_Screen
 
         public void Service_Request_Handle(object sender, EventArgs e)
         {
-            ((Button)sender).BackColor = Constants.alternative_color;
-            ((Button)sender).Click -= Service_Request_Handle; 
+            ((Button)sender).BackColor = Constants.selected_color;
+            ((Button)sender).Click -= Service_Request_Handle;
             bool zisclient = net.tcpSockets.Count > 0 && lastpingpositiv;
             if ((zisclient || ((Constants.ServicesSetting)((Button)sender).Tag).hassecondary) && !Servicelocked)
             {
@@ -1554,12 +1749,12 @@ namespace Spa_Interaction_Screen
                 {
                     Task.Run(async () => performsecondary(sf));
                 }
-                if(sf.canceling)
+                if (sf.canceling)
                 {
                     return;
                 }
             }
-            
+
             if (Constants.noNet)
             {
                 return;
@@ -1719,8 +1914,8 @@ namespace Spa_Interaction_Screen
                 vlc.hidethis();
             }
             vlcclosed = true;
-            if(screenissue) 
-            { 
+            if (screenissue)
+            {
                 foreach (Button b in helper.RestrictedPageButtons)
                 {
                     if (b != null && ((String)b.Tag).Length > 0 && ((String)b.Tag).Equals("VLCClose"))
@@ -1810,14 +2005,14 @@ namespace Spa_Interaction_Screen
                     MainForm.currentState = 0;
                     return;
                 }
-                changeddimmerchannels[index] = (byte)(int)((float)((float)((ColorSlider.ColorSlider)sender).Value/100.0)*255);
+                changeddimmerchannels[index] = (byte)(int)((float)((float)((ColorSlider.ColorSlider)sender).Value / 100.0) * 255);
             }
             SendCurrentSceneOverCom();
         }
 
         public void ColorChanged_Handler(object sender, EventArgs e)
         {
-            if(sender.Equals(colorWheelElement))
+            if (sender.Equals(colorWheelElement))
             {
                 if (((ColorSlider.ColorSlider)colorWheelElement.Tag).Value < 15)
                 {
@@ -1827,7 +2022,7 @@ namespace Spa_Interaction_Screen
             Constants.RGBW c = RGBtoRGBW(colorWheelElement.Color);
             foreach (int value in Config.colorwheelvalues[0])
             {
-                if (Config.DMXScenes[2].Channelvalues.Length > value && value>=0)
+                if (Config.DMXScenes[2].Channelvalues.Length > value && value >= 0)
                 {
                     Config.DMXScenes[2].Channelvalues[value] = (byte)(double)(c.R * ((ColorSlider.ColorSlider)colorWheelElement.Tag).Value * new decimal(0.01));
                 }
@@ -1863,7 +2058,7 @@ namespace Spa_Interaction_Screen
 
         public void reset()
         {
-            Constants.InvokeDelegate<object>([],new MyNoArgument(delegatereset), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatereset), this);
         }
 
         public object delegatereset()
@@ -1871,7 +2066,7 @@ namespace Spa_Interaction_Screen
             Logger.Print("Performing Reset", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             RunTask = false;
             this.Hide();
-            
+
             loadscreen = new Loading(this, mainscreen);
             loadscreen.Show();
             loadscreen.updateProgress(20);
@@ -1928,7 +2123,7 @@ namespace Spa_Interaction_Screen
 
         public bool generateQRCode(PictureBox p, int pixelsize, bool quietzone, int size, bool inv)
         {
-            if(p == null)
+            if (p == null)
             {
                 return false;
             }
@@ -1958,7 +2153,7 @@ namespace Spa_Interaction_Screen
             }
 
             p.Size = new Size(size, size);
-            if(qrCodeImage == null)
+            if (qrCodeImage == null)
             {
                 p.Image = Image.FromFile("QRplaceholderstillcreating.png");
                 return false;
@@ -1989,6 +2184,7 @@ namespace Spa_Interaction_Screen
                 windows.Dispose();
             }
             Application.Exit();
+
         }
 
         public void tabControl_DrawItem(object sender, DrawItemEventArgs e)
@@ -2012,8 +2208,8 @@ namespace Spa_Interaction_Screen
 
             //If the maximum value is 0, immediately return pure black.
             if (tM == 0)
-            { 
-                return new Constants.RGBW(c, 0, 0, 0, 0); 
+            {
+                return new Constants.RGBW(c, 0, 0, 0, 0);
             }
 
             //This section serves to figure out what the color with 100% hue is
@@ -2034,7 +2230,7 @@ namespace Spa_Interaction_Screen
             values[3] = Convert.ToInt32(c.B - Luminance);
 
             //Trim them so that they are all between 0 and 255
-            for (int i=0;i<values.Length;i++) 
+            for (int i = 0; i < values.Length; i++)
             {
                 values[i] = Math.Max(values[i], 0);
                 values[i] = Math.Min(values[i], 255);
@@ -2052,7 +2248,7 @@ namespace Spa_Interaction_Screen
 
         public void setscenelocked(bool x, String txt, Color c)
         {
-            Constants.InvokeDelegate<object>([x,txt,c],new Mysetscenelocked(delegatesetscenelocked), this);
+            Constants.InvokeDelegate<object>([x, txt, c], new Mysetscenelocked(delegatesetscenelocked), this);
         }
 
         public object delegatesetscenelocked(bool x, String txt, Color c)
@@ -2066,7 +2262,7 @@ namespace Spa_Interaction_Screen
                 {
                     l.Show();
                     helper.SetEdgePosition(l, 3);
-                    l.Location = new Point((Constants.windowwidth/2)-(l.Size.Width/2), l.Location.Y);
+                    l.Location = new Point((Constants.windowwidth / 2) - (l.Size.Width / 2), l.Location.Y);
                     l.BringToFront();
                     resetscenelockbutton.Show();
                 }
@@ -2145,9 +2341,9 @@ namespace Spa_Interaction_Screen
             return null;
         }
 
-        public void setservicelocked(bool x,Color c)
+        public void setservicelocked(bool x, Color c)
         {
-            Constants.InvokeDelegate<object>([x,c], new Mysetservicelocked(delegatesetservicelocked), this);
+            Constants.InvokeDelegate<object>([x, c], new Mysetservicelocked(delegatesetservicelocked), this);
         }
 
         public object delegatesetservicelocked(bool x, Color c)
@@ -2280,7 +2476,7 @@ namespace Spa_Interaction_Screen
             {
                 vlc.toggleConsoleBox(false);
             }
-            if(UIControl != null)
+            if (UIControl != null)
             {
                 UIControl.SelectTab(UIControl.TabCount - 1);
             }
@@ -2288,6 +2484,7 @@ namespace Spa_Interaction_Screen
             {
                 showconsoleonallsites_button.Show();
             }
+            assemblePCStats();
             ((Button)(sender)).Click -= ShowConsole;
             ((Button)(sender)).Click += CloseConsole;
             ((Button)(sender)).Text = "Schließe Konsole";
@@ -2301,14 +2498,15 @@ namespace Spa_Interaction_Screen
                 return;
             }
             helper.removeConsolePage();
-            if(sender == null)
+            if (sender == null)
             {
                 return;
             }
-            if(showconsoleonallsites_button != null)
+            if (showconsoleonallsites_button != null)
             {
                 showconsoleonallsites_button.Hide();
             }
+            assemblePCStats();
             ((Button)(sender)).Click -= CloseConsole;
             ((Button)(sender)).Click += ShowConsole;
             ((Button)(sender)).Text = "Öffne Konsole";
@@ -2333,41 +2531,6 @@ namespace Spa_Interaction_Screen
             ((Button)(sender)).Click += ShowConsoleOnallSites;
             ((Button)(sender)).Text = "Zeige Konsole immer";
             helper.selectButton(((Button)(sender)), false, Constants.selected_color);
-        }
-
-        public String AddConsoleLine(String line)
-        {
-            if(line != null && line.Length > 0)
-            {
-                if (vlc != null && Logger.ConsoleBox != null)
-                {
-                    bool scroll = true;
-                    if (Logger.ConsoleBox.SelectionStart == Logger.ConsoleBox.Text.Length)
-                    {
-                        scroll = false;
-                    }
-                    Logger.ConsoleBox.Text += line;
-                    Logger.ConsoleBox.Text += "\n\r";
-                    if (scroll)
-                    {
-                        Logger.ConsoleBox.SelectionStart = Logger.ConsoleBox.Text.Length;
-                        Logger.ConsoleTextscroll.Value = Logger.ConsoleBox.SelectionStart * -1 + Logger.ConsoleTextscroll.Maximum;
-                        Logger.ConsoleBox.ScrollToCaret();
-                    }
-                    if (TextRenderer.MeasureText(Logger.ConsoleBox.Text, Logger.ConsoleBox.Font).Height > Logger.ConsoleBox.Size.Height)
-                    {
-                        Logger.ConsoleTextscroll.Maximum = Logger.ConsoleBox.Text.Length;
-                        Logger.ConsoleTextscroll.Show();
-                    }
-                    else
-                    {
-                        Logger.ConsoleTextscroll.Hide();
-                    }
-                    return Logger.ConsoleBox.Text;
-                }
-                return line;
-            }
-            return "";
         }
 
         public void SetConsoleText(String Text)
@@ -2400,7 +2563,7 @@ namespace Spa_Interaction_Screen
 
         public void ClearConsole()
         {
-            if(vlc != null && Logger.ConsoleBox != null)
+            if (vlc != null && Logger.ConsoleBox != null)
             {
                 Logger.ConsoleBox.Text = "";
                 Logger.ConsoleBox.Clear();
@@ -2409,7 +2572,7 @@ namespace Spa_Interaction_Screen
 
         public void comboconsoleItemchanged(object sender, EventArgs e)
         {
-            if(Logger.consoletype == null)
+            if (Logger.consoletype == null)
             {
                 return;
             }
@@ -2429,7 +2592,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                if((Constants.ComboItem)Logger.consolesubtype.SelectedItem == null)
+                if ((Constants.ComboItem)Logger.consolesubtype.SelectedItem == null)
                 {
                     SubIndex = null;
                 }
@@ -2439,9 +2602,9 @@ namespace Spa_Interaction_Screen
                 }
             }
             ClearConsole();
-            if(Logger.consoletype != null)
+            if (Logger.consoletype != null)
             {
-                if(SubIndex != null)
+                if (SubIndex != null)
                 {
                     SetConsoleText(Logger.GetConsoleText((Logger.MessageType)Index, (Logger.MessageSubType)SubIndex));
                 }
@@ -2450,13 +2613,13 @@ namespace Spa_Interaction_Screen
                     SetConsoleText(Logger.GetConsoleText((Logger.MessageType)Index));
                 }
             }
-            
+
             Logger.setCurrentlyshowing((byte)Index);
         }
 
         public void sendTCPfromconsole(object sender, EventArgs e)
         {
-            ((Button)sender).BackColor = Constants.alternative_color;
+            ((Button)sender).BackColor = Constants.selected_color;
             ((Button)sender).Click -= sendTCPfromconsole;
             ButtonFader.addcolortimedButton(((Button)sender), Constants.Buttonshortfadetime, Constants.Button_color, sendTCPfromconsole);
             net.Messageafterparse(CreateMessagString());
@@ -2494,7 +2657,7 @@ namespace Spa_Interaction_Screen
             p += '"';
             p += ':';
             p += '"';
-            if(tcptype.SelectedIndex<0 || tcptype.SelectedIndex >= Config.Typenames.Length)
+            if (tcptype.SelectedIndex < 0 || tcptype.SelectedIndex >= Config.Typenames.Length)
             {
                 return "Select Type";
             }
@@ -2545,7 +2708,7 @@ namespace Spa_Interaction_Screen
                     int parse = 0;
                     if (!s.Contains('"') && !Int32.TryParse(s, out parse))
                     {
-                        p+= '"';
+                        p += '"';
                     }
                     p += s.Trim();
                     if (!s.Contains('"') && !Int32.TryParse(s, out parse))

@@ -41,6 +41,11 @@ namespace Spa_Interaction_Screen
             {
                 f.SessionEnded(this, false);
             }
+            if (Constants.Unternehmensname != null && Constants.Unternehmensname.Length > 0)
+            {
+                this.Text = Constants.Unternehmensname;
+            }
+            SetIcon();
         }
 
         public override void OnFormClosed(object sender, EventArgs e)

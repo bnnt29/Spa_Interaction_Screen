@@ -5,6 +5,7 @@ UDPReceivePort%50100
 ConfigSeperator%;
 ConfigComment%#
 ConfigEmpty%!
+SpaName%Veen Spa
 maxscenes%12
 maxhelps%12
 maxtcps%5
@@ -18,7 +19,3 @@ EdgeItemposxdist%80
 EdgeItemposydist%80
 Logoxsize%100
 Logoysize%100
-
-
-
-

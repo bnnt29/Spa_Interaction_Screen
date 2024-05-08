@@ -16,16 +16,16 @@ namespace Spa_Interaction_Screen
         public const int SessionOvertimeBuffer = 2;
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
-        public const String ServiceNotReachableText = "Anzeige Service Ruf nicht möglich";
+        public const String ServiceNotReachableText = "Service Ruf nicht möglich";
         public const int Buttonshortfadetime = 150;
         public const int ButtonLongfadetime = 1000;
         public const bool NetRoomSpecMandatory = false;
-        public const int SaunaChanneloffset = 1;
         public const bool showButtonTester = true;
 
         //PreConfig
         public static String ContentPath = null;
         public static int UDPReceivePort = 50100;
+        public static String Unternehmensname = null;
         private static Char[] delimiter = new Char[] { ';', '#', '!' };
         public static int maxscenes = 12;
         public static int maxhelps = 12;
