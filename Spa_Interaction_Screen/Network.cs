@@ -1,22 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using System.Net;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.IO;
 using Newtonsoft.Json.Linq;
-using System.Linq.Expressions;
-using ENTTEC.Devices.MessageFilters;
-using System.Diagnostics.Eventing.Reader;
 using static Spa_Interaction_Screen.Constants;
-using static System.Collections.Specialized.BitVector32;
-using System.Text.RegularExpressions;
-using static QRCoder.PayloadGenerator.SwissQrCode;
-
 namespace Spa_Interaction_Screen
 {
     public class Network

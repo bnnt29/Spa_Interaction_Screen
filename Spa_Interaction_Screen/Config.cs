@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Data.SqlTypes;
+﻿
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
-using System.Drawing.Design;
-using System.IO;
-using static QRCoder.PayloadGenerator;
 using static Spa_Interaction_Screen.Constants;
 using static Spa_Interaction_Screen.Logger;
 
@@ -15,9 +7,9 @@ namespace Spa_Interaction_Screen
 {
     public static class Config
     {
-        private static String[] __preconfiglines;
+        private static String[]? __preconfiglines;
         private static int currentpreconfigindex = 0;
-        private static String[] __configlines;
+        private static String[]? __configlines;
         private static int currentconfigindex = 0;
 
         public static bool allread = false;
@@ -66,7 +58,7 @@ namespace Spa_Interaction_Screen
         public static byte[] ObjectLightInterval = null;
         public static int ObjectLightchannel = -1;
         public static String Objectname = null;
-        public static int[][] colorwheelvalues;
+        public static int[][] colorwheelvalues = null;
         public static String[] Typenames = null;
         public static int SessionSetting = -1;
         public static int DMXSceneSetting = -1;
@@ -815,7 +807,7 @@ namespace Spa_Interaction_Screen
         {
             Debug.Print(((Constants.rawfunctiontext)(s.secondary)).functionText);
             String[] functionspecs = ((Constants.rawfunctiontext)(s.secondary)).functionText.Split(',');
-            configclasses functionclass = null;
+            Configclasses functionclass = null;
             if (functionspecs.Length < 2)
             {
                 Logger.Print("Not enough Secondary Function arguments", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
@@ -827,8 +819,8 @@ namespace Spa_Interaction_Screen
             {
                 return null;
             }
-            List<configclasses> typelist = getListfromint(type);
-            foreach (configclasses sys in typelist)
+            List<Configclasses> typelist = getListfromint(type);
+            foreach (Configclasses sys in typelist)
             {
                 if (sys.JsonText.Equals(functionspecs[1]))
                 {
@@ -940,22 +932,22 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        private static List<configclasses> getListfromint(int x)
+        private static List<Configclasses> getListfromint(int x)
         {
             switch (x)
             {
                 case 0:
-                    return SystemSettings.Cast<configclasses>().ToList();
+                    return SystemSettings.Cast<Configclasses>().ToList();
                 case 1:
-                    return TCPSettings.Cast<configclasses>().ToList();
+                    return TCPSettings.Cast<Configclasses>().ToList();
                 case 2:
-                    return SessionSettings.Cast<configclasses>().ToList();
+                    return SessionSettings.Cast<Configclasses>().ToList();
                 case 3:
-                    return ServicesSettings.Cast<configclasses>().ToList();
+                    return ServicesSettings.Cast<Configclasses>().ToList();
                 case 4:
-                    return DMXScenes.Cast<configclasses>().ToList();
+                    return DMXScenes.Cast<Configclasses>().ToList();
                 default:
-                    return new List<configclasses>();
+                    return new List<Configclasses>();
             }
         }
 

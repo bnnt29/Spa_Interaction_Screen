@@ -1,8 +1,4 @@
-﻿using System.Windows.Forms;
-using System.Diagnostics;
-using Microsoft.VisualBasic.ApplicationServices;
-using static System.Windows.Forms.LinkLabel;
-using static QRCoder.PayloadGenerator;
+﻿
 
 namespace Spa_Interaction_Screen
 {

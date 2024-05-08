@@ -1,16 +1,5 @@
 ﻿using LibVLCSharp.Shared;
 using LibVLCSharp.WinForms;
-using Microsoft.VisualBasic.ApplicationServices;
-using PlanwerkLichtSpa.Properties;
-using System.Diagnostics;
-using System.Net.Sockets;
-using System.Resources;
-using System.Runtime.CompilerServices;
-using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
-using Test;
-using static Spa_Interaction_Screen.MainForm;
-using static System.Windows.Forms.LinkLabel;
 
 namespace Spa_Interaction_Screen
 {

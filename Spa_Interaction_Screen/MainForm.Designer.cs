@@ -1,21 +1,4 @@
-﻿using Microsoft.VisualBasic.FileIO;
-using System.CodeDom;
-using System.Diagnostics;
-using System.Text;
-using System.Runtime.CompilerServices;
-using System.Xml.Linq;
-using System;
-using System.ComponentModel.DataAnnotations;
-
-using System;
-using System.Drawing;
-using System.Linq;
-using System.Reflection;
-using Microsoft.Web.WebView2.Core;
-using ColorSlider;
-using Cyotek.Windows.Forms;
-using System.Windows.Forms;
-using BrbVideoManager.Controls;
+﻿using Cyotek.Windows.Forms;
 
 
 namespace Spa_Interaction_Screen

@@ -1,9 +1,4 @@
-﻿using Microsoft.VisualBasic.ApplicationServices;
-using System.Diagnostics;
-using System.Drawing.Drawing2D;
-using System.IO;
-using static Spa_Interaction_Screen.Constants;
-using static Spa_Interaction_Screen.EmbedVLC;
+﻿using System.Diagnostics;
 
 namespace Spa_Interaction_Screen
 {

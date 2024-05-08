@@ -1,15 +1,5 @@
 ﻿
-using QRCoder;
-using Spa_Interaction_Screen;
-using System.Diagnostics;
-using System.Windows.Forms;
-using static System.Windows.Forms.AxHost;
-using System.Management;
-using Microsoft.VisualBasic;
-using static System.Formats.Asn1.AsnWriter;
-using System.Text.RegularExpressions;
 using BrbVideoManager.Controls;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Spa_Interaction_Screen
 {

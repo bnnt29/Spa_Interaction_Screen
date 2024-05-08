@@ -1,11 +1,5 @@
-using System;
 using System.Runtime.InteropServices;
-using System.IO;
-using System.Threading;
-using System.Diagnostics;
 using FT_HANDLE = System.UIntPtr;
-using System.Reflection.Metadata;
-using Microsoft.VisualBasic;
 using Spa_Interaction_Screen;
 
 

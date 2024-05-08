@@ -1,35 +1,25 @@
 using AudioSwitcher.AudioApi.CoreAudio;
 using Cyotek.Windows.Forms;
-using Newtonsoft.Json.Linq;
 using QRCoder;
 using System.Diagnostics;
 using System.IO.Ports;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Windows.Forms;
-using Microsoft.Win32;
-using static QRCoder.PayloadGenerator.SwissQrCode;
-using System.Runtime.InteropServices;
-using System.Xml;
-using System.Diagnostics.Metrics;
-using static Spa_Interaction_Screen.EmbedVLC;
-using Microsoft.VisualBasic.ApplicationServices;
-using static System.Windows.Forms.LinkLabel;
 using System.Net.NetworkInformation;
 using System.Net;
-using System;
-using QRCoder.Extensions;
 using System.Net.Sockets;
 using Test;
-using System.Runtime.Intrinsics.X86;
-using System.ComponentModel;
 
 /*TODO:
+ * File Logging reparieren
+ * CPU stats in Log
+ * Channel nummern prüfen
+ * frisst manche "Session fast zuende" nachrichten nicht
+ * QR Code auf Media Seite broken, wenn noch nicht backup geladen
  * Umschaltung zu Endszene trotz Streaming
  * Bildschirmschoner knopf broken
  * TCPWartung blinkt nicht
  * repair monitor setup (start with 1, then connect 1)
+ * evtl. Tab swicth delayen, um Grafik zu laden
+ * Design / Sauna nicht konfig überschreiben, wenn nicht geändert
  * Test TCPButtons
  * Refactor for performance
  * Remove left over artefacts
@@ -1560,7 +1550,7 @@ namespace Spa_Interaction_Screen
             if (s != null && s.hassecondary)
             {
                 Constants.ServicesSettingfunction sf = (Constants.ServicesSettingfunction)((Button)(sender)).Tag;
-                if (sf.functionclass != null && sf.secondary != null && sf.functionclass.IsSubclassOf(typeof(Constants.configclasses)))
+                if (sf.functionclass != null && sf.secondary != null && sf.functionclass.IsSubclassOf(typeof(Constants.Configclasses)))
                 {
                     Task.Run(async () => performsecondary(sf));
                 }

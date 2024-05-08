@@ -1,5 +1,4 @@
 ﻿using BrbVideoManager.Controls;
-using System.Runtime.CompilerServices;
 
 namespace Spa_Interaction_Screen
 {
@@ -69,7 +68,7 @@ namespace Spa_Interaction_Screen
         public const int waittonextcheck = 100;
         public const int sendtimeout = 30;
 
-        public class SystemSetting : configclasses
+        public class SystemSetting : Configclasses
         {
             public String? value = null;
         }
@@ -78,7 +77,7 @@ namespace Spa_Interaction_Screen
         {
         }
 
-        public class SessionSetting : configclasses
+        public class SessionSetting : Configclasses
         {
             /*
             public int startvalue = -1;//inclusive
@@ -88,7 +87,7 @@ namespace Spa_Interaction_Screen
             public bool should_reset = false;
         }
 
-        public class ServicesSetting : configclasses
+        public class ServicesSetting : Configclasses
         {
             /*
             public int startvalue = -1;//inclusive
@@ -97,7 +96,7 @@ namespace Spa_Interaction_Screen
             public bool hassecondary = false;
         }
 
-        public class rawfunctiontext : configclasses
+        public class rawfunctiontext : Configclasses
         {
             public String functionText;
         }
@@ -115,7 +114,7 @@ namespace Spa_Interaction_Screen
             public bool block;
             public bool canceling;
             public bool toggle;
-            public configclasses? secondary;
+            public Configclasses? secondary;
             public override string ToString()
             {
                 String s = "[";
@@ -154,13 +153,13 @@ namespace Spa_Interaction_Screen
             }
         }
 
-        public class DMXScene : configclasses
+        public class DMXScene : Configclasses
         {
             public byte[] Channelvalues = null;
             public String? ContentPath = null;
         }
 
-        public abstract class configclasses
+        public abstract class Configclasses
         {
             public int id=-1;
             public string Typename = null;
