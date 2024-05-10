@@ -1,5 +1,6 @@
 ﻿using LibVLCSharp.Shared;
 using LibVLCSharp.WinForms;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Spa_Interaction_Screen
 {
@@ -60,7 +61,7 @@ namespace Spa_Interaction_Screen
                     main.vlc.Dispose();
                     main.vlc = null;
                 }
-                else if(main.vlc != null && main.sessionEndVLC.Equals(this))
+                else if(main.vlc != null && main.sessionEndVLC != null && main.sessionEndVLC.Equals(this))
                 {
                     main.sessionEndVLC.Dispose();
                     main.sessionEndVLC = null;
@@ -121,15 +122,22 @@ namespace Spa_Interaction_Screen
 
         public void exittorestricted(object sender, EventArgs e)
         {
-            main.UIControl.SelectTab(main.UIControl.TabCount - 1);
+            //TODO
+            if (main!=null)
+            {
+                if (main.UIControl != null)
+                {
+                    main.UIControl.SelectTab(main.UIControl.TabPages.IndexOf(main.WartungPage));
+                }
+                main.showlogin();
+            }
             this.SendToBack();
             this.Hide();
-            main.showlogin();
         }
 
         public void quitMedia(bool user)
         {
-            Constants.InvokeDelegate<object>([user], new MyquitMedia(delegatequitMedia), this);
+            Constants.InvokeDelegate<object>([user], new MyquitMedia(delegatequitMedia), this, Logger.MessageType.VideoProjection);
         }
 
         private object delegatequitMedia(bool user)
@@ -150,7 +158,7 @@ namespace Spa_Interaction_Screen
 
         public void showthis()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), main);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), this, Logger.MessageType.VideoProjection);
         }
 
         public object delegateshowthis()
@@ -164,7 +172,7 @@ namespace Spa_Interaction_Screen
 
         public void hidethis()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this, Logger.MessageType.VideoProjection);
         }
 
         private object delegatehidethis()
@@ -175,7 +183,7 @@ namespace Spa_Interaction_Screen
 
         public void newsession()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatenewsession), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatenewsession), this, Logger.MessageType.VideoProjection);
         }
 
         private object delegatenewsession()
@@ -203,7 +211,7 @@ namespace Spa_Interaction_Screen
                     return;
                 }
             }
-            Constants.InvokeDelegate<object>([link, user], new MychangeMedia(delegatechangeMedia), this);
+            Constants.InvokeDelegate<object>([link, user], new MychangeMedia(delegatechangeMedia), this, Logger.MessageType.VideoProjection);
         }
 
         private object delegatechangeMedia(String link, bool user)
@@ -221,7 +229,7 @@ namespace Spa_Interaction_Screen
             {
                 return null;
             }
-            Logger.Print($"Showing {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Information);
+            Logger.Print($"Showing {link}", Logger.MessageType.VideoProjection, Logger.MessageSubType.Information);
             int index = link.LastIndexOf('.');
             switch (link.Substring(index))
             {
@@ -260,23 +268,22 @@ namespace Spa_Interaction_Screen
                     picture(link, user);
                     break;
                 default:
-                    Logger.Print($"Couldn't use file format of file: {link}", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    Logger.Print($"Couldn't use file format of file: {link}", Logger.MessageType.VideoProjection, Logger.MessageSubType.Notice);
                     break;
+            }
+            if (user && welcomeqr != null)
+            {
+                welcomeqr.Hide();
             }
             if (showingconsole)
             {
                 Logger.ConsoleBox.Show();
                 Logger.ConsoleBox.BringToFront();
+                return null;
             }
             else
             {
                 Logger.ConsoleBox.Hide();
-                Logger.ConsoleBox.SendToBack();
-            }
-            if (user && welcomeqr != null)
-            {
-                welcomeqr.Hide();
-                welcomeqr.BringToFront();
             }
             return null;
         }
@@ -285,7 +292,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(link))
             {
-                Logger.Print("Video Media not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                Logger.Print("Video Media not found", Logger.MessageType.VideoProjection, Logger.MessageSubType.Notice);
             }
             var uri = new Uri(link);
             // Use command line options as Options for media playback (https://wiki.videolan.org/VLC_command-line_help/)
@@ -305,7 +312,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(link))
             {
-                Logger.Print("Video Media not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                Logger.Print("Video Media not found", Logger.MessageType.VideoProjection, Logger.MessageSubType.Notice);
             }
             Uri uri = new Uri(link);
 
@@ -318,15 +325,18 @@ namespace Spa_Interaction_Screen
         public void toggleConsoleBox(bool show)
         {
             showingconsole = show;
-            if (show)
+            if(Logger.ConsoleBox != null)
             {
-                Logger.ConsoleBox.Show();
-                Logger.ConsoleBox.BringToFront();
-            }
-            else
-            {
-                Logger.ConsoleBox.Hide();
-                Logger.ConsoleBox.SendToBack();
+                if (show)
+                {
+                    Logger.ConsoleBox.Show();
+                    Logger.ConsoleBox.BringToFront();
+                }
+                else
+                {
+                    Logger.ConsoleBox.Hide();
+                    Logger.ConsoleBox.SendToBack();
+                }
             }
         }
 

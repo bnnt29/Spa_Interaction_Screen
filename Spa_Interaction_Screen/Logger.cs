@@ -1,10 +1,13 @@
 ﻿using Microsoft.VisualBasic.Logging;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Spa_Interaction_Screen
 {
     public static class Logger
     {
+        private static Semaphore __Blogpool = new Semaphore(1, 1); 
+        private static Semaphore __logpool = new Semaphore(1, 1);
         private static List<Log_Element>[] log_Elements = null;
         private static byte currentlyshowing = Byte.MaxValue;
         public static RichTextBox ConsoleBox;
@@ -23,6 +26,11 @@ namespace Spa_Interaction_Screen
                 return null;
             }
             return log_Elements[index];
+        }
+
+        public static void Clear()
+        {
+            log_Elements = new List<Log_Element>[Byte.MaxValue];
         }
 
         public class Log_Element
@@ -116,11 +124,12 @@ namespace Spa_Interaction_Screen
             Router = 5,
             Gastro = 6,
             Licht = 7,
-            VideoProjektion = 8,
+            VideoProjection = 8,
             Intern = 9,
             Extern = 10,
             Konfig = 11,
-            Logger = 12
+            Logger = 12,
+            SystemState = 13
         }
 
         public enum MessageSubType : byte
@@ -170,7 +179,7 @@ namespace Spa_Interaction_Screen
                 log.Message = Message;
                 if (valid > 0)
                 {
-                    Constants.InvokeDelegate<int>([log, ShowfullMessageLater], new MyaddElement(addElement), form);
+                    Constants.InvokeDelegate<int>([log, ShowfullMessageLater], new MyaddElement(addElement), form, Logger.MessageType.Logger);
                 }
                 if (ShowfullMessageLater)
                 {
@@ -188,36 +197,64 @@ namespace Spa_Interaction_Screen
             Debug.WriteLine(m);
             try
             {
+                __Blogpool.WaitOne();
                 WriteSingleLogMessage(Constants.BackupLOGPath, m, false);
-                WriteSingleLogMessage(Config.LogPath, m, false);
-            }catch(Exception e)
+            }
+            catch (IOException ex)
+            {
+                initLog();
+            }
+            catch (Exception e)
             {
                 Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
                 Logger.Print("Die Log Dateien sind seit Programm start verschwunden", MessageType.Logger, MessageSubType.Notice);
+            }
+            finally
+            {
+                __Blogpool.Release();
+            }
+            try
+            {
+                __logpool.WaitOne();
+                WriteSingleLogMessage(Config.LogPath, m, false);
+            }catch(IOException ex)
+            {
+                InitLogfromBackup();
+            }
+            catch(Exception e)
+            {
+                Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
+                Logger.Print("Die Log Dateien sind seit Programm start verschwunden", MessageType.Logger, MessageSubType.Notice);
+            }
+            finally
+            {
+                __logpool.Release();
             }
         }
 
         private static void WriteSingleLogMessage(String Path, String log, Boolean shouldcreate)
         {
+            WriteBunchLogMessages(Path, [log], shouldcreate);
+        }
+
+        private static void WriteBunchLogMessages(String Path, String[] log, Boolean shouldcreate)
+        {
+            if(log == null || log.Length == 0)
+            {
+                return;
+            }
             if (Path != null && Path.Length > 0)
             {
                 if (!File.Exists(Path))
                 {
-                    if (shouldcreate)
+                    try
                     {
-                        try
-                        {
-                            File.Create(Path);
-                        }
-                        catch(Exception ex)
-                        {
-                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
-                            Logger.Print($"Could not Create File: {Path}", MessageType.Logger, MessageSubType.Notice);
-                        }
+                        File.Create(Path);
                     }
-                    else
+                    catch(Exception ex)
                     {
-                        throw new IOException("Die Datei existiert nicht und durfte nicht erstellt werden an dieser Stelle.");
+                        Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                        Logger.Print($"Could not Create File: {Path}", MessageType.Logger, MessageSubType.Notice);
                     }
                 }
                 try
@@ -226,7 +263,10 @@ namespace Spa_Interaction_Screen
                     {
                         if (sw != null)
                         {
-                            sw.WriteLine(log);
+                            foreach(String s in log)
+                            {
+                                sw.WriteLine(s);
+                            }
                             try
                             {
                                 sw.Flush();
@@ -262,7 +302,7 @@ namespace Spa_Interaction_Screen
                 start.SubType = MTypetobyte<MessageSubType>(MessageSubType.Information);
                 start.time = DateTime.Now;
                 start.Message = $"Welcome to the Interaction Screen Version {Constants.CurrentVersion}";
-                Constants.InvokeDelegate<int>([start, true], new MyaddElement(addElement), form);
+                Constants.InvokeDelegate<int>([start, true], new MyaddElement(addElement), form, Logger.MessageType.Logger);
             }
             int i;
             for (i = 0; i < LE.type.Length; i++)
@@ -300,7 +340,17 @@ namespace Spa_Interaction_Screen
 
         public static void initLog()
         {
-            WriteSingleLogMessage(Constants.BackupLOGPath, $"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n{Logger.TimeToString(DateTime.Now)}", true);
+            try
+            {
+                __Blogpool.WaitOne();
+                WriteSingleLogMessage(Constants.BackupLOGPath, $"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n{Logger.TimeToString(DateTime.Now)}", true);
+            }catch(Exception ex)
+            {
+                Logger.Print("Konnte Backup Log nicht erstellen oder öffnen.", MessageType.Logger, MessageSubType.Error);
+            }finally 
+            { 
+                __Blogpool.Release(); 
+            }
         }
 
         public static bool FOpenWrite(FileStream file)
@@ -364,12 +414,25 @@ namespace Spa_Interaction_Screen
             {
                 Debug.Print($"LogFilePath is null");
             }
+            List<Log_Element> sorted = combineandsort(log_Elements);
+            String[] logs = new string[sorted.Count];
+            for(int i = 0;i<sorted.Count;i++)
+            {
+                logs[i] = sorted[i].ToString();
+            }
             try
             {
-                File.Copy(Constants.BackupLOGPath, Config.LogPath, true);
+                __logpool.WaitOne();
+                WriteBunchLogMessages(Config.LogPath, logs, true);
             }catch(Exception e)
             {
+                Debug.Print("2");
                 Logger.Print(e.Message, MessageType.Logger, MessageSubType.Error);
+                Logger.Print("InitLogfromBackup", MessageType.Logger, MessageSubType.Notice);
+            }
+            finally
+            {
+                __logpool.Release();
             }
         }
 
@@ -411,7 +474,7 @@ namespace Spa_Interaction_Screen
 
         public static String AddConsoleLine(String line)
         {
-            return Constants.InvokeDelegate<String>([line], new MyAddConsoleLine(delegateAddConsoleLine), form.vlc);
+            return Constants.InvokeDelegate<String>([line], new MyAddConsoleLine(delegateAddConsoleLine), form.vlc, Logger.MessageType.Logger);
         }
 
         public static String delegateAddConsoleLine(String line)
@@ -421,31 +484,39 @@ namespace Spa_Interaction_Screen
                 if (ConsoleBox != null)
                 {
                     bool scroll = true;
-                    if (ConsoleBox.SelectionStart == ConsoleBox.Text.Length)
+                    try
                     {
-                        scroll = false;
-                    }
-                    ConsoleBox.Text += line;
-                    ConsoleBox.Text += "\r\n";
-                    if (scroll)
+                        if (ConsoleBox.SelectionStart == ConsoleBox.Text.Length)
+                        {
+                            scroll = false;
+                        }
+                        ConsoleBox.Text += line;
+                        ConsoleBox.Text += "\r\n";
+                        if (scroll)
+                        {
+                            ConsoleBox.SelectionStart = ConsoleBox.Text.Length;
+                            int x = ((int)(ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum));
+                            x = Math.Max(x, ((int)ConsoleTextscroll.Minimum));
+                            x = Math.Min(x, ((int)ConsoleTextscroll.Maximum));
+                            ConsoleTextscroll.Value = x;
+                            ConsoleBox.ScrollToCaret();
+                        }
+                        if (TextRenderer.MeasureText(ConsoleBox.Text, ConsoleBox.Font).Height > ConsoleBox.Size.Height)
+                        {
+                            ConsoleTextscroll.Maximum = ConsoleBox.Text.Length;
+                            ConsoleTextscroll.Show();
+                        }
+                        else
+                        {
+                            ConsoleTextscroll.Hide();
+                        }
+                        return ConsoleBox.Text;
+                    }catch(Exception ex)
                     {
-                        ConsoleBox.SelectionStart = ConsoleBox.Text.Length;
-                        int x = ((int)(ConsoleBox.SelectionStart * -1 + ConsoleTextscroll.Maximum));
-                        x = Math.Max(x, ((int)ConsoleTextscroll.Minimum));
-                        x = Math.Min(x, ((int)ConsoleTextscroll.Maximum));
-                        ConsoleTextscroll.Value = x;
-                        ConsoleBox.ScrollToCaret();
+                        Logger.Print(ex.Message, MessageType.Benutzeroberfläche, MessageSubType.Error);
+                        Logger.Print("delegateAddConsoleLine", MessageType.Benutzeroberfläche, MessageSubType.Notice);
+                        return "";
                     }
-                    if (TextRenderer.MeasureText(ConsoleBox.Text, ConsoleBox.Font).Height > ConsoleBox.Size.Height)
-                    {
-                        ConsoleTextscroll.Maximum = ConsoleBox.Text.Length;
-                        ConsoleTextscroll.Show();
-                    }
-                    else
-                    {
-                        ConsoleTextscroll.Hide();
-                    }
-                    return ConsoleBox.Text;
                 }
                 return line;
             }
@@ -493,6 +564,57 @@ namespace Spa_Interaction_Screen
                 return null;
             }
             return fstream;
+        }
+
+        public static List<Log_Element> combineandsort(List<Log_Element>[] ListArray)
+        {
+            if(ListArray == null || ListArray.Length == 0)
+            {
+                return new List<Log_Element>();
+            }
+            List<Log_Element> comb = new List<Log_Element>();
+            int[] index = new int[ListArray.Length];
+            int Elementsleft = 0;
+            for (int i = 0; i < ListArray.Length; i++)
+            {
+                if (ListArray[i] == null)
+                {
+                    index[i] = -1;
+                }
+                else
+                {
+                    index[i] = ListArray[i].Count;
+                    Elementsleft += index[i];
+                }
+            }
+            while(Elementsleft > 0)
+            {
+                int nextelementlist = -1;
+                DateTime oldest = DateTime.Now;
+                for(int i = 0;i< ListArray.Length; i++)
+                {
+                    if (index[i] <= 0)
+                    {
+                        continue;
+                    }
+                    if (ListArray[i][index[i]-1].time < oldest)
+                    {
+                        nextelementlist = i;
+                    }
+                }
+                if(nextelementlist > 0)
+                {
+                    comb.Add(ListArray[nextelementlist][index[nextelementlist]-1]);
+                    index[nextelementlist]--;
+                }
+                else
+                {
+                    break;
+                }
+                Elementsleft--;
+            }
+
+            return comb;
         }
     }
 }

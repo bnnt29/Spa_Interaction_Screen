@@ -1836,7 +1836,7 @@ namespace Spa_Interaction_Screen
             {
                 return;
             }
-            Logger.Print("1"+m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
+            Logger.Print(m, Logger.MessageType.TCPReceive, Logger.MessageSubType.Information);
             Dictionary<String, Object> keyValuePairs;
             try
             {

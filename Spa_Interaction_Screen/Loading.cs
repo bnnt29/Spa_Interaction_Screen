@@ -40,7 +40,7 @@ namespace Spa_Interaction_Screen
 
         public void Debugtext(String Text, bool show)
         {
-            Constants.InvokeDelegate<object>([Text, show], new MyDebugText(delegateDebugtext), this);
+            Constants.InvokeDelegate<object>([Text, show], new MyDebugText(delegateDebugtext), this, Logger.MessageType.Hauptprogramm);
         }
 
         private object delegateDebugtext(String Text, bool show)
@@ -59,7 +59,7 @@ namespace Spa_Interaction_Screen
             {
                 DebugText.Show();
                 MainForm.currentState = 0;
-                Logger.Print($"DebugText: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                Logger.Print($"Loadscreen: {Text}", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             }
             else
             {
@@ -81,7 +81,7 @@ namespace Spa_Interaction_Screen
 
         public void exitp(bool show)
         {
-            Constants.InvokeDelegate<object>([show], new Myswitchexit(delegateexitp), this);
+            Constants.InvokeDelegate<object>([show], new Myswitchexit(delegateexitp), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegateexitp(bool show)
@@ -106,7 +106,7 @@ namespace Spa_Interaction_Screen
 
         public void updateProgress(int percentage)
         {
-            Constants.InvokeDelegate<object>([percentage], new MyupdateProgress(delegateupdateProgress), this);
+            Constants.InvokeDelegate<object>([percentage], new MyupdateProgress(delegateupdateProgress), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegateupdateProgress(int percentage)
@@ -115,7 +115,6 @@ namespace Spa_Interaction_Screen
             updateloadGUI();
             return null;
         }
-
 
         public override void OnFormClosed(object sender, EventArgs e)
         {

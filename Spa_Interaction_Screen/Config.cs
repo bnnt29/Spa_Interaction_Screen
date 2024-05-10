@@ -155,6 +155,7 @@ namespace Spa_Interaction_Screen
             {
                 Constants.noCOM = Boolean.Parse(ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToLower());
                 Constants.noNet = Boolean.Parse(ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToLower());
+                Constants.showbuttontester = Boolean.Parse(ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToLower());
                 Constants.showdirectlypotentiallyfalsewificreds = Boolean.Parse(ReadPreConfig().Split(Constants.PreConfigDelimiter)[1].ToLower());
             }
             catch (FormatException e)

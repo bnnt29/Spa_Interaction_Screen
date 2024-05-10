@@ -1,6 +1,6 @@
 Version%1.3
 LoggerDateTimeFormat%14
-ContentPath%C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen_Content
+ContentPath%C:\Users\Berni\Documents\Github\Spa_Interaction_Screen\Spa_Interaction_Screen_Content
 UDPReceivePort%50100
 ConfigSeperator%;
 ConfigComment%#
@@ -12,8 +12,9 @@ maxtcps%5
 XButtonCount%5
 YButtonCount%5
 InlineuntilXButtons%5
-noCom%false
+noCom%true
 noNet%false
+showbuttontester%true
 showdirectlypotentiallyfalsewificreds%false
 EdgeItemposxdist%80
 EdgeItemposydist%80

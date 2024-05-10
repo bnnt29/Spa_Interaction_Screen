@@ -13,14 +13,13 @@ namespace Spa_Interaction_Screen
         public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
-        public const int SessionOvertimeBuffer = 2;
+        public const int SessionOvertimeBuffer = 0;
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
         public const String ServiceNotReachableText = "Service Ruf nicht möglich";
         public const int Buttonshortfadetime = 150;
         public const int ButtonLongfadetime = 1000;
         public const bool NetRoomSpecMandatory = false;
-        public const bool showButtonTester = true;
 
         //PreConfig
         public static String ContentPath = null;
@@ -42,7 +41,7 @@ namespace Spa_Interaction_Screen
         public static int Logoysize = 50;
         public static int buttonupdatemillis = 40;
         public static int DateTimeFormat = 0;
-
+        public static bool showbuttontester = false;
 
         //UI
         public static int windowwidth = 1420;
@@ -283,9 +282,9 @@ namespace Spa_Interaction_Screen
             return (Button)b;
         }
 
-        public static ReturnType InvokeDelegate<ReturnType>(object[]? args, Delegate Mydelegate, CForm form)
+        public static ReturnType InvokeDelegate<ReturnType>(object[]? args, Delegate Mydelegate, CForm form, Logger.MessageType type)
         {
-            if (form == null)
+            if (form == null || Mydelegate == null || Mydelegate.Method == null || Mydelegate.Method.Name == null)
             {
                 return default(ReturnType);
             }
@@ -298,8 +297,8 @@ namespace Spa_Interaction_Screen
                 catch (InvalidOperationException ex)
                 {
                     MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, type, Logger.MessageSubType.Error);
+                    Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     try
                     {
                         return (ReturnType)Mydelegate.DynamicInvoke(args);
@@ -307,8 +306,8 @@ namespace Spa_Interaction_Screen
                     catch (InvalidOperationException ex2)
                     {
                         MainForm.currentState = 7;
-                        Logger.Print(ex2.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                        Logger.Print(ex2.Message, type, Logger.MessageSubType.Error);
+                        Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     }
                 }
             }
@@ -321,8 +320,8 @@ namespace Spa_Interaction_Screen
                 catch (InvalidOperationException ex)
                 {
                     MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                    Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                    Logger.Print(ex.Message, type, Logger.MessageSubType.Error);
+                    Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     try
                     {
                         return (ReturnType)form.Invoke(Mydelegate, args);
@@ -330,8 +329,8 @@ namespace Spa_Interaction_Screen
                     catch (InvalidOperationException ex2)
                     {
                         MainForm.currentState = 7;
-                        Logger.Print(ex2.Message, Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                        Logger.Print("QuitMedia", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Notice);
+                        Logger.Print(ex2.Message, type, Logger.MessageSubType.Error);
+                        Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     }
                 }
             }

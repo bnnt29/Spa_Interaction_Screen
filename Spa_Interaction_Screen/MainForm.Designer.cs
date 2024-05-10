@@ -78,10 +78,7 @@ namespace Spa_Interaction_Screen
             UIControl.Controls.Add(MediaPage);
             UIControl.Controls.Add(TimePage);
             UIControl.Controls.Add(WartungPage);
-            if (Constants.showButtonTester)
-            {
-                UIControl.Controls.Add(ButtonPage);
-            }
+            UIControl.Controls.Add(ButtonPage);
             UIControl.Dock = DockStyle.Fill;
             UIControl.Font = Constants.Standart_font;
             UIControl.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
@@ -91,7 +88,7 @@ namespace Spa_Interaction_Screen
             UIControl.Size = new Size(Constants.windowwidth, Constants.windowheight);
             UIControl.SizeMode = TabSizeMode.Fixed;
             UIControl.TabIndex = 4;
-            UIControl.Selecting += Tab_Changed_Handler;
+            UIControl.Selecting += Tab_Selected_Handler;
             // 
             // AmbientePage
             // 

@@ -14,13 +14,10 @@ using LibreHardwareMonitor.Hardware;
 using System.Windows.Forms;
 
 /*TODO:
- * File Logging reparieren
- * CPU stats in Log
  * frisst manche "Session fast zuende" nachrichten nicht
+ * Console not showen, but qr showen, when Programm is in Overtime mode
  * Umschaltung zu Endszene trotz Streaming
- * Bildschirmschoner knopf broken
  * repair monitor setup (start with 1, then connect 1)
- * evtl. Tab switch delayen, um Grafik zu laden
  * Design / Sauna nicht konfig überschreiben, wenn nicht geändert
  * Test TCPButtons
  * Refactor for performance
@@ -265,11 +262,11 @@ namespace Spa_Interaction_Screen
 
             loadscreen.Debugtext($"Preloading Sites", true);
             hidethis();
-            Constants.InvokeDelegate<object>([], new MyNoArgument(UIControlSwitcher), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(UIControlSwitcher), this, Logger.MessageType.Hauptprogramm);
 
             loadscreen.Debugtext($"Switching to Mainview", true);
             loadscreen.exitp(false);
-            Constants.InvokeDelegate<object>([], new MyNoArgument(loadscreencloser), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(loadscreencloser), this, Logger.MessageType.Hauptprogramm);
             EnterFullscreen(this, mainscreen);
             showthis();
             if (exitProgramm)
@@ -319,7 +316,7 @@ namespace Spa_Interaction_Screen
         {
             EnterFullscreen(this, mainscreen);
 
-            Constants.InvokeDelegate<object>([], new MyNoArgument(removetabs), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(removetabs), this, Logger.MessageType.Hauptprogramm);
             loadscreen.updateProgress(60);
 
             loadscreen.updateProgress(70);
@@ -336,19 +333,19 @@ namespace Spa_Interaction_Screen
             loadscreen.updateProgress(80);
             if (SessionTimer != null)
             {
-                Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(disposeTimer), this);
+                Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(disposeTimer), this, Logger.MessageType.Hauptprogramm);
             }
-            SessionTimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([1000], new MycreateTimer(createTimer), this);
+            SessionTimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([1000], new MycreateTimer(createTimer), this, Logger.MessageType.Hauptprogramm);
             SessionTimer.Tick += timer_tick;
             ButtonFader.removeall();
-            Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(enableTimer), this);
+            Constants.InvokeDelegate<object>([SessionTimer], new MyTimer(enableTimer), this, Logger.MessageType.Hauptprogramm);
             if (ButtonColorTimer != null)
             {
-                Constants.InvokeDelegate<object>([ButtonColorTimer], new MyTimer(disposeTimer), this);
+                Constants.InvokeDelegate<object>([ButtonColorTimer], new MyTimer(disposeTimer), this, Logger.MessageType.Hauptprogramm);
             }
-            ButtonColorTimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([Constants.buttonupdatemillis], new MycreateTimer(createTimer), this);
+            ButtonColorTimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([Constants.buttonupdatemillis], new MycreateTimer(createTimer), this, Logger.MessageType.Hauptprogramm);
             ButtonColorTimer.Tick += ButtonFader.UpdateButtoncolor;
-            Constants.InvokeDelegate<object>([ButtonColorTimer], new MyTimer(enableTimer), this);
+            Constants.InvokeDelegate<object>([ButtonColorTimer], new MyTimer(enableTimer), this, Logger.MessageType.Hauptprogramm);
             /*
             SessionTimer = createTimer(1000, timer_tick);
             enableTimer(SessionTimer);
@@ -356,7 +353,7 @@ namespace Spa_Interaction_Screen
             ButtonColorTimer = createTimer(Constants.buttonupdatemillis, ButtonFader.UpdateButtoncolor);
             enableTimer(ButtonColorTimer);
             */
-            Constants.InvokeDelegate<object>([], new MyNoArgument(resizeUIControlItems), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(resizeUIControlItems), this, Logger.MessageType.Hauptprogramm);
         }
 
         private void setupThreads()
@@ -388,8 +385,12 @@ namespace Spa_Interaction_Screen
                 windows = Task.Run(async () => ScreenManagerTaskMethod(this));
                 pinggastro = Task.Run(async () => GastroPing(this));
                 pingzentrale = Task.Run(async () => ZentralePing(this));
+#if !DEBUG
                 PCStats = new String?[5];
-                systemstats = Task.Run(async () => SastemStats(this));
+                systemstats = Task.Run(async () => SystemStats(this));
+#else
+                PCStats = new String?[0];
+#endif
                 if (Config.StateSendInterval > 0)
                 {
                     state = Task.Run(async () => sendState(this));
@@ -410,108 +411,111 @@ namespace Spa_Interaction_Screen
             public void VisitSensor(ISensor sensor) { }
             public void VisitParameter(IParameter parameter) { }
         }
-        private async Task SastemStats(MainForm form)
+        private async Task SystemStats(MainForm form)
         {
-            Computer computer = new Computer
+            try
             {
-                IsCpuEnabled = true,
-                IsGpuEnabled = true,
-                IsMemoryEnabled = true,
-                IsMotherboardEnabled = true,
-                IsControllerEnabled = true,
-                IsNetworkEnabled = true,
-                IsStorageEnabled = true
-            };
-            while (form.RunTask)
-            {
-                Debug.Print("----------Open Computer----------");
-                computer.Open();
-                Debug.Print("----------Opened Computer----------");
-                computer.Accept(new UpdateVisitor());
-                Debug.Print("----------Accept Computer----------");
-                foreach (IHardware hardware in computer.Hardware)
+                Computer computer = new Computer
                 {
-                    Debug.Print("1");
-                    foreach (ISensor s in hardware.Sensors)
+                    IsCpuEnabled = true,
+                    IsGpuEnabled = true,
+                    IsMemoryEnabled = true
+                };
+                computer.Open();
+                while (form.RunTask)
+                {
+                    computer.Accept(new UpdateVisitor());
+                    foreach (IHardware hardware in computer.Hardware)
                     {
-                        Debug.Print("2");
-                        if (s.Value==null && s.Value < 0)
+                        foreach (ISensor s in hardware.Sensors)
                         {
-                            form.PCStats[3] = "";
-                            continue;
-                        }
-                        Debug.Print("3");
-                        if (s.SensorType == SensorType.Temperature)
-                        {
-                            Debug.Print("4");
-                            switch (s.Name)
+                            if (s.Value == null && s.Value < 0)
                             {
-                                case "GPU Core":
-                                    form.PCStats[3] = $"GPU Core temperatur: {(int)s.Value}";
-                                    if (s.Value > 85)
-                                    {
-                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Notice);
-                                    }
-                                    else if (s.Value > 95)
-                                    {
-                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Error);
-                                    }
-                                    else
-                                    {
-                                        Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Information);
-                                    }
-                                    break;
-                                case "GPU Hot Spot":
-                                    form.PCStats[4] = $"GPU Hot Spot temperatur: {(int)s.Value}";
-                                    break;
-                                default:
-                                    break;
-
+                                form.PCStats[3] = "";
+                                continue;
                             }
-                        }
-                        else if (s.SensorType == SensorType.Load)
-                        {
-                            Debug.Print("5");
-                            switch (s.Name)
+                            if (s.SensorType == SensorType.Temperature)
                             {
-                                case "CPU Total":
-                                    form.PCStats[0] = $"CPU Total Load: {(int)s.Value}";
-                                    if (s.Value > 85)
-                                    {
-                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Notice);
-                                    }else if (s.Value > 95)
-                                    {
-                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Error);
-                                    }
-                                    else
-                                    {
-                                        Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.Logger, Logger.MessageSubType.Information);
-                                    }
-                                    break;
-                                case "CPU Core Max":
-                                    form.PCStats[1] = $"CPU Core Max Load: {(int)s.Value}";
-                                    break;
-                                case "Memory":
-                                    form.PCStats[2] = $"Memory Load: {(int)s.Value}";
-                                    break;
-                                default:
-                                    break;
+                                switch (s.Name)
+                                {
+                                    case "GPU Core":
+                                        form.PCStats[3] = $"GPU Core temperatur: {(int)s.Value}";
+                                        if (s.Value > 85)
+                                        {
+                                            Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Notice);
+                                        }
+                                        else if (s.Value > 95)
+                                        {
+                                            Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Error);
+                                        }
+                                        else
+                                        {
+                                            Logger.Print($"GPU Core temperatur: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Information);
+                                        }
+                                        break;
+                                    case "GPU Hot Spot":
+                                        form.PCStats[4] = $"GPU Hot Spot temperatur: {(int)s.Value}";
+                                        break;
+                                    default:
+                                        break;
 
+                                }
+                            }
+                            else if (s.SensorType == SensorType.Load)
+                            {
+                                switch (s.Name)
+                                {
+                                    case "CPU Total":
+                                        form.PCStats[0] = $"CPU Total Load: {(int)s.Value}";
+                                        if (s.Value > 85)
+                                        {
+                                            Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Notice);
+                                        }
+                                        else if (s.Value > 95)
+                                        {
+                                            Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Error);
+                                        }
+                                        else
+                                        {
+                                            Logger.Print($"CPU Total Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Information);
+                                        }
+                                        break;
+                                    case "CPU Core Max":
+                                        form.PCStats[1] = $"CPU Core Max Load: {(int)s.Value}";
+                                        break;
+                                    case "Memory":
+                                        form.PCStats[2] = $"Memory Load: {(int)s.Value}";
+                                        if (s.Value > 85)
+                                        {
+                                            Logger.Print($"Memory Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Notice);
+                                        }
+                                        else if (s.Value > 95)
+                                        {
+                                            Logger.Print($"Memory Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Error);
+                                        }
+                                        else
+                                        {
+                                            Logger.Print($"Memory Load: {s.Value}", Logger.MessageType.SystemState, Logger.MessageSubType.Information);
+                                        }
+                                        break;
+                                    default:
+                                        break;
+
+                                }
                             }
                         }
                     }
+                    Constants.InvokeDelegate<object>([], new MyNoArgument(assemblePCStats), form, Logger.MessageType.Hauptprogramm);
+                    Task.Delay(2000).Wait();
                 }
-                Debug.Print("6");
-                assemblePCStats();
-                Debug.Print("----------Closing Computer----------");
-                computer.Close();
-                Debug.Print("----------Closed Computer----------");
-                Task.Delay(10000).Wait();
-                Debug.Print($"----------Delayed Computer----------{RunTask}");
+            }catch(Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.SystemState, Logger.MessageSubType.Error);
+                Logger.Print("Systemstats", Logger.MessageType.SystemState, Logger.MessageSubType.Notice);
             }
         }
         // CPU Total Load, CPU Core Max Load, Memory Load, GPU Core Temp, GPU HotSpot Temp
-        private void assemblePCStats()
+        private object assemblePCStats()
         {
             if (Logger.consoleshown)
             {
@@ -556,233 +560,262 @@ namespace Spa_Interaction_Screen
                     }
                 }
             }
+            return null;
         }
 
         private async Task ZentralePing(MainForm form)
         {
-            int index = 0;
-            while (form.RunTask && !Constants.noNet)
+            try
             {
-                Ping pinger = null;
-                byte[] ip = new byte[4];
-                try
+                int index = 0;
+                while (form.RunTask && !Constants.noNet)
                 {
-                    for (int i = 0; i < Config.IPZentrale.Length; i++)
+                    Ping pinger = null;
+                    byte[] ip = new byte[4];
+                    try
                     {
-                        ip[i] = Byte.Parse(Config.IPZentrale[i]);
+                        for (int i = 0; i < Config.IPZentrale.Length; i++)
+                        {
+                            ip[i] = Byte.Parse(Config.IPZentrale[i]);
+                        }
                     }
-                }
-                catch (FormatException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
-                }
-                IPAddress ZentralIP = new IPAddress(ip);
-                try
-                {
-                    pinger = new Ping();
-                    ping[index] = pinger.SendPingAsync(ZentralIP);
-                }
-                catch (PingException ex)
-                {
-                    MainForm.currentState = 7;
-                    Logger.Print(ex.Message, Logger.MessageType.Extern, Logger.MessageSubType.Error);
-                }
-                bool zisclient = form.net.tcpSockets.Count > 0;
-                if (lastZentralButtonstate != zisclient)
-                {
-                    lastZentralButtonstate = zisclient;
-                    Constants.InvokeDelegate<object>([], new MyNoArgument(delegateswitchzentralenotreachable), form);
+                    catch (FormatException ex)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                    }
+                    IPAddress ZentralIP = new IPAddress(ip);
+                    try
+                    {
+                        pinger = new Ping();
+                        ping[index] = pinger.SendPingAsync(ZentralIP);
+                    }
+                    catch (PingException ex)
+                    {
+                        MainForm.currentState = 7;
+                        Logger.Print(ex.Message, Logger.MessageType.Extern, Logger.MessageSubType.Error);
+                    }
+                    bool zisclient = form.net.tcpSockets.Count > 0;
+                    if (lastZentralButtonstate != zisclient)
+                    {
+                        lastZentralButtonstate = zisclient;
+                        Constants.InvokeDelegate<object>([], new MyNoArgument(delegateswitchzentralenotreachable), form, Logger.MessageType.Hauptprogramm);
 
-                }
-                if (lastpingpositiv)
-                {
-                    await Task.Delay(7500);
-                }
-                else
-                {
-                    await Task.Delay(500);
-                }
+                    }
+                    if (lastpingpositiv)
+                    {
+                        await Task.Delay(7500);
+                    }
+                    else
+                    {
+                        await Task.Delay(500);
+                    }
 
-                index++;
-                index %= ping.Length;
-                if (ping != null && ping[index] != null)
-                {
-                    PingReply reply = await ping[index];
-                    lastpingpositiv = reply.Status == IPStatus.Success;
-                    if (!lastpingpositiv)
+                    index++;
+                    index %= ping.Length;
+                    if (ping != null && ping[index] != null)
                     {
-                        Logger.Print($"Zentralen Ping Status:{reply.Status}", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
+                        PingReply reply = await ping[index];
+                        lastpingpositiv = reply.Status == IPStatus.Success;
+                        if (!lastpingpositiv)
+                        {
+                            Logger.Print($"Zentralen Ping Status:{reply.Status}", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
+                        }
+                    }
+                    if (!lastpingpositiv && zisclient)
+                    {
+                        Logger.Print("Die Zentrale ist nicht erreichbar. Es hat sich jedoch jemand Registriert.", Logger.MessageType.Intern, Logger.MessageSubType.Notice);
+                    }
+                    if (lastpingpositiv && !zisclient)
+                    {
+                        Logger.Print("Die Zentrale ist erreichbar, hat sich allerdings noch nicht Registriert.", Logger.MessageType.Extern, Logger.MessageSubType.Notice);
+                    }
+                    if (!lastpingpositiv && !zisclient)
+                    {
+                        Logger.Print("Die Zentrale ist nicht erreichbar und hat sich nicht Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
+                    }
+                    if (zisclient)
+                    {
+                        bool zentral = false;
+                        foreach (Socket tcp in form.net.tcpSockets)
+                        {
+                            zentral |= net.isClientZentrale(tcp);
+                        }
+                        if (!lastpingpositiv && zentral)
+                        {
+                            Logger.Print("Die Zentrale ist nicht erreichbar, hat sich allerdings Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
+                        }
+                        if (lastpingpositiv && zentral)
+                        {
+                            Logger.Print("Die Zentrale ist erreichbar und hat sich Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Information);
+                        }
                     }
                 }
-                if (!lastpingpositiv && zisclient)
-                {
-                    Logger.Print("Die Zentrale ist nicht erreichbar. Es hat sich jedoch jemand Registriert.", Logger.MessageType.Intern, Logger.MessageSubType.Notice);
-                }
-                if (lastpingpositiv && !zisclient)
-                {
-                    Logger.Print("Die Zentrale ist erreichbar, hat sich allerdings noch nicht Registriert.", Logger.MessageType.Extern, Logger.MessageSubType.Notice);
-                }
-                if (!lastpingpositiv && !zisclient)
-                {
-                    Logger.Print("Die Zentrale ist nicht erreichbar und hat sich nicht Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
-                }
-                if (zisclient)
-                {
-                    bool zentral = false;
-                    foreach (Socket tcp in form.net.tcpSockets)
-                    {
-                        zentral |= net.isClientZentrale(tcp);
-                    }
-                    if (!lastpingpositiv && zentral)
-                    {
-                        Logger.Print("Die Zentrale ist nicht erreichbar, hat sich allerdings Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Notice);
-                    }
-                    if (lastpingpositiv && zentral)
-                    {
-                        Logger.Print("Die Zentrale ist erreichbar und hat sich Registriert.", [Logger.MessageType.Extern, Logger.MessageType.Intern], Logger.MessageSubType.Information);
-                    }
-                }
+            }catch(Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
+                Logger.Print("ZnetralenPing", Logger.MessageType.TCPSend, Logger.MessageSubType.Notice);
             }
         }
 
         private async Task GastroPing(MainForm form)
         {
-            HttpWebResponse response = null;
-            bool connectionok = false;
-            while (form.RunTask && !Constants.noNet)
+            try
             {
-                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Config.GastroUrl);
-                request.AllowAutoRedirect = true; // find out if this site is up and don't follow a redirector
-                request.Method = "HEAD";
-                try
+                HttpWebResponse response = null;
+                bool connectionok = false;
+                while (form.RunTask && !Constants.noNet)
                 {
-                    response = (HttpWebResponse)request.GetResponse();
-                    // do something with response.Headers to find out information about the request
-                }
-                catch (WebException wex)
-                {
-                    MainForm.currentState = 4;
-                    Logger.Print(wex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
-                    connectionok = false;
-                    //set flag if there was a timeout or some other issues
-                }
-                catch (Exception ex)
-                {
-                    MainForm.currentState = 5;
-                    Logger.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
-                }
-                if (response == null)
-                {
-                    MainForm.currentState = 5;
-                    Logger.Print("No Connection", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
-                    connectionok = false;
-                }
-                if ((int)response.StatusCode > 100 && (int)response.StatusCode < 400)
-                {
-                    connectionok = true;
-                }
-                else if ((int)response.StatusCode > 400 && (int)response.StatusCode < 500)
-                {
-                    Logger.Print("Client Error received, but ignoring it for now", Logger.MessageType.Gastro, Logger.MessageSubType.Notice);
-                    connectionok = true;
-                }
-                else if ((int)response.StatusCode > 500 && (int)response.StatusCode < 600)
-                {
-                    MainForm.currentState = 5;
-                    Logger.Print("Server Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
-                    connectionok = false;
-                }
-                else
-                {
-                    MainForm.currentState = 5;
-                    Logger.Print("unknown Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
-                    connectionok = false;
-                }
+                    HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(Config.GastroUrl);
+                    request.AllowAutoRedirect = true; // find out if this site is up and don't follow a redirector
+                    request.Method = "HEAD";
+                    try
+                    {
+                        response = (HttpWebResponse)request.GetResponse();
+                        // do something with response.Headers to find out information about the request
+                    }
+                    catch (WebException wex)
+                    {
+                        MainForm.currentState = 4;
+                        Logger.Print(wex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                        connectionok = false;
+                        //set flag if there was a timeout or some other issues
+                    }
+                    catch (Exception ex)
+                    {
+                        MainForm.currentState = 5;
+                        Logger.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                    }
+                    if (response == null)
+                    {
+                        MainForm.currentState = 5;
+                        Logger.Print("No Connection", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                        connectionok = false;
+                    }
+                    if ((int)response.StatusCode > 100 && (int)response.StatusCode < 400)
+                    {
+                        connectionok = true;
+                    }
+                    else if ((int)response.StatusCode > 400 && (int)response.StatusCode < 500)
+                    {
+                        Logger.Print("Client Error received, but ignoring it for now", Logger.MessageType.Gastro, Logger.MessageSubType.Notice);
+                        connectionok = true;
+                    }
+                    else if ((int)response.StatusCode > 500 && (int)response.StatusCode < 600)
+                    {
+                        MainForm.currentState = 5;
+                        Logger.Print("Server Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                        connectionok = false;
+                    }
+                    else
+                    {
+                        MainForm.currentState = 5;
+                        Logger.Print("unknown Error received", Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                        connectionok = false;
+                    }
 
-                Constants.InvokeDelegate<object>([connectionok], new Myswitchgastro(delegateswitchgastronotreachable), form);
+                    Constants.InvokeDelegate<object>([connectionok], new Myswitchgastro(delegateswitchgastronotreachable), form, Logger.MessageType.Hauptprogramm);
 
-                if (connectionok)
-                {
-                    await Task.Delay(10000);
+                    if (connectionok)
+                    {
+                        await Task.Delay(10000);
+                    }
+                    else
+                    {
+                        await Task.Delay(2500);
+                    }
                 }
-                else
-                {
-                    await Task.Delay(2500);
-                }
+            }catch(Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Gastro, Logger.MessageSubType.Error);
+                Logger.Print("GastroPing", Logger.MessageType.Gastro, Logger.MessageSubType.Notice);
             }
         }
 
         private async Task sendState(MainForm form)
         {
-            while (form.RunTask && !Constants.noNet)
+            try
             {
-                Network.RequestJson request = new Network.RequestJson();
+                while (form.RunTask && !Constants.noNet)
+                {
+                    Network.RequestJson request = new Network.RequestJson();
 
-                request.destination = ArraytoString(Config.IPZentrale, 4);
-                request.port = Config.PortZentrale;
-                request.label = "State";
-                request.type = Config.Typenames[0];
-                request.id = MainForm.currentState;
-                request.Raum = Config.Room;
-                if (net.SendTCPMessage(request, null))
-                {
-                    Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
+                    request.destination = ArraytoString(Config.IPZentrale, 4);
+                    request.port = Config.PortZentrale;
+                    request.label = "State";
+                    request.type = Config.Typenames[0];
+                    request.id = MainForm.currentState;
+                    request.Raum = Config.Room;
+                    if (net.SendTCPMessage(request, null))
+                    {
+                        Logger.Print($"Message sent sucessfully", Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
+                    }
+                    if (Programmstate != null)
+                    {
+                        Programmstate.Text = $"Programmstatus: {MainForm.currentState}";
+                    }
+                    await Task.Delay(Config.StateSendInterval * 1000);
                 }
-                if (Programmstate != null)
-                {
-                    Programmstate.Text = $"Programmstatus: {MainForm.currentState}";
-                }
-                await Task.Delay(Config.StateSendInterval * 1000);
+            }catch(Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                Logger.Print("sendstate", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             }
         }
 
         private async void ScreenManagerTaskMethod(MainForm form)
         {
-            while (form.RunTask)
+            try
             {
-                switch (System.Windows.Forms.SystemInformation.MonitorCount)
+                while (form.RunTask)
                 {
-                    case 0:
-                        MainForm.currentState = 3;
-                        Logger.Print("No Screen detected", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
-                        form.hidethis();
-                        if (vlc != null)
-                        {
-                            vlc.hidethis();
-                        }
-                        break;
-                    case 1:
-                        if (!form.SessionEndbool)
-                        {
-                            form.showthis();
-                        }
-                        EnterFullscreen(form, Screen.PrimaryScreen);
-                        if (vlc != null)
-                        {
-                            MainForm.currentState = 0;
-                            Logger.Print("No second Screen detected", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
-                            vlc.hidethis();
-                        }
-                        break;
-                    default:
-                        if (vlc == null)
-                        {
-
-                            form.watingforEmbed = true;
-                            SetupEmbedvlcScreen(form);
+                    switch (System.Windows.Forms.SystemInformation.MonitorCount)
+                    {
+                        case 0:
+                            MainForm.currentState = 3;
+                            Logger.Print("No Screen detected", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                            form.hidethis();
+                            if (vlc != null)
+                            {
+                                vlc.hidethis();
+                            }
+                            break;
+                        case 1:
                             if (!form.SessionEndbool)
                             {
                                 form.showthis();
                             }
-                        }
-                        break;
+                            EnterFullscreen(form, Screen.PrimaryScreen);
+                            if (vlc != null)
+                            {
+                                MainForm.currentState = 0;
+                                Logger.Print("No second Screen detected", Logger.MessageType.VideoProjection, Logger.MessageSubType.Error);
+                                vlc.hidethis();
+                            }
+                            break;
+                        default:
+                            if (vlc == null)
+                            {
+
+                                form.watingforEmbed = true;
+                                SetupEmbedvlcScreen(form);
+                                if (!form.SessionEndbool)
+                                {
+                                    form.showthis();
+                                }
+                            }
+                            break;
+                    }
+                    while (form.watingforEmbed)
+                    {
+                        await Task.Delay(1000);
+                    }
+                    await Task.Delay(3000);
                 }
-                while (form.watingforEmbed)
-                {
-                    await Task.Delay(1000);
-                }
-                await Task.Delay(3000);
+            }catch(Exception ex)
+            {
+                Logger.Print(ex.Message, Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Error);
+                Logger.Print("ScreenManagerTaskMethod", Logger.MessageType.Hauptprogramm, Logger.MessageSubType.Notice);
             }
         }
 
@@ -866,7 +899,7 @@ namespace Spa_Interaction_Screen
 
         public void showthis()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegateshowthis), this, Logger.MessageType.Hauptprogramm);
         }
 
         private object delegateshowthis()
@@ -881,7 +914,7 @@ namespace Spa_Interaction_Screen
 
         public void hidethis()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatehidethis), this, Logger.MessageType.Hauptprogramm);
         }
 
         private object delegatehidethis()
@@ -905,7 +938,7 @@ namespace Spa_Interaction_Screen
             {
                 tabs++;
             }
-            if (Constants.showButtonTester)
+            if (Constants.showbuttontester)
             {
                 tabs++;
             }
@@ -923,12 +956,16 @@ namespace Spa_Interaction_Screen
             {
                 UIControl.Controls.Remove(ColorPage);
             }
+            if (!Constants.showbuttontester)
+            {
+                UIControl.Controls.Remove(ButtonPage);
+            }
             return null;
         }
 
         private void SetupEmbedvlcScreen(MainForm form)
         {
-            Constants.InvokeDelegate<object>([form], new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), form);
+            Constants.InvokeDelegate<object>([form], new MySetupEmbedvlcScreen(delegateSetupEmbedvlcScreen), form, Logger.MessageType.Hauptprogramm);
         }
 
         private object delegateSetupEmbedvlcScreen(MainForm form)
@@ -963,14 +1000,14 @@ namespace Spa_Interaction_Screen
                 else
                 {
                     MainForm.currentState = 0;
-                    Logger.Print("Different Variables for the same thing Stated different Results.\n Therefore second Monitor couldn't be initialized.", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("Different Variables for the same thing Stated different Results.\n Therefore second Monitor couldn't be initialized.", Logger.MessageType.VideoProjection, Logger.MessageSubType.Error);
                 }
                 if (TV == null)
                 {
                     //TODO
                     //Could be Timing Issue, when TV not yet Registered as  monitor
                     MainForm.currentState = 3;
-                    Logger.Print("Second Monitor not found", Logger.MessageType.VideoProjektion, Logger.MessageSubType.Error);
+                    Logger.Print("Second Monitor not found", Logger.MessageType.VideoProjection, Logger.MessageSubType.Error);
                     if (vlc != null)
                     {
                         vlc.hidethis();
@@ -1065,7 +1102,6 @@ namespace Spa_Interaction_Screen
                             if (Config.showtime)
                             {
                                 int x = 4 + ((Config.showcolor) ? 1 : 0);
-                                UIControl.SelectTab(x);
                             }
                             Content_Change(false);
                             if (vlc != null)
@@ -1102,6 +1138,10 @@ namespace Spa_Interaction_Screen
                         foreach (Label l in helper.globaltimelabels)
                         {
                             l.Hide();
+                        }
+                        if (UIControl != null)
+                        {
+                            UIControl.SelectedIndex = UIControl.TabPages.IndexOf(WartungPage);
                         }
                         EndSession();
                         return;
@@ -1343,7 +1383,7 @@ namespace Spa_Interaction_Screen
             logout();
         }
 
-        public void Tab_Changed_Handler(object sender, TabControlCancelEventArgs e)
+        public void Tab_Selected_Handler(object sender, TabControlCancelEventArgs e)
         {
             if (passwordwaswrong)
             {
@@ -1354,9 +1394,13 @@ namespace Spa_Interaction_Screen
                 RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                 passwordwaswrong = !passwordwaswrong;
             }
+            if (Logger.consoleshown && !showconsoleonallsites && vlc != null && UIControl != null)
+            {
+                vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabPages.IndexOf(ConsolePage));
+            }
             if (SessionEndbool)
             {
-                if (e.TabPageIndex != UIControl.TabCount - 1 || !(e.TabPageIndex == UIControl.TabCount - 2 && Logger.consoleshown))
+                if (e.TabPageIndex < UIControl.TabPages.IndexOf(WartungPage))
                 {
                     e.Cancel = true;
                     if (sessionEndVLC != null)
@@ -1370,10 +1414,6 @@ namespace Spa_Interaction_Screen
 #if !DEBUG
             logout();
 #endif
-            if (Logger.consoleshown && !showconsoleonallsites && vlc != null && UIControl != null)
-            {
-                vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabCount - 1);
-            }
         }
 
         public void logout()
@@ -1404,7 +1444,7 @@ namespace Spa_Interaction_Screen
 
         public void EnterFullscreen(CForm f, Screen screen)
         {
-            Constants.InvokeDelegate<object>([f, screen], new MyFullscreen(delegateEnterFullscreen), f);
+            Constants.InvokeDelegate<object>([f, screen], new MyFullscreen(delegateEnterFullscreen), f, Logger.MessageType.Ohne_Kategorie);
         }
 
         public object delegateEnterFullscreen(Form f, Screen screen)
@@ -1562,16 +1602,16 @@ namespace Spa_Interaction_Screen
                 if ((fadingtimer == null || !fadingtimer.Enabled) && notsamevalue)
                 {
 
-                    fadingtimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([Constants.sendtimeout - 1], new MycreateTimer(createTimer), this);
+                    fadingtimer = Constants.InvokeDelegate<System.Windows.Forms.Timer>([Constants.sendtimeout - 1], new MycreateTimer(createTimer), this, Logger.MessageType.Licht);
                     fadingtimer.Tick += SendCurrentSceneOverCom_Handle;
-                    Constants.InvokeDelegate<object>([fadingtimer], new MyTimer(enableTimer), this);
+                    Constants.InvokeDelegate<object>([fadingtimer], new MyTimer(enableTimer), this, Logger.MessageType.Licht);
                 }
             }
             else
             {
                 if (fadingtimer != null && fadingtimer.Enabled)
                 {
-                    Constants.InvokeDelegate<object>([fadingtimer], new MyTimer(disposeTimer), this);
+                    Constants.InvokeDelegate<object>([fadingtimer], new MyTimer(disposeTimer), this, Logger.MessageType.Licht);
                 }
                 fade = tempchannelvalues;
             }
@@ -1647,7 +1687,7 @@ namespace Spa_Interaction_Screen
 
         public void Content_Change(bool SwitchToStream)
         {
-            Constants.InvokeDelegate<object>([SwitchToStream], new MyContentchange(delegateContent_Change), this);
+            Constants.InvokeDelegate<object>([SwitchToStream], new MyContentchange(delegateContent_Change), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegateContent_Change(bool SwitchToStream)
@@ -1776,7 +1816,7 @@ namespace Spa_Interaction_Screen
         private void performsecondary(Constants.ServicesSettingfunction ssf)
         {
             Task wait = Task.Delay(ssf.delay);
-            Constants.InvokeDelegate<object>([ssf], new Myperformsecondary(delegateperformsecondary), this);
+            Constants.InvokeDelegate<object>([ssf], new Myperformsecondary(delegateperformsecondary), this, Logger.MessageType.Hauptprogramm);
         }
 
         private object delegateperformsecondary(Constants.ServicesSettingfunction ssf)
@@ -2058,7 +2098,7 @@ namespace Spa_Interaction_Screen
 
         public void reset()
         {
-            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatereset), this);
+            Constants.InvokeDelegate<object>([], new MyNoArgument(delegatereset), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegatereset()
@@ -2088,6 +2128,7 @@ namespace Spa_Interaction_Screen
             sessionEndVLC = null;
             switchedtotimepage = false;
             Logger.consoleshown = false;
+            Logger.Clear();
             Config.initconfig();
             helper.setConfig();
             Ambiente_Change(Config.DMXScenes[Config.DMXSceneSetting], true, false, false);
@@ -2248,7 +2289,7 @@ namespace Spa_Interaction_Screen
 
         public void setscenelocked(bool x, String txt, Color c)
         {
-            Constants.InvokeDelegate<object>([x, txt, c], new Mysetscenelocked(delegatesetscenelocked), this);
+            Constants.InvokeDelegate<object>([x, txt, c], new Mysetscenelocked(delegatesetscenelocked), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegatesetscenelocked(bool x, String txt, Color c)
@@ -2343,7 +2384,7 @@ namespace Spa_Interaction_Screen
 
         public void setservicelocked(bool x, Color c)
         {
-            Constants.InvokeDelegate<object>([x, c], new Mysetservicelocked(delegatesetservicelocked), this);
+            Constants.InvokeDelegate<object>([x, c], new Mysetservicelocked(delegatesetservicelocked), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegatesetservicelocked(bool x, Color c)
@@ -2371,7 +2412,7 @@ namespace Spa_Interaction_Screen
 
         public void setsessionlocked(bool x)
         {
-            Constants.InvokeDelegate<object>([x], new Mysetsessionlocked(delegatesetsessionlocked), this);
+            Constants.InvokeDelegate<object>([x], new Mysetsessionlocked(delegatesetsessionlocked), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegatesetsessionlocked(bool x)
@@ -2424,7 +2465,7 @@ namespace Spa_Interaction_Screen
             SessionEndbool = true;
             if (fromevent)
             {
-                UIControl.SelectTab(UIControl.TabCount - 1);
+                UIControl.SelectTab(UIControl.TabPages.IndexOf(WartungPage));
             }
             Scenelocked = false;
             Ambiente_Change(Config.DMXScenes[0], true, true, false);
@@ -2436,7 +2477,7 @@ namespace Spa_Interaction_Screen
             if (SessionEndbool)
             {
                 this.showthis();
-                UIControl.SelectTab(UIControl.TabCount - 1);
+                UIControl.SelectTab(UIControl.TabPages.IndexOf(WartungPage));
             }
         }
 
@@ -2549,7 +2590,7 @@ namespace Spa_Interaction_Screen
                         Logger.ConsoleTextscroll.Value = Logger.ConsoleBox.SelectionStart * -1 + Logger.ConsoleTextscroll.Maximum;
                         Logger.ConsoleTextscroll.Show();
                     }
-                    else
+                    else if(Logger.ConsoleTextscroll!=null)
                     {
 #if DEBUG
                         Logger.ConsoleTextscroll.Show();
@@ -2622,7 +2663,10 @@ namespace Spa_Interaction_Screen
             ((Button)sender).BackColor = Constants.selected_color;
             ((Button)sender).Click -= sendTCPfromconsole;
             ButtonFader.addcolortimedButton(((Button)sender), Constants.Buttonshortfadetime, Constants.Button_color, sendTCPfromconsole);
-            net.Messageafterparse(CreateMessagString());
+            if(net != null)
+            {
+                net.Messageafterparse(CreateMessagString());
+            }
         }
 
         public void consolescroll(object sender, EventArgs e)
