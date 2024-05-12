@@ -109,14 +109,14 @@ namespace Spa_Interaction_Screen
                 Controls.Add(welcomeqr);
 
                 newsession();
-            }
 
-            Logger.ConsoleBox = new RichTextBox();
-            Controls.Add(Logger.ConsoleBox);
-            Logger.ConsoleBox.Size = new Size(this.Width, this.Height);
-            Logger.ConsoleBox.Location = new Point(0, 0);
-            Logger.ConsoleBox.ReadOnly = true;
-            Logger.ConsoleBox.Hide();
+                Logger.ConsoleBox = new RichTextBox();
+                Controls.Add(Logger.ConsoleBox);
+                Logger.ConsoleBox.Size = new Size(this.Width, this.Height);
+                Logger.ConsoleBox.Location = new Point(0, 0);
+                Logger.ConsoleBox.ReadOnly = true;
+                Logger.ConsoleBox.Hide();
+            }
 
         }
 
@@ -275,16 +275,7 @@ namespace Spa_Interaction_Screen
             {
                 welcomeqr.Hide();
             }
-            if (showingconsole)
-            {
-                Logger.ConsoleBox.Show();
-                Logger.ConsoleBox.BringToFront();
-                return null;
-            }
-            else
-            {
-                Logger.ConsoleBox.Hide();
-            }
+            toggleConsoleBox(showingconsole);
             return null;
         }
 
@@ -335,7 +326,6 @@ namespace Spa_Interaction_Screen
                 else
                 {
                     Logger.ConsoleBox.Hide();
-                    Logger.ConsoleBox.SendToBack();
                 }
             }
         }

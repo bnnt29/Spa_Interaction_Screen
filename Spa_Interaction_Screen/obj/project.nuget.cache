@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "m5EBFqMCMLHhci0ycaXpIujgdWagtQDFYAZFqqRFMTHBGPXi5I0PA7EB2+kwb4xgfYKqEiK2uwifiAckP5ojTg==",
+  "dgSpecHash": "YV8rg7xbny1jqpP4BKNggt7sNyXoh+t5GqySEsOeNahE8BRxxUNcgUkDwaaTZVPy7xRqI+5I9aKnbOngS8kXpg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Berni\\Documents\\Github\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
+  "projectFilePath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Berni\\.nuget\\packages\\audioswitcher.audioapi\\3.0.0\\audioswitcher.audioapi.3.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\audioswitcher.audioapi.coreaudio\\3.0.3\\audioswitcher.audioapi.coreaudio.3.0.3.nupkg.sha512",

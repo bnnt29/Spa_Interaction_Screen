@@ -970,6 +970,7 @@ namespace Spa_Interaction_Screen
 
         private object delegateSetupEmbedvlcScreen(MainForm form)
         {
+            //TODO check wether to use PC Stats information service for screens information
             if (System.Windows.Forms.SystemInformation.MonitorCount > 1)
             {
                 Screen TV = null;
@@ -1103,18 +1104,18 @@ namespace Spa_Interaction_Screen
                             {
                                 int x = 4 + ((Config.showcolor) ? 1 : 0);
                             }
-                            Content_Change(false);
                             if (vlc != null)
                             {
                                 vlc.changeMedia(Config.SessionEndImage, false);
                             }
                             switchedtotimepage = true;
                         }
-                        TVSettingsAmbienteButton.Hide();
-                        TVSettingsStreamingButton.Hide();
-                        MediaPageAmbientVolumeSlider.Location = new Point(MediaPageAmbientVolumeSlider.Location.X, Constants.tabheight / 3);
-                        helper.SetupLabelofTrackbar(MediaPageAmbientVolumeSlider, TVSettingsVolumeColorSliderDescribtion, Config.slidernames[((int)MediaPageAmbientVolumeSlider.Tag) - 1]);
                     }
+                    TVSettingsAmbienteButton.Hide();
+                    TVSettingsStreamingButton.Hide();
+                    MediaPageAmbientVolumeSlider.Location = new Point(MediaPageAmbientVolumeSlider.Location.X, Constants.tabheight / 3);
+                    helper.SetupLabelofTrackbar(MediaPageAmbientVolumeSlider, TVSettingsVolumeColorSliderDescribtion, Config.slidernames[((int)MediaPageAmbientVolumeSlider.Tag) - 1]);
+                    Content_Change(false);
                 }
                 else
                 {
@@ -1209,7 +1210,7 @@ namespace Spa_Interaction_Screen
             {
                 if (vlc != null && !streaming)
                 {
-                    vlc.changeMedia(Config.DMXScenes[Config.DMXSceneSetting].ContentPath, false);
+                    //vlc.changeMedia(Config.DMXScenes[Config.DMXSceneSetting].ContentPath, false);
                 }
                 if (helper.globaltimelabels != null)
                 {
@@ -1394,9 +1395,16 @@ namespace Spa_Interaction_Screen
                 RestrictedAreaDescribtion.ForeColor = Constants.Text_color;
                 passwordwaswrong = !passwordwaswrong;
             }
-            if (Logger.consoleshown && !showconsoleonallsites && vlc != null && UIControl != null)
+            if (Logger.consoleshown && vlc != null && UIControl != null)
             {
-                vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabPages.IndexOf(ConsolePage));
+                if (showconsoleonallsites)
+                {
+                    vlc.toggleConsoleBox(true);
+                }
+                else
+                {
+                    vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabPages.IndexOf(ConsolePage));
+                }
             }
             if (SessionEndbool)
             {
@@ -1457,7 +1465,8 @@ namespace Spa_Interaction_Screen
             f.TopMost = false;
             f.ControlBox = true;
 #endif
-            f.WindowState = FormWindowState.Normal;
+            //TODO check whether it nedds to be normalized first
+            //f.WindowState = FormWindowState.Normal;
             f.WindowState = FormWindowState.Maximized;
             //Set fullscreen
             f.Size = screen.Bounds.Size;
@@ -1760,7 +1769,11 @@ namespace Spa_Interaction_Screen
 
         public void EndSession()
         {
-            EmbedVLC evlc = new EmbedVLC(this, mainscreen, true);
+            EmbedVLC evlc = null;
+            if (sessionEndVLC == null)
+            {
+                evlc = new EmbedVLC(this, mainscreen, true);
+            }
             if (evlc != null)
             {
                 evlc.changeMedia(Config.SessionEndImage, true);
@@ -2508,18 +2521,10 @@ namespace Spa_Interaction_Screen
         public void ShowConsole(object sender, EventArgs e)
         {
             Logger.setCurrentlyshowing(Byte.MaxValue);
-            helper.createConsolePage();
-            if (showconsoleonallsites)
-            {
-                vlc.toggleConsoleBox(true);
-            }
-            else
-            {
-                vlc.toggleConsoleBox(false);
-            }
+            helper.createConsolePage(); 
             if (UIControl != null)
             {
-                UIControl.SelectTab(UIControl.TabCount - 1);
+                UIControl.SelectTab(UIControl.TabPages.IndexOf(ConsolePage));
             }
             if (showconsoleonallsites_button != null)
             {
