@@ -115,7 +115,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    MainForm.currentState = 7;
+                    MainForm.currentState = 8;
                     Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
                     return null;
                 }
@@ -263,11 +263,12 @@ namespace Spa_Interaction_Screen
             }
             NetworkStream stream = new NetworkStream(cl);
             string text = assembleJsonString(json);
-            Logger.Print(text, Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             byte[] send_buffer = Encoding.Default.GetBytes(text);
+            Logger.Print(text, Logger.MessageType.TCPSend, Logger.MessageSubType.Information);
             try
             {
                 stream.Write(send_buffer, 0, send_buffer.Length);
+                stream.Flush();
             }
             catch (Exception ex)
             {
@@ -277,7 +278,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex.Message, Logger.MessageType.TCPSend, Logger.MessageSubType.Error);
                         break;
                 }
@@ -373,7 +374,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            MainForm.currentState = 7;
+                            MainForm.currentState = 8;
                             Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                             break;
                     }
@@ -408,7 +409,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -440,7 +441,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -465,7 +466,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            MainForm.currentState = 7;
+                            MainForm.currentState = 8;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
@@ -508,7 +509,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -533,7 +534,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            MainForm.currentState = 7;
+                            MainForm.currentState = 8;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             return true; //true, because we do not really need to read anything and the router commonly closes the connection without answer, when the new SSID equals the old SSID
                     }
@@ -575,7 +576,7 @@ namespace Spa_Interaction_Screen
                     case ArgumentOutOfRangeException:
                     case InvalidOperationException:
                     case IOException:
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                         break;
                 }
@@ -600,7 +601,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            MainForm.currentState = 7;
+                            MainForm.currentState = 8;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
@@ -643,7 +644,7 @@ namespace Spa_Interaction_Screen
                         case ArgumentOutOfRangeException:
                         case InvalidOperationException:
                         case IOException:
-                            MainForm.currentState = 7;
+                            MainForm.currentState = 8;
                             Logger.Print(ex.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                             break;
                     }
@@ -828,7 +829,7 @@ namespace Spa_Interaction_Screen
             }
             catch (Exception e)
             {
-                MainForm.currentState = 7;
+                MainForm.currentState = 2;
                 Logger.Print(e.Message, Logger.MessageType.Router, Logger.MessageSubType.Error);
                 Logger.Print($"Failed while connecting to: {ip_address}, port: {port_number}", Logger.MessageType.Router, Logger.MessageSubType.Notice);
                 routerclient = null;
@@ -1086,7 +1087,7 @@ namespace Spa_Interaction_Screen
                         Logger.Print("index / value outside Volume Range", Logger.MessageType.TCPReceive, Logger.MessageSubType.Notice);
                         break;
                     }
-                    f.AmbientVolume(volumevalue, null, null);
+                    f.AmbientVolume(volumevalue);
                         break;
                     case 6:
                     if (jsonpartvalid(json, "values"))

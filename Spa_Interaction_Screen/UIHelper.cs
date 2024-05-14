@@ -1,5 +1,6 @@
 ﻿
 using BrbVideoManager.Controls;
+using System.Windows.Forms;
 
 namespace Spa_Interaction_Screen
 {
@@ -17,7 +18,7 @@ namespace Spa_Interaction_Screen
 
         public List<Button> AmbientePageButtons = new List<Button>();
         public List<Button> AmbientePagedynamicButtons = new List<Button>();
-        public List<Label> AmbientePageLabel = new List<Label>();
+        public List<PictureBox> AmbientePageLabel = new List<PictureBox>();
         public List<ColorSlider.ColorSlider> AmbientePageColorSlide = new List<ColorSlider.ColorSlider>();
 
         public List<Button> MediaPageButtons = new List<Button>();
@@ -143,10 +144,9 @@ namespace Spa_Interaction_Screen
                 AmbientePageButtons = new List<Button>();
                 AmbientePagedynamicButtons = new List<Button>();
 
-                AmbientePageLabel = new List<Label>();
-                AmbientePageLabel.Add((Label)form.Dimmer1ColorSliderDescribtion);
-                AmbientePageLabel.Add((Label)form.Dimmer2ColorSliderDescribtion);
-                AmbientePageLabel.Add((Label)form.AmbientelautstärkeColorSliderDescribtion);
+                AmbientePageLabel = new List<PictureBox>();
+                AmbientePageLabel.Add((PictureBox)form.DimmerColorSliderImage);
+                AmbientePageLabel.Add((PictureBox)form.AmbientelautstärkeColorSliderImage);
             }
 
             //Media
@@ -159,7 +159,6 @@ namespace Spa_Interaction_Screen
                 MediaPageLabel.Add((Label)form.WiFiPasswordTitle);
                 MediaPageLabel.Add((Label)form.WiFiPasswortLabel);
                 MediaPageLabel.Add((Label)form.TVSettingsTitle);
-                MediaPageLabel.Add((Label)form.TVSettingsVolumeColorSliderDescribtion);
             }
 
             //Service
@@ -192,80 +191,50 @@ namespace Spa_Interaction_Screen
             form.AmbientePage.SuspendLayout();
             int Pos_x, Pos_y;
 
-            GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 2, false);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, Config.Objectname, (int)0, form.AmbientePage, form, form.Ambiente_Design_Handler);
+            GetDynamicPosition(2, 0, out Pos_x, out Pos_y, -0.5, 2, true);
+            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, Config.Objectname, (bool)false, form.AmbientePage, form, form.Ambiente_Design_Handler, out form.DesignButton);
 
-            ColorSlider.ColorSlider newslider = null;
-            GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 2, false);
-            form.Dimmer1ColorSlider = createColorSlide(100);
-            form.AmbientePage.Controls.Add(form.Dimmer1ColorSlider);
-            form.Dimmer1ColorSlider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.Dimmer1ColorSlider.Location = new Point(Pos_x, Pos_y);
-            form.Dimmer1ColorSlider.Tag = 1;
-            form.Dimmer1ColorSlider.Name = "0";
-            form.Dimmer1ColorSlider.TabIndex = AmbientePageButtons.Count + 1;
+            GetDynamicPosition(2, 1, out Pos_x, out Pos_y, -0.5, 2, true);
+            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, Config.Saunaname, null, form.AmbientePage, form, form.Ambiente_Sauna_Handler, out form.SaunaButton);
+
+            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0.05, 0.65, false);
+            form.DimmerColorSlider = createColorSlide(100);
+            form.AmbientePage.Controls.Add(form.DimmerColorSlider);
+            form.DimmerColorSlider.Size = new Size(Constants.Element_width, Constants.tabheight/2);
+            form.DimmerColorSlider.Location = new Point(Pos_x, Pos_y);
+            form.DimmerColorSlider.Name = "0";
+            form.DimmerColorSlider.Orientation = Orientation.Vertical;
+            form.DimmerColorSlider.TabIndex = AmbientePageButtons.Count + 1;
             //newslider.Value = Config.DMXScenes[Config.DMXSceneSetting].Channelvalues[Config.Dimmerchannel[0]];
-            form.Dimmer1ColorSlider.ValueChanged += form.Dimmer_Change;
-            FormColorSlides.Add(form.Dimmer1ColorSlider);
+            form.DimmerColorSlider.ValueChanged += form.Dimmer_Change;
+            FormColorSlides.Add(form.DimmerColorSlider);
 
-            form.Dimmer1ColorSliderDescribtion = new Label();
-            form.Dimmer1ColorSliderDescribtion.BackColor = Color.Transparent;
-            form.Dimmer1ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer1ColorSliderDescribtion.ForeColor = Constants.Text_color;
-            form.AmbientePage.Controls.Add(form.Dimmer1ColorSliderDescribtion);
-
-            GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 2, false);
-            form.Dimmer2ColorSlider = createColorSlide(100);
-            form.AmbientePage.Controls.Add(form.Dimmer2ColorSlider);
-            form.Dimmer2ColorSlider.Size = new Size(Constants.Element_width, Constants.Element_height);
-            form.Dimmer2ColorSlider.Location = new Point(Pos_x, Pos_y);
-            form.Dimmer2ColorSlider.Tag = 2;
-            form.Dimmer2ColorSlider.Name = "1";
-            form.Dimmer2ColorSlider.TabIndex = AmbientePageButtons.Count + 1;
-            //newslider.Value = Config.DMXScenes[Config.DMXSceneSetting].Channelvalues[Config.Dimmerchannel[1]];
-            FormColorSlides.Add(form.Dimmer2ColorSlider);
-            form.Dimmer2ColorSlider.ValueChanged += form.Dimmer_Change;
-
-            form.Dimmer2ColorSliderDescribtion = new Label();
-            form.Dimmer2ColorSliderDescribtion.BackColor = Color.Transparent;
-            form.Dimmer2ColorSliderDescribtion.AutoSize = true;
-            form.Dimmer2ColorSliderDescribtion.ForeColor = Constants.Text_color;
-            form.AmbientePage.Controls.Add(form.Dimmer2ColorSliderDescribtion);
+            form.DimmerColorSliderImage = new PictureBox();
+            form.DimmerColorSliderImage.BackColor = Color.Transparent;
+            form.DimmerColorSliderImage.AutoSize = true;
+            form.DimmerColorSliderImage.ForeColor = Constants.Text_color;
+            form.AmbientePage.Controls.Add(form.DimmerColorSliderImage);
             
-            GetDynamicPosition(3, 0, out Pos_x, out Pos_y, 0, 3, true);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Sauna Lampe 1", (int)0, form.AmbientePage, form, form.Ambiente_Sauna_Handler);
-
-            GetDynamicPosition(3, 1, out Pos_x, out Pos_y, 0, 3, true);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Sauna Lampe 2", (int)1, form.AmbientePage, form, form.Ambiente_Sauna_Handler);
-
-            GetDynamicPosition(3, 2, out Pos_x, out Pos_y, 0, 3, true);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, "Sauna Lampe 3", (int)2, form.AmbientePage, form, form.Ambiente_Sauna_Handler);
-
-
-            GetDynamicPosition(2, 0, out Pos_x, out Pos_y, 0, 3, false);
-            newslider = createColorSlide(100);
-            newslider.Size = new Size(Constants.Element_width * 2, Constants.Element_height);
-            newslider.Location = new Point(Pos_x, Pos_y);
-            newslider.TabIndex = AmbientePageButtons.Count + 1;
-            newslider.Tag = 3;
-            newslider.ValueChanged += form.AmbientVolume_Handler;
-            //form.AmbientePage.Controls.Add(newslider);
+            GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0.125, 0.65, false);
+            form.VolumeColorSlider = createColorSlide(100);
+            form.VolumeColorSlider.Size = new Size(Constants.Element_width * 2, Constants.tabheight / 2);
+            form.VolumeColorSlider.Location = new Point(Pos_x, Pos_y);
+            form.VolumeColorSlider.TabIndex = AmbientePageButtons.Count + 1;
+            form.VolumeColorSlider.Name = "Volume1";
+            form.VolumeColorSlider.ValueChanged += form.AmbientVolume_Handler;
+            form.VolumeColorSlider.Orientation = Orientation.Vertical;
+            form.AmbientePage.Controls.Add(form.VolumeColorSlider);
 
             /*if (Config.Volume >= newslider.Minimum && Config.Volume <= newslider.Maximum)
             {
                 newslider.Value = Config.Volume;
             }*/
 
-            // 
-            // AmbientelautstärkeColorSliderDescribtion
-            // 
-
-            form.AmbientelautstärkeColorSliderDescribtion = new Label();
-            form.AmbientelautstärkeColorSliderDescribtion.BackColor = Color.Transparent;
-            form.AmbientelautstärkeColorSliderDescribtion.AutoSize = true;
-            form.AmbientelautstärkeColorSliderDescribtion.ForeColor = Constants.Text_color;
-            //form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderDescribtion);
-            FormColorSlides.Add(newslider);
+            form.AmbientelautstärkeColorSliderImage = new PictureBox();
+            form.AmbientelautstärkeColorSliderImage.BackColor = Color.Transparent;
+            form.AmbientelautstärkeColorSliderImage.ForeColor = Constants.Text_color;
+            form.AmbientePage.Controls.Add(form.AmbientelautstärkeColorSliderImage);
+            FormColorSlides.Add(form.VolumeColorSlider);
             form.AmbientePage.ResumeLayout(true);
         }
 
@@ -404,15 +373,15 @@ namespace Spa_Interaction_Screen
                 FormColorSlides.Remove(but);
                 but.Dispose();
             }
-            if (form.TVSettingsVolumeColorSliderDescribtion != null)
+            if (form.TVSettingsVolumeColorSliderImage != null)
             {
-                Label but = form.TVSettingsVolumeColorSliderDescribtion;
+                PictureBox but = form.TVSettingsVolumeColorSliderImage;
                 if (but.Parent != null)
                 {
                     but.Parent.Controls.Remove(but);
                 }
                 but.Hide();
-                form.TVSettingsVolumeColorSliderDescribtion = null;
+                form.TVSettingsVolumeColorSliderImage = null;
                 but.Dispose();
             }
             int Pos_x, Pos_y = 0;
@@ -434,20 +403,31 @@ namespace Spa_Interaction_Screen
             form.MediaPageAmbientVolumeSlider = createColorSlide(100);
             form.MediaPageAmbientVolumeSlider.Location = new Point(Pos_x, Pos_y);
             form.MediaPageAmbientVolumeSlider.Size = new Size(sizex, 200);
-            form.MediaPageAmbientVolumeSlider.Tag = 3;
+            form.MediaPageAmbientVolumeSlider.Name = "Volume2";
             form.MediaPage.Controls.Add(form.MediaPageAmbientVolumeSlider);
             FormColorSlides.Add(form.MediaPageAmbientVolumeSlider);
             form.MediaPageAmbientVolumeSlider.ValueChanged += form.AmbientVolume_Handler;
+
             /*if (Config.Volume >= newslider.Minimum && Config.Volume <= newslider.Maximum)
             {
                 newslider.Value = Config.Volume;
             }*/
 
-            form.TVSettingsVolumeColorSliderDescribtion = new Label();
-            form.TVSettingsVolumeColorSliderDescribtion.BackColor = Color.Transparent;
-            form.TVSettingsVolumeColorSliderDescribtion.AutoSize = true;
-            form.TVSettingsVolumeColorSliderDescribtion.ForeColor = Constants.Text_color;
-            form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderDescribtion);
+            form.TVSettingsVolumeColorSliderImage = new PictureBox();
+            form.TVSettingsVolumeColorSliderImage.BackColor = Color.Transparent;
+            form.TVSettingsVolumeColorSliderImage.AutoSize = true;
+            form.TVSettingsVolumeColorSliderImage.ForeColor = Constants.Text_color;
+            form.MediaPage.Controls.Add(form.TVSettingsVolumeColorSliderImage);
+            try
+            {
+                SetupImageofTrackbar(form.MediaPageAmbientVolumeSlider, form.TVSettingsVolumeColorSliderImage, Image.FromFile(Config.VolumeSliderImage), false);
+            }
+            catch (IOException ex) {
+                MainForm.currentState = 7;
+                Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                Logger.Print("Could not find Dimmer or Volume Image", Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Notice);
+            }
+
         }
 
         public void createTimePageElements()
@@ -555,6 +535,9 @@ namespace Spa_Interaction_Screen
                 }
             }
             Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (1 * (Constants.Element_height + pad_padding)), starty + (3 * (Constants.Element_height + pad_padding)), WartungPageButtons, $"{0}", 0, form.WartungPage, form, form.Numberfield_Click);
+
+            Constants.createButton(Constants.Element_height, Constants.Element_height, startx + (2 * (Constants.Element_height + pad_padding)), starty + (3 * (Constants.Element_height + pad_padding)), WartungPageButtons, $"<-", "!", form.WartungPage, form, form.Numberfield_Click);
+
 #if DEBUG
             Constants.createButton(Constants.Element_width, Constants.Element_height,0, Constants.Element_height, WartungPageButtons, "Login", "Login", form.WartungPage, form, form.Login);
 #endif
@@ -624,25 +607,29 @@ namespace Spa_Interaction_Screen
             }
             
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
-            Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "neue Session Starten", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "neue Session", "SessionStart", form.WartungPage, form, form.NewSession_Handler);
 
             GetDynamicPosition(5, 2, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
-            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Session Beenden", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Session beenden", "SessionEnd", form.WartungPage, form, form.EndSession_Handler);
 
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
             Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, Constants.ExitFullscreenText, "ToggleFullscreen", form.WartungPage, form, form.Programm_Exit_Handler);
 
-            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
-            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Programm zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
+            /*GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Zurücksetzen", "Reset", form.WartungPage, form, form.reset_Handler);
+            */
             GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
             if (form.vlcclosed)
             {
-                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Öffne den Player", "VLCClose", form.WartungPage, form, form.OpenPlayer_Handler);
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Player öffnen", "VLCClose", form.WartungPage, form, form.OpenPlayer_Handler);
             }
             else
             {
-                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Schließe den Player", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
+                Constants.createButton(width, height, Pos_x, Restrictedstarty + 2 * Restrictedycoord, RestrictedPageButtons, "Player schließen", "VLCClose", form.WartungPage, form, form.closePlayer_Handler);
             }
+            GetDynamicPosition(5, 3, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
+            Constants.createButton(width, height, Pos_x, Restrictedstarty + 1 * Restrictedycoord, RestrictedPageButtons, "Verlassen", "exit", form.WartungPage, form, form.OnFormClosed);
+
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
             Constants.createButton(width, height, Pos_x, Restrictedstarty + 0 * Restrictedycoord, RestrictedPageButtons, "Ausloggen", "Logout", form.WartungPage, form, form.logoutbutton_Handler);
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0, Restrictedyoffset, false, width, height);
@@ -809,6 +796,29 @@ namespace Spa_Interaction_Screen
             l.BringToFront();
         }
 
+        public void SetupImageofTrackbar(ColorSlider.ColorSlider b, PictureBox p, Image i, bool top)
+        {
+            if (p == null || b == null)
+            {
+                return;
+            }
+            p.Image = i;
+            p.Size = new Size(80, 80);
+            p.SizeMode = PictureBoxSizeMode.Zoom;
+            int posx = (int)(b.Location.X + (b.Size.Width / 2 - p.Size.Width / 2));
+            int posy = 0;
+            if (top)
+            {
+                posy = (int)(b.Location.Y - p.Size.Height * 1.025);
+            }
+            else
+            {
+                posy = (int)(b.Location.Y + b.Size.Height * 0.75);
+            }
+            p.Location = new Point(posx, posy);
+            p.BringToFront();
+        }
+
         public void SetupLabelofButton(Button b, Label l, String Text)
         {
             l.Name = Text;
@@ -844,7 +854,7 @@ namespace Spa_Interaction_Screen
             int channel = 0;
             foreach (ColorSlider.ColorSlider slider in FormColorSlides)
             {
-                if (slider == null || (int)slider.Tag <= 0 || (int)slider.Tag >= 3 || slider.Name == null || slider.Name.Length <= 0)
+                if (slider == null || slider.Name == null || slider.Name.Length <= 0)
                 {
                     continue;
                 }
@@ -854,12 +864,12 @@ namespace Spa_Interaction_Screen
                 }
                 catch (FormatException ex)
                 {
-                    MainForm.currentState = 7;
+                    MainForm.currentState = 0;
                     Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }catch (ArgumentOutOfRangeException ex)
                 {
-                    MainForm.currentState = 7;
+                    MainForm.currentState = 0;
                     Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                     continue;
                 }
@@ -991,22 +1001,28 @@ namespace Spa_Interaction_Screen
             GendynamicServiceButtons();
 
             UpdateActiveDMXScene(-1, true);
-
-            foreach (ColorSlider.ColorSlider s in FormColorSlides)
+            Image volume = null;
+            try
             {
-                Label l = new Label();
-                switch (FormColorSlides.IndexOf(s))
-                {
-                    case 0:
-                        l = form.Dimmer1ColorSliderDescribtion; break;
-                    case 1:
-                        l = form.Dimmer2ColorSliderDescribtion; break;
-                    case 2:
-                        l = form.AmbientelautstärkeColorSliderDescribtion; break;
-                    case 3:
-                        l = form.TVSettingsVolumeColorSliderDescribtion; break;
-                }
-                SetupLabelofTrackbar(s, l, Config.slidernames[((int)s.Tag) - 1]);
+                SetupImageofTrackbar(FormColorSlides[0], form.DimmerColorSliderImage, Image.FromFile(Config.Dimmerimage), true);
+                form.DimmerColorSliderImage.Click += form.DimmerClick;
+                form.DimmerColorSliderImage.Tag = FormColorSlides[0];
+                volume = Image.FromFile(Config.VolumeSliderImage);
+            }
+            catch (IOException ex)
+            {
+                MainForm.currentState = 7;
+                Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
+                Logger.Print("Could not find Dimmer or Volume Image", Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Notice);
+            }
+            if (volume != null)
+            {
+                SetupImageofTrackbar(FormColorSlides[1], form.AmbientelautstärkeColorSliderImage, volume, true);
+                form.AmbientelautstärkeColorSliderImage.Click += form.VolumeClick;
+                form.AmbientelautstärkeColorSliderImage.Tag = FormColorSlides[1];
+                SetupImageofTrackbar(FormColorSlides[2], form.TVSettingsVolumeColorSliderImage, volume, false);
+                form.AmbientelautstärkeColorSliderImage.Click += form.VolumeClick;
+                form.TVSettingsVolumeColorSliderImage.Tag = FormColorSlides[2];
             }
             Showonallsites();
             Application.DoEvents();
@@ -1096,7 +1112,7 @@ namespace Spa_Interaction_Screen
                     scene.ButtonElement = bu;
                     continue;
                 }
-                GetDynamicPosition(Numscenes, x, out Pos_x, out Pos_y, 0, 0, true);
+                GetDynamicPosition(Numscenes, x, out Pos_x, out Pos_y, -0.5, 0, true);
                 Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, scene.ShowText, scene, form.AmbientePage, form, form.Ambiente_Change_Handler, out bu);
                 scene.ButtonElement = bu;
                 bu.BringToFront();
@@ -1463,9 +1479,9 @@ namespace Spa_Interaction_Screen
             Logger.ConsoleTextscroll.Hide();
             Logger.ConsoleTextscroll.ValueChanged += form.consolescroll;
             ConsoleElements.Add(Logger.ConsoleTextscroll);
-            form.ConsolePage.Controls.Add(Logger.ConsoleTextscroll);
+            //form.ConsolePage.Controls.Add(Logger.ConsoleTextscroll);
 
-            curindex++;
+            //curindex++;
             GetDynamicPosition(elementsinwidth, curindex, out posx, out posy, 0, 0, false);
             form.Programmstate = new Label();
             form.Programmstate.AutoSize = true;

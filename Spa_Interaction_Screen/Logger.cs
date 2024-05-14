@@ -450,7 +450,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (Exception ex)
                 {
-                    MainForm.currentState = 6;
+                    MainForm.currentState = 7;
                     Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                     Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 }
@@ -533,7 +533,7 @@ namespace Spa_Interaction_Screen
             }
             catch (IOException ex)
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print($"Could not open File: {path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 if (fstream != null)
@@ -544,7 +544,7 @@ namespace Spa_Interaction_Screen
             }
             catch (UnauthorizedAccessException ex)
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 if (fstream != null)
@@ -554,7 +554,7 @@ namespace Spa_Interaction_Screen
                 return null;
             }catch(Exception ex)
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print(ex.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print($"Missing Permissions to Open File:{path}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 if (fstream != null)

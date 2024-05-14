@@ -16,7 +16,7 @@ namespace Spa_Interaction_Screen
         public const int SessionOvertimeBuffer = 0;
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
-        public const String ServiceNotReachableText = "Service Ruf nicht möglich";
+        public const String ServiceNotReachableText = "Service Ruf nicht Verfügbar";
         public const int Buttonshortfadetime = 150;
         public const int ButtonLongfadetime = 1000;
         public const bool NetRoomSpecMandatory = false;
@@ -270,7 +270,8 @@ namespace Spa_Interaction_Screen
             }
             b.Tag = Tag;
             b.Text = Text;
-            b.BorderRadius = (Constants.Element_width>Constants.Element_height)? Constants.Element_width: Constants.Element_height;
+            b.BorderRadius = 42;
+            //b.BorderRadius = (Constants.Element_width>Constants.Element_height)? Constants.Element_width: Constants.Element_height;
             b.BorderWidth = 0;
             b.BackColor = Constants.Button_color;
             b.AutoEllipsis = true;
@@ -296,7 +297,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    MainForm.currentState = 7;
+                    MainForm.currentState = 8;
                     Logger.Print(ex.Message, type, Logger.MessageSubType.Error);
                     Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     try
@@ -305,7 +306,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (InvalidOperationException ex2)
                     {
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex2.Message, type, Logger.MessageSubType.Error);
                         Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     }
@@ -319,7 +320,7 @@ namespace Spa_Interaction_Screen
                 }
                 catch (InvalidOperationException ex)
                 {
-                    MainForm.currentState = 7;
+                    MainForm.currentState = 8;
                     Logger.Print(ex.Message, type, Logger.MessageSubType.Error);
                     Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     try
@@ -328,7 +329,7 @@ namespace Spa_Interaction_Screen
                     }
                     catch (InvalidOperationException ex2)
                     {
-                        MainForm.currentState = 7;
+                        MainForm.currentState = 8;
                         Logger.Print(ex2.Message, type, Logger.MessageSubType.Error);
                         Logger.Print(Mydelegate.Method.Name, type, Logger.MessageSubType.Notice);
                     }

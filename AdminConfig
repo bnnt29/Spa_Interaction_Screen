@@ -14,7 +14,7 @@ YButtonCount%5
 InlineuntilXButtons%5
 noCom%false
 noNet%false
-showbuttontester%true
+showbuttontester%false
 showdirectlypotentiallyfalsewificreds%false
 EdgeItemposxdist%80
 EdgeItemposydist%80

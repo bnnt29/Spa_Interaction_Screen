@@ -15,7 +15,7 @@
 #String;#Port Router;23;;;;;;;;;;;;;;;
 #Bool;#Zeige Zeit Seite;false;;;;;;;;;;;;;;;
 #Bool;#Zeige Eck Zeit;true;3;;;;;;;;;;;;;;
-#Bool;#Zeige Color Wheel Seite;true;#Ambiente;#Color;#Gastronomie;#Service;#Media;#Time;#Wartung;;;;;;;;
+#Bool;#Zeige Color Wheel Seite;false;#Ambiente;#Color;#Gastronomie;#Service;#Media;#Time;#Wartung;;;;;;;;
 #Integer;#Zeige Logo (Position|Ambiente|Farbe|Gastro|Media|Service|Wartung|restricted);4;true;true;false;true;true;true;true;;;;;;;;
 #String;#Logo Absolut Filepath;Logoscaled.png;;;;;;;;;;;;;;;
 #String;#QRCode Logo;QRLogo.png;;;;;;;;;;;;;;;
@@ -27,21 +27,20 @@
 #String;#Wartung Bild;;#minuntes before end of Session (shows endpicture (changeable, blocks streaming, switches to TimePage);;;;;;;;;;;;;;
 #String;#EndBild;butler.png;15;;;;;;;;;;;;;;
 #String;#LogFile ([Date],[Time] are replaced ([Date]->Year.Month.Day, [Time]->Hour-Minute));Log.txt;;;;;;;;;;;;;;;
-#;#Special DMX Channels;#DMX Channel to change;#Anzeige Text ;#Off Value;#On Value;;;;;;;;;;;;
-#Integer;#Dimmer1 Channel;12;Dusche;#;#;;;;;;;;;;;;
-#Integer;#Dimmer2 Channel;11;Raum;#;#;;;;;;;;;;;;
+#;#Special DMX Channels;#DMX Channel to change;#Icon Filepath / Name;#Off Value;#On Value;;;;;;;;;;;;
+#Integer;#Dimmer Channel;11,12;LightIcon.png;#;#;;;;;;;;;;;;
 #Integer;#HDMI Switch;6;#Not useable;0;255;;;;;;;;;;;;
-#Integer;#Objektbeleuchtung (Channel(1<X<#channels)|Off|On);4;Design Element;0;255;;;;;;;;;;;;
-#Integer;#Sauna Knöpfe channel offset;0;;;;;;;;;;;;;;;
+#Integer;#Objektbeleuchtung (Channel(1<X<#channels)|Off|On);3;Design Element;0;255;;;;;;;;;;;;
+#Integer;Sauna Leuchte;1;#Not useable;0;255;;;;;;;;;;;;
 #Integer;#List of Channels (R|G|B|W);7;8;9;10;;;;;;;;;;;;
 Json Type:1;System;#Json Label;;;;;;;;;;;;;;;
 #Integer;#Normalbetrieb;normal;;;;;;;;;;;;;;;
 #Integer;#Config neuladen;config;;;;;;;;;;;;;;;
 #Integer;#Neustart;restart;;;;;;;;;;;;;;;
 #Integer;#Aus;off;;;;;;;;;;;;;;;
-#;#;#Json Label;#default;;;;;;;;;;;;;;
+#;#;#Json Label;#default;#Icon Filepath;;;;;;;;;;;;;
 #Integer;#DMXScene;scene;0;;;;;;;;;;;;;;
-#Integer;Laustärke;volume;15;;;;;;;;;;;;;;
+#Integer;#Laustärke;volume;15;volumeIcon.png;;;;;;;;;;;;;
 Json Type:2;TCPWartung;#Json Label;#id;#value (no Array);;;;;;;;;;;;;
 #Integer;Whirlpool spülen;Whirlpool;1;;;;;;;;;;;;;;
 #Integer;Whirlpool ablassen;Whirlpool;2;;;;;;;;;;;;;;
@@ -59,13 +58,13 @@ Json Type:4;Services;#Json Label;#Anzeige Text;"#Secondary Function (JsonType,Su
 #String;#3;Handtuch;frische Handtücher;;#This is important when selecting a ServiceSetting as Secondary Function;;;;;;;;;;;;
 #;#[More Serives can be added (max 12 mit Anzeige Text)];;;;;;;;;;;;;;;;
 Json Type:5;Scenes;#Json Label;#Anzeige Text;#CH1 ;#CH2 ;#CH3;#CH4;#CH5;#CH6;#CH7;#CH8;#CH9;#CH10;#CH11;#CH12;#TVContent absolute Filepath;#Info
-#Order Importance;#0;default;!;56;0;0;0;0;0;255;255;0;0;0;0;WerbeVideo.mp4;
-#Order Importance;#1;Putzlicht;!;200;128;255;0;0;0;100;0;255;0;0;0;Werbung.jpeg;#(Wird nur im Service Tab angezeigt)
-#Order Importance;#2;Notfall;!;200;128;255;0;0;0;255;0;100;0;0;0;;
+#Order Importance;#0;default;!;0;0;0;0;0;0;255;255;0;0;0;0;WerbeVideo.mp4;
+#Order Importance;#1;Putzlicht;!;255;255;255;0;0;0;0;0;255;0;0;0;Werbung.jpeg;#(Wird nur im Service Tab angezeigt)
+#Order Importance;#2;Notfall;!;255;255;255;0;0;0;255;0;255;0;0;0;;#Streaming wird beendet
 #Order Importance;#3;Colorwheel;!;0;0;0;0;0;0;0;0;0;0;0;0;;
-#;#4;Kamin;Kamin;0;0;0;128;0;0;255;0;0;0;255;0;Feuer.mp4;
-#;#5;Wellen;Wellen;255;0;0;0;255;0;0;0;255;0;0;0;Wellen.mp4;
-#;#6;Wald;Wald;0;255;0;0;0;128;0;255;0;0;0;0;Wald.mp4;
-#;#7;Wolken;Wolken;0;255;0;255;128;355;255;255;255;255;0;0;Wolken.mp4;
+#;#4;Kamin;Kamin;0;0;0;0;0;0;255;0;0;0;255;0;Feuer.mp4;
+#;#5;Wellen;Wellen;255;0;0;0;0;0;0;0;255;0;0;0;Wellen.mp4;
+#;#6;Wald;Wald;0;0;255;0;0;255;0;255;0;0;0;0;Wald.mp4;
+#;#7;Wolken;Wolken;255;0;255;0;0;355;255;255;255;255;0;0;Wolken.mp4;
 #;#[More Scenes can be added (max 15 mit Anzeige Text)];;;;;;;;;;;;;;;;
 #End of Data Placeholder;;;;;;;;;;;;;;;;;

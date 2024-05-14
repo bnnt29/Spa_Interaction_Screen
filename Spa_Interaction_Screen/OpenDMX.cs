@@ -139,7 +139,6 @@ namespace Test
             status = FT_Purge(handle, PURGE_TX);
             status = FT_Purge(handle, PURGE_RX);
         }
-
     }
 
     /// <summary>

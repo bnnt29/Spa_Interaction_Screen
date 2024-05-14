@@ -47,7 +47,7 @@ namespace Spa_Interaction_Screen
             }
             catch (Exception exp)
             {
-                MainForm.currentState = 5;
+                MainForm.currentState = 6;
                 Logger.Print(exp.Message, Logger.MessageType.Licht, Logger.MessageSubType.Error);
                 Logger.Print("Error Connecting to Enttec USB Device", Logger.MessageType.Licht, Logger.MessageSubType.Notice);
                 triedtoopen = false;
@@ -65,7 +65,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                MainForm.currentState = 5;
+                MainForm.currentState = 6;
                 Logger.Print("Error Opening Device", Logger.MessageType.Licht, Logger.MessageSubType.Error);
                 return false;
             }

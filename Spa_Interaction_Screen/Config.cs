@@ -52,19 +52,21 @@ namespace Spa_Interaction_Screen
         public static int SessionEndShowTimeLeft = -1;
         public static String LogPath = null;
         public static int[] Dimmerchannel = null;
-        public static String[] slidernames = null;
+        public static String Saunaname = null;
+        public static byte[] Saunainterval = null;
+        public static String Dimmerimage = null;
         public static byte[] HDMISwitchInterval = null;
         public static int HDMISwitchchannel = -1;
         public static byte[] ObjectLightInterval = null;
         public static int ObjectLightchannel = -1;
         public static String Objectname = null;
-        public static int SaunaChanneloffset = 0;
+        public static int[] SaunaChannel = null;
         public static int[][] colorwheelvalues = null;
         public static String[] Typenames = null;
         public static int SessionSetting = -1;
         public static int DMXSceneSetting = -1;
         public static String DMXSceneSettingJson = null;
-        public static String VolumeSliderName = null;
+        public static String VolumeSliderImage = null;
         public static int Volume = -1;
         public static String VolumeJson = null;
         public static List<Constants.SystemSetting> SystemSettings = null;
@@ -81,7 +83,7 @@ namespace Spa_Interaction_Screen
         currentconfigindex = 0;
         if (!Config.LoadPreConfig())
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print("Problem in loading PreConfig", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
@@ -92,7 +94,7 @@ namespace Spa_Interaction_Screen
         {
             if (!File.Exists(Constants.PreConfigPath))
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print($"Could not find PreConfig: {Constants.PreConfigPath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return false;
             }
@@ -188,7 +190,7 @@ namespace Spa_Interaction_Screen
                 {
                     if (stream == null)
                     {
-                        MainForm.currentState = 6;
+                        MainForm.currentState = 7;
                         Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         fstream.Close();
                         fstream.Dispose();
@@ -196,7 +198,7 @@ namespace Spa_Interaction_Screen
                     }
                     if (stream.EndOfStream)
                     {
-                        MainForm.currentState = 6;
+                        MainForm.currentState = 7;
                         Logger.Print("Could not establish Config FileStream", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                         stream.Close();
                         stream.Dispose();
@@ -223,7 +225,7 @@ namespace Spa_Interaction_Screen
             }
             else if(fstream != null)
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error); 
                 fstream.Close();
                 fstream.Dispose();
@@ -231,7 +233,7 @@ namespace Spa_Interaction_Screen
             }
             else
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print("Opened PreConfig, but cannot Read it.", MessageType.Konfig, MessageSubType.Error); 
                 return null;
             }
@@ -254,7 +256,7 @@ namespace Spa_Interaction_Screen
             Logger.Print($"Using {FilePath} for the MainConfig Path", Logger.MessageType.Konfig, Logger.MessageSubType.Information);
             if (!File.Exists(FilePath))
             {
-                MainForm.currentState = 6;
+                MainForm.currentState = 7;
                 Logger.Print($"Could not find Config: {FilePath}", Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 return;
             }
@@ -380,21 +382,25 @@ namespace Spa_Interaction_Screen
             Debug.Print(LogPath);
             Logger.InitLogfromBackup();
             currentconfigindex++;
-            String[] Dimmerchannelval1 = null;
-            read_all = getcsvFields(ref Dimmerchannelval1, -1, false, read_all, false);
-            String[] Dimmerchannelval2 = null;
-            read_all = getcsvFields(ref Dimmerchannelval2, -1, false, read_all, false);
-            try
+            String[] Dimmerchannelstring = null;
+            read_all = getcsvFields(ref Dimmerchannelstring, -1, false, read_all, false);
+            Debug.Print(Dimmerchannelstring[0]);
+            Dimmerchannel = new Int32[Dimmerchannelstring[0].Split(',').Length];
+            for (int i = 0;i< Dimmerchannel.Length;i++) 
             {
-                Dimmerchannel = new Int32[2] { Int32.Parse(Dimmerchannelval1[0]), Int32.Parse(Dimmerchannelval2[0]) };
+                try
+                {
+                    Dimmerchannel[i] = Int32.Parse(Dimmerchannelstring[0].Split(',')[i].Trim());
+                }
+                catch (FormatException e)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Logger.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                }
             }
-            catch (FormatException e)
-            {
-                MainForm.currentState = 7;
-                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
-                Logger.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
-            }
-            slidernames = new String[] { Dimmerchannelval1[1], Dimmerchannelval2[1], null };
+            Dimmerimage = Dimmerchannelstring[1];
+            finalizePaths(out Dimmerimage, Dimmerimage);
             String[] field = null;
             read_all = getcsvFields(ref field, -1, false, read_all, false);
             try
@@ -422,7 +428,34 @@ namespace Spa_Interaction_Screen
                 Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
                 Logger.Print("Die in der Konfig angegebene Zahl für das ObjectLight ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
             }
-            read_all = getcsvFields(ref SaunaChanneloffset, 0, false, read_all, true);
+            read_all = getcsvFields(ref field, -1, false, read_all, false);
+            Saunaname = field[0];
+            SaunaChannel = new int[field[1].Split(',').Length];
+            Debug.Print("1");
+            Debug.Print(field[1]);
+            for (int i = 0; i < SaunaChannel.Length; i++)
+            {
+                try
+                {
+                    SaunaChannel[i] = Int32.Parse(field[1].Split(',')[i].Trim());
+                }
+                catch (FormatException e)
+                {
+                    MainForm.currentState = 7;
+                    Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                    Logger.Print("Die in der Konfig angegebene Zahl für die Dimmerchannel ist fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+                }
+            }
+            try
+            {
+                Saunainterval = new Byte[2] { Byte.Parse(field[2].Trim()), Byte.Parse(field[3].Trim()) };
+            }
+            catch (FormatException e)
+            {
+                MainForm.currentState = 7;
+                Logger.Print(e.Message, Logger.MessageType.Konfig, Logger.MessageSubType.Error);
+                Logger.Print("Die in der Konfig angegebenen Saunachannel intervalle (on/off) sind fehlerhaft.", Logger.MessageType.Konfig, Logger.MessageSubType.Notice);
+            }
             String[] ReadFields = null;
             read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
             colorwheelvalues = new Int32[4][];
@@ -528,9 +561,11 @@ namespace Spa_Interaction_Screen
                         DMXSceneSetting = Int32.Parse(ReadFields[1]);
 
                         read_all = getcsvFields(ref ReadFields, -1, false, read_all, false);
-                        slidernames[2] = ReadFields[0];
-                        VolumeJson = ReadFields[1];
-                        Volume = Int32.Parse(ReadFields[2]);
+                        finalizePaths(out VolumeSliderImage, VolumeSliderImage);
+                        VolumeJson = ReadFields[0];
+                        Volume = Int32.Parse(ReadFields[1]);
+                        VolumeSliderImage = ReadFields[2];
+                        finalizePaths(out VolumeSliderImage, VolumeSliderImage);
                         //stream.ReadLine();
                         //read_all = getcsvFields(stream, ref ReadFields, -1, false, read_all);
                         read_all = true;

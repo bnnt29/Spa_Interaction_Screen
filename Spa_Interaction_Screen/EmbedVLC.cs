@@ -190,7 +190,7 @@ namespace Spa_Interaction_Screen
         {
             if (main.generateQRCode(welcomeqr, 29, true, (int)(scrn.Bounds.Width * 0.2), true))
             {
-                welcomeqr.Location = new Point((this.Width / 2) - welcomeqr.Size.Width / 2, this.Height / 2 - welcomeqr.Size.Height / 2);
+                welcomeqr.Location = new Point((this.Width / 2) - welcomeqr.Size.Width / 2, (this.Size.Height - Constants.EdgeItemposydist) - welcomeqr.Size.Height);
                 welcomeqr.BringToFront();
                 welcomeqr.Show();
             }

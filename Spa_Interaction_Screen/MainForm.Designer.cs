@@ -370,11 +370,12 @@ namespace Spa_Interaction_Screen
         public TabPage ButtonPage;
 
         //AmbientePage
-        public Label Dimmer1ColorSliderDescribtion;
-        public Label Dimmer2ColorSliderDescribtion;
-        public ColorSlider.ColorSlider Dimmer1ColorSlider; 
-        public ColorSlider.ColorSlider Dimmer2ColorSlider;
-        public Label AmbientelautstärkeColorSliderDescribtion;
+        public PictureBox DimmerColorSliderImage;
+        public ColorSlider.ColorSlider DimmerColorSlider;
+        public ColorSlider.ColorSlider VolumeColorSlider;
+        public Button SaunaButton;
+        public PictureBox AmbientelautstärkeColorSliderImage;
+        public Button DesignButton;
 
         //ColorPage
         public ColorWheel colorWheelElement;
@@ -394,7 +395,7 @@ namespace Spa_Interaction_Screen
         public Label TVSettingsTitle;
         public Button TVSettingsAmbienteButton;
         public Button TVSettingsStreamingButton;
-        public Label TVSettingsVolumeColorSliderDescribtion;
+        public PictureBox TVSettingsVolumeColorSliderImage;
         public ColorSlider.ColorSlider MediaPageAmbientVolumeSlider;
 
         //TimePage
