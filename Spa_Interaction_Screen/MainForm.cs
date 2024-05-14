@@ -14,11 +14,10 @@ using LibreHardwareMonitor.Hardware;
 using System.Windows.Forms;
 
 /*TODO:
+ * limit Log files on x lines
  * Wlan passwort / beschreibung auf Embed
  * Freezing on TCP receive (Scene)
  * Ignoring Streaming state when timeouting qr code
- * Design und Sauna Buttons umgekehrete Logik
- * Putzlicht schaltet nicht Design, obwohl in Config
  * fix random error Status
  * add a few status updater
  * Volume swithing when icon clicked

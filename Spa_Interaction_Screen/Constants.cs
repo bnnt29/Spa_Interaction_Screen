@@ -13,7 +13,7 @@ namespace Spa_Interaction_Screen
         public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";
         public const String ExitFullscreenText = "Verlasse Fullscreen";
-        public const int SessionOvertimeBuffer = 0;
+        public const int SessionOvertimeBuffer = 2;
         public const String scenelockedinfo = "Szenen Auswahl gesperrt. Bitte durch das Personal wieder freischalten lassen.";
         public const int TelnetComTimeout = 90;
         public const String ServiceNotReachableText = "Service Ruf nicht Verfügbar";
