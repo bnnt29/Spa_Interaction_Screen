@@ -192,10 +192,10 @@ namespace Spa_Interaction_Screen
             int Pos_x, Pos_y;
 
             GetDynamicPosition(2, 0, out Pos_x, out Pos_y, -0.5, 2, true);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, Config.Objectname, (bool)false, form.AmbientePage, form, form.Ambiente_Design_Handler, out form.DesignButton);
+            Constants.createButton<Button>(Pos_x, Pos_y, AmbientePageButtons, Config.Objectname, (bool)false, form.AmbientePage, form, form.Ambiente_Design_Handler, out form.DesignButton);
 
             GetDynamicPosition(2, 1, out Pos_x, out Pos_y, -0.5, 2, true);
-            Constants.createButton(Pos_x, Pos_y, AmbientePageButtons, Config.Saunaname, null, form.AmbientePage, form, form.Ambiente_Sauna_Handler, out form.SaunaButton);
+            Constants.createButton<Button>(Pos_x, Pos_y, AmbientePageButtons, Config.Saunaname, null, form.AmbientePage, form, form.Ambiente_Sauna_Handler, out form.SaunaButton);
 
             GetDynamicPosition(5, 4, out Pos_x, out Pos_y, 0.05, 0.65, false);
             form.DimmerColorSlider = createColorSlide(100);
@@ -204,7 +204,7 @@ namespace Spa_Interaction_Screen
             form.DimmerColorSlider.Location = new Point(Pos_x, Pos_y);
             form.DimmerColorSlider.Name = "0";
             form.DimmerColorSlider.Orientation = Orientation.Vertical;
-            form.DimmerColorSlider.TabIndex = AmbientePageButtons.Count + 1;
+            form.DimmerColorSlider.TabIndex = AmbientePageButtons.Count + 3;
             //newslider.Value = Config.DMXScenes[Config.DMXSceneSetting].Channelvalues[Config.Dimmerchannel[0]];
             form.DimmerColorSlider.ValueChanged += form.Dimmer_Change;
             FormColorSlides.Add(form.DimmerColorSlider);
@@ -219,7 +219,7 @@ namespace Spa_Interaction_Screen
             form.VolumeColorSlider = createColorSlide(100);
             form.VolumeColorSlider.Size = new Size(Constants.Element_width * 2, Constants.tabheight / 2);
             form.VolumeColorSlider.Location = new Point(Pos_x, Pos_y);
-            form.VolumeColorSlider.TabIndex = AmbientePageButtons.Count + 1;
+            form.VolumeColorSlider.TabIndex = AmbientePageButtons.Count + 3;
             form.VolumeColorSlider.Name = "Volume1";
             form.VolumeColorSlider.ValueChanged += form.AmbientVolume_Handler;
             form.VolumeColorSlider.Orientation = Orientation.Vertical;
@@ -854,7 +854,7 @@ namespace Spa_Interaction_Screen
             int channel = 0;
             foreach (ColorSlider.ColorSlider slider in FormColorSlides)
             {
-                if (slider == null || slider.Name == null || slider.Name.Length <= 0)
+                if (slider == null || slider.Name == null || slider.Name.Length <= 0 || slider.Name.Contains("Volume"))
                 {
                     continue;
                 }

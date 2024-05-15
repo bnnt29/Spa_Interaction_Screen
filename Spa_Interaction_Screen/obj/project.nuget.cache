@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YV8rg7xbny1jqpP4BKNggt7sNyXoh+t5GqySEsOeNahE8BRxxUNcgUkDwaaTZVPy7xRqI+5I9aKnbOngS8kXpg==",
+  "dgSpecHash": "5GiehkKxkJ3lUgKrfKCrKbI0FRdncitjfbI5J0VZpBiVl1hmeWiO0ybO0Quo7O8rFl0fuY8RNGUIqNgFzyYp3w==",
   "success": true,
   "projectFilePath": "C:\\Users\\Berni\\Documents\\GitHub\\Spa_Interaction_Screen\\Spa_Interaction_Screen\\Spa_Interaction_Screen.csproj",
   "expectedPackageFiles": [
@@ -12,6 +12,7 @@
     "C:\\Users\\Berni\\.nuget\\packages\\libvlcsharp\\3.8.2\\libvlcsharp.3.8.2.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\libvlcsharp.winforms\\3.8.2\\libvlcsharp.winforms.3.8.2.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\lioncs.colorslider\\1.0.0\\lioncs.colorslider.1.0.0.nupkg.sha512",
+    "C:\\Users\\Berni\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.3\\microsoft.net.illink.tasks.8.0.3.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\microsoft.netcore.platforms\\5.0.0\\microsoft.netcore.platforms.5.0.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\microsoft.toolkit.diagnostics\\7.1.0\\microsoft.toolkit.diagnostics.7.1.0.nupkg.sha512",
     "C:\\Users\\Berni\\.nuget\\packages\\microsoft.web.webview2\\1.0.2478.35\\microsoft.web.webview2.1.0.2478.35.nupkg.sha512",

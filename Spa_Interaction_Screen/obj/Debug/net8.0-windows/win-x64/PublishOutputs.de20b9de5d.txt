@@ -1,0 +1,2 @@
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\publish\win-x64\Spa_Interaction_Screen.pdb
+C:\Users\Berni\Documents\GitHub\Spa_Interaction_Screen\Spa_Interaction_Screen\bin\Debug\net8.0-windows\publish\win-x64\Spa_Interaction_Screen.exe

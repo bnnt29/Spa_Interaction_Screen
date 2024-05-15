@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualBasic.Logging;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Forms.VisualStyles;
 
 namespace Spa_Interaction_Screen
 {
@@ -239,7 +240,7 @@ namespace Spa_Interaction_Screen
 
         private static void WriteBunchLogMessages(String Path, String[] log, Boolean shouldcreate)
         {
-            if(log == null || log.Length == 0)
+            if (log == null || log.Length == 0)
             {
                 return;
             }
@@ -249,9 +250,9 @@ namespace Spa_Interaction_Screen
                 {
                     try
                     {
-                        File.Create(Path);
+                        File.Create(Path).Close();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
                         Logger.Print($"Could not Create File: {Path}", MessageType.Logger, MessageSubType.Notice);
@@ -263,7 +264,7 @@ namespace Spa_Interaction_Screen
                     {
                         if (sw != null)
                         {
-                            foreach(String s in log)
+                            foreach (String s in log)
                             {
                                 sw.WriteLine(s);
                             }
@@ -271,7 +272,7 @@ namespace Spa_Interaction_Screen
                             {
                                 sw.Flush();
                             }
-                            catch (Exception ex)
+                            catch (IOException ex)
                             {
                                 Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
                                 Logger.Print($"Could not write to {Path}", MessageType.Logger, MessageSubType.Notice);
@@ -343,6 +344,100 @@ namespace Spa_Interaction_Screen
             try
             {
                 __Blogpool.WaitOne();
+                try
+                {
+                    int totallines = File.ReadLines(Constants.BackupLOGPath).Count();
+                    if (totallines > Constants.MaxBLOGLines || totallines > Int32.MaxValue)
+                    {
+                        try
+                        {
+                            if (File.Exists(Constants.BackupLOGPath + ".temp"))
+                            {
+                                try
+                                {
+                                    File.Delete(Constants.BackupLOGPath + ".temp");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                                    Logger.Print($"Could not Delete TempBLOG: {Constants.BackupLOGPath + ".temp"} -> Can not Shorten BLOG", MessageType.Logger, MessageSubType.Notice);
+                                }
+                            }
+                            File.Create(Constants.BackupLOGPath + ".temp").Close();
+                            if (File.Exists(Constants.BackupLOGPath + ".temp"))
+                            {
+                                using (FileStream fs = CreateStream(Constants.BackupLOGPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                                {
+                                    if (fs != null)
+                                    {
+                                        int line_number = 0;
+                                        using (StreamReader reader = new StreamReader(fs))
+                                        {
+                                            if (reader != null)
+                                            {
+                                                while (!reader.EndOfStream && reader.ReadLine() != null)
+                                                {
+                                                    line_number++;
+
+                                                    if (line_number > totallines-Constants.MaxBLOGLines || line_number > Int32.MaxValue || reader.EndOfStream)
+                                                        break;
+                                                }
+                                                using (StreamWriter writer = new StreamWriter(Constants.BackupLOGPath + ".temp"))
+                                                {
+                                                    if (writer != null)
+                                                    {
+                                                        String line;
+                                                        while (!reader.EndOfStream && (line = reader.ReadLine()) != null)
+                                                        {
+                                                            writer.WriteLine(line);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if (File.Exists(Constants.BackupLOGPath))
+                            {
+                                try
+                                {
+                                    File.Delete(Constants.BackupLOGPath);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                                    Logger.Print($"Could not Delete TempBLOG: {Constants.BackupLOGPath}", MessageType.Logger, MessageSubType.Notice);
+                                    Logger.Print($"Could not Shorten BLOG. Be aware of a growing Log File at: {Constants.BackupLOGPath}", MessageType.Logger, MessageSubType.Notice);
+                                }
+                            }
+                            File.Copy(Constants.BackupLOGPath + ".temp", Constants.BackupLOGPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                            Logger.Print($"Could not Shorten BLOG. Be aware of a growing Log File at: {Constants.BackupLOGPath}", MessageType.Logger, MessageSubType.Notice);
+                        }
+                        finally
+                        {
+                            if (File.Exists(Constants.BackupLOGPath + ".temp"))
+                            {
+                                try
+                                {
+                                    File.Delete(Constants.BackupLOGPath + ".temp");
+                                }
+                                catch (Exception ex)
+                                {
+                                    Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                                    Logger.Print($"Could not Delete TempBLOG: {Constants.BackupLOGPath + ".temp"}", MessageType.Logger, MessageSubType.Notice);
+                                }
+                            }
+                        }
+                    }
+                }catch(Exception ex)
+                {
+                    Logger.Print(ex.Message, MessageType.Logger, MessageSubType.Error);
+                }
                 WriteSingleLogMessage(Constants.BackupLOGPath, $"Spa_Interaction_Screen\nVersion:{Constants.CurrentVersion}\n{Logger.TimeToString(DateTime.Now)}", true);
             }catch(Exception ex)
             {

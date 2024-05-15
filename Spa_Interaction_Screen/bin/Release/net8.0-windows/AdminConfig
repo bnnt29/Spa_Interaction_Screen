@@ -1,0 +1,22 @@
+Version%1.3
+LoggerDateTimeFormat%14
+ContentPath%C:\Users\Berni\Documents\Github\Spa_Interaction_Screen\Spa_Interaction_Screen_Content
+UDPReceivePort%50100
+ConfigSeperator%;
+ConfigComment%#
+ConfigEmpty%!
+SpaName%Veen Spa
+maxscenes%12
+maxhelps%12
+maxtcps%5
+XButtonCount%5
+YButtonCount%5
+InlineuntilXButtons%5
+noCom%false
+noNet%false
+showbuttontester%false
+showdirectlypotentiallyfalsewificreds%false
+EdgeItemposxdist%80
+EdgeItemposydist%80
+Logoxsize%100
+Logoysize%100

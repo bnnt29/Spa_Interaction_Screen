@@ -1,10 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Exe</OutputType>
+	<PublishSingleFile>true</PublishSingleFile>
+	<IncludeAllContentForSelfExtract >true</IncludeAllContentForSelfExtract>
+	<EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+	<TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+	<DebugType>embedded</DebugType>
+	<PublishTrimmed>false</PublishTrimmed>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 

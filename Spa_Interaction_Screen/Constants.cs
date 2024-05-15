@@ -6,9 +6,10 @@ namespace Spa_Interaction_Screen
     {
         //Constants
         public const String CurrentVersion = "1.3";
-        public static String PreConfigPath = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\AdminConfig";
-        public static String BackupLOGPath = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\BLOG";
-        public static String WifiCreds = @$"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName}\WiFi.creds";
+        public static String PreConfigPath = @$".\AdminConfig";
+        public static String BackupLOGPath = @$".\BLOG";
+        public static int MaxBLOGLines = 200000;
+        public static String WifiCreds = @$".\WiFi.creds";
         public const String PreConfigGastroURL = @"https://www.lieferando.de/";
         public const Char PreConfigDelimiter = '%';
         public const String EnterFullscreenText = "Programm in Fullscreen setzen";

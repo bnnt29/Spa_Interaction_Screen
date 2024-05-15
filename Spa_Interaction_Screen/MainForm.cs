@@ -14,7 +14,6 @@ using LibreHardwareMonitor.Hardware;
 using System.Windows.Forms;
 
 /*TODO:
- * limit Log files on x lines
  * Wlan passwort / beschreibung auf Embed
  * Freezing on TCP receive (Scene)
  * Ignoring Streaming state when timeouting qr code
@@ -104,6 +103,11 @@ namespace Spa_Interaction_Screen
                 Logger.Print(ex.Message, Logger.MessageType.Ohne_Kategorie, Logger.MessageSubType.Error);
             }
         }
+
+        private void InitializeComponent()
+        {
+
+        }
     }
 
     public partial class MainForm : CForm
@@ -135,6 +139,7 @@ namespace Spa_Interaction_Screen
         public bool SessionendNet = false;
         public int timeleftnet = int.MaxValue;
         public bool switchedtotimepage = false;
+        public List<TabPage>? oldtabs = null;
         public bool RunTask = true;
         public bool showconsoleonallsites = false;
         public bool lastpingpositiv = true;
@@ -527,22 +532,22 @@ namespace Spa_Interaction_Screen
         {
             if (Logger.consoleshown)
             {
-                if (PCStatLabels == null)
+                if (PCStatLabels == null || PCStatLabels.Count <=0)
                 {
                     PCStatLabels = new List<Label>();
                     int posx, posy;
                     /*for (int i = 0; i < PCStats.Length; i++)
                     {*/
-                        helper.GetDynamicPosition(5, 0, out posx, out posy, 0, 4.5, false);
-                        Label l = new Label();
-                        l.AutoSize = true;
-                        l.ForeColor = Constants.Text_color;
-                        l.Location = new Point(posx, posy);
-                        l.Tag = new Point(0, 4);
-                        l.Font = Constants.Standart_font;
-                        ConsolePage.Controls.Add(l);
-                        helper.ConsoleElements.Add(l);
-                        PCStatLabels.Add(l);
+                    helper.GetDynamicPosition(5, 0, out posx, out posy, 0, 4.5, false);
+                    Label l = new Label();
+                    l.AutoSize = true;
+                    l.ForeColor = Constants.Text_color;
+                    l.Location = new Point(posx, posy);
+                    l.Tag = new Point(0, 4);
+                    l.Font = Constants.Standart_font;
+                    ConsolePage.Controls.Add(l);
+                    helper.ConsoleElements.Add(l);
+                    PCStatLabels.Add(l);
                     //}
                 }
                 PCStatLabels[0].Text = "";
@@ -934,24 +939,11 @@ namespace Spa_Interaction_Screen
 
         public object resizeUIControlItems()
         {
-            int tabs = 5;
-            if (Config.showcolor)
+            if (UIControl.TabCount <= 0)
             {
-                tabs++;
+                return null;
             }
-            if (Config.showtime)
-            {
-                tabs++;
-            }
-            if (Logger.consoleshown)
-            {
-                tabs++;
-            }
-            if (Constants.showbuttontester)
-            {
-                tabs++;
-            }
-            UIControl.ItemSize = new Size((Constants.windowwidth - tabs) / tabs, UIControl.ItemSize.Height);
+            UIControl.ItemSize = new Size((int)(((Constants.windowwidth - UIControl.TabCount) / UIControl.TabCount)-1), UIControl.ItemSize.Height);
             return null;
         }
 
@@ -969,6 +961,58 @@ namespace Spa_Interaction_Screen
             {
                 UIControl.Controls.Remove(ButtonPage);
             }
+            return null;
+        }
+
+        public object removeendtabs()
+        {
+            UIControl.Selecting -= Tab_Selected_Handler;
+            oldtabs = new List<TabPage>();
+            for (int i = 0; i < UIControl.TabCount; i++)
+            {
+                if (!UIControl.TabPages[i].Equals(ConsolePage))
+                {
+                    oldtabs.Add(UIControl.TabPages[i]);
+                }
+                if (!UIControl.TabPages[i].Equals(ServicePage) && !UIControl.TabPages[i].Equals(WartungPage) && !UIControl.TabPages[i].Equals(ConsolePage) && !UIControl.TabPages[i].Equals(ButtonPage))
+                {
+                    if (Config.showtime)
+                    {
+                        if (!UIControl.TabPages[i].Equals(ButtonPage))
+                        {
+                            UIControl.TabPages[i].Parent = null;
+                            i--;
+                        }
+                    }
+                    else
+                    {
+                        UIControl.TabPages.Remove(UIControl.TabPages[i]);
+                        i--;
+                    }
+                }
+            }
+            UIControl.Selecting += Tab_Selected_Handler;
+            UIControl.SelectedIndex = 0;
+            resizeUIControlItems();
+            return null;
+        }
+
+        public object readdtabs()
+        {
+            if(oldtabs==null || oldtabs.Count <= 0)
+            {
+                return null;
+            }
+            UIControl.Selecting -= Tab_Selected_Handler;
+            UIControl.TabPages.Clear();
+            UIControl.TabPages.AddRange(oldtabs.ToArray());
+            if (Logger.consoleshown)
+            {
+                UIControl.TabPages.Add(ConsolePage);
+            }
+            UIControl.Selecting += Tab_Selected_Handler;
+            resizeUIControlItems();
+            UIControl.SelectedIndex = 0;
             return null;
         }
 
@@ -1096,7 +1140,7 @@ namespace Spa_Interaction_Screen
             {
                 int timeleftnotclamped = (int)Math.Ceiling(((TimeSpan)(TimeSessionEnd - DateTime.Now)).TotalMinutes);
                 int timeleftclamped = Math.Max(timeleftnotclamped, 0);
-                if (timeleftnet <= Config.SessionEndShowTimeLeft)
+                if (timeleftnotclamped <= Config.SessionEndShowTimeLeft)
                 {
                     if (!streaming)
                     {
@@ -1117,6 +1161,7 @@ namespace Spa_Interaction_Screen
                             {
                                 vlc.changeMedia(Config.SessionEndImage, false);
                             }
+                            removeendtabs();
                             switchedtotimepage = true;
                         }
                     }
@@ -1133,7 +1178,7 @@ namespace Spa_Interaction_Screen
                         Logger.Print(ex.Message, Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Error);
                         Logger.Print("Could not find Dimmer or Volume Image", Logger.MessageType.Benutzeroberfläche, Logger.MessageSubType.Notice);
                     }
-                    Content_Change(false);
+                    keepContent_Change(false);
                 }
                 else
                 {
@@ -1160,11 +1205,28 @@ namespace Spa_Interaction_Screen
                         }
                         if (UIControl != null)
                         {
-                            UIControl.SelectedIndex = UIControl.TabPages.IndexOf(WartungPage);
+                            UIControl.SelectTab(WartungPage);
                         }
                         EndSession();
                         return;
                     }
+                }
+                else if(SessionEndbool)
+                {
+                    foreach (Label l in helper.globaltimelabels)
+                    {
+                        l.Show();
+                    }
+                    if (UIControl != null)
+                    {
+                        UIControl.SelectTab(UIControl.TabPages[0]);
+                    }
+                    SessionEndbool = false;
+                    blocknonstreamingmedia = false;
+                    Ambiente_Change(Config.DMXScenes[0], true, true, false);
+                    this.showthis();
+                    sessionEndVLC.OnFormClosed(null, null);
+                    vlc.toggleConsoleBox(false);
                 }
                 Constants.SessionSetting Settingstoapply = null;
                 for (int i = 0; i < Config.SessionSettings.Count; i++)
@@ -1431,14 +1493,7 @@ namespace Spa_Interaction_Screen
             }
             if (Logger.consoleshown && vlc != null && UIControl != null)
             {
-                if (showconsoleonallsites)
-                {
-                    vlc.toggleConsoleBox(true);
-                }
-                else
-                {
-                    vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabPages.IndexOf(ConsolePage));
-                }
+                vlc.toggleConsoleBox(e.TabPageIndex == UIControl.TabPages.IndexOf(ConsolePage)||showconsoleonallsites);
             }
             if (SessionEndbool)
             {
@@ -1548,7 +1603,14 @@ namespace Spa_Interaction_Screen
                 {
                     if (!blocknonstreamingmedia && !SessionEndbool)
                     {
-                        vlc.changeMedia(scene.ContentPath, user);
+                        if(/*scene == Config.DMXScenes[0] &&*/ timeleftnet <= Config.SessionEndShowTimeLeft)
+                        {
+                            vlc.changeMedia(Config.SessionEndImage, user);
+                        }
+                        else
+                        {
+                            vlc.changeMedia(scene.ContentPath, user);
+                        }
                     }
                     vlc.showthis();
                 }
@@ -1573,7 +1635,7 @@ namespace Spa_Interaction_Screen
             }
             if(Config.DMXSceneSetting == 2)
             {
-                Constants.InvokeDelegate<object>([false, true], new MyContentchange(delegateContent_Change), this, Logger.MessageType.Hauptprogramm);
+                keepContent_Change(false);
             }
             updatechannelUI();
             SendCurrentSceneOverCom();
@@ -1753,6 +1815,11 @@ namespace Spa_Interaction_Screen
         public void Content_Change(bool SwitchToStream)
         {
             Constants.InvokeDelegate<object>([SwitchToStream, false], new MyContentchange(delegateContent_Change), this, Logger.MessageType.Hauptprogramm);
+        }
+
+        public void keepContent_Change(bool SwitchToStream)
+        {
+            Constants.InvokeDelegate<object>([SwitchToStream, true], new MyContentchange(delegateContent_Change), this, Logger.MessageType.Hauptprogramm);
         }
 
         public object delegateContent_Change(bool SwitchToStream, bool nochange)

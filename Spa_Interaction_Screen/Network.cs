@@ -1417,9 +1417,11 @@ namespace Spa_Interaction_Screen
                     {
                         Logger.Print(ex.Message, Logger.MessageType.TCPReceive, Logger.MessageSubType.Error);
                     }
-                    f.TimeSessionEnd = DateTime.Now.AddMinutes(time);
+                    f.TimeSessionEnd = DateTime.Now.AddMinutes(time); 
+                    f.timeleftnet = time;
                     if (f.timeleftnet >= Config.SessionEndShowTimeLeft)
                     {
+                        f.readdtabs();
                         f.switchedtotimepage = false;
                     }
                 }
@@ -1485,6 +1487,7 @@ namespace Spa_Interaction_Screen
                     f.timeleftnet = (Int32)((Int64)json["id"]);
                     if (f.timeleftnet >= Config.SessionEndShowTimeLeft)
                     {
+                        f.readdtabs();
                         f.switchedtotimepage = false;
                     }
                 }

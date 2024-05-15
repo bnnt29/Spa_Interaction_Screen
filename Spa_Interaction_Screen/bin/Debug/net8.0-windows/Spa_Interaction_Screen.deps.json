@@ -12,6 +12,7 @@
           "Cyotek.Windows.Forms.ColorPicker": "1.7.2",
           "LibVLCSharp.WinForms": "3.8.2",
           "LibreHardwareMonitorLib": "0.9.3",
+          "Microsoft.NET.ILLink.Tasks": "8.0.3",
           "Microsoft.Toolkit.Diagnostics": "7.1.0",
           "Microsoft.Web.WebView2": "1.0.2478.35",
           "Newtonsoft.Json": "13.0.3",
@@ -104,6 +105,7 @@
           }
         }
       },
+      "Microsoft.NET.ILLink.Tasks/8.0.3": {},
       "Microsoft.NETCore.Platforms/5.0.0": {},
       "Microsoft.Toolkit.Diagnostics/7.1.0": {
         "runtime": {
@@ -463,6 +465,13 @@
       "sha512": "sha512-6xlsZ7on9ZosXGDuFrpMnnX61nhhNVQ6UbqOx7huC0h2fv/b2N6u7bmsXYY+WODpoCyWs9zi8eLGvgyNMqDfTA==",
       "path": "lioncs.colorslider/1.0.0",
       "hashPath": "lioncs.colorslider.1.0.0.nupkg.sha512"
+    },
+    "Microsoft.NET.ILLink.Tasks/8.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-0kwNg0LBIvVTx9A2mo9Mnw4wLGtaeQgjSz5P13bOOwdWPPLe9HzI+XTkwiMhS7iQCM6X4LAbFR76xScaMw0MrA==",
+      "path": "microsoft.net.illink.tasks/8.0.3",
+      "hashPath": "microsoft.net.illink.tasks.8.0.3.nupkg.sha512"
     },
     "Microsoft.NETCore.Platforms/5.0.0": {
       "type": "package",

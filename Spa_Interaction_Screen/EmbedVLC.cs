@@ -61,7 +61,7 @@ namespace Spa_Interaction_Screen
                     main.vlc.Dispose();
                     main.vlc = null;
                 }
-                else if(main.vlc != null && main.sessionEndVLC != null && main.sessionEndVLC.Equals(this))
+                else if(main.sessionEndVLC != null && main.sessionEndVLC.Equals(this))
                 {
                     main.sessionEndVLC.Dispose();
                     main.sessionEndVLC = null;
