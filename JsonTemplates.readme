@@ -129,7 +129,7 @@ Services:
 System:
 {  
   "room":1,
-  "type":"System",
+  "type":"TCPWartung",
   "label":"Whirlpool",
   "id":1
 }
